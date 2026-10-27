@@ -3,1073 +3,1796 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NuvoraFit - دستیار هوشمند تناسب اندام</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
+    <title>zeucball - نتایج زنده فوتبال</title>
+    <!-- اضافه کردن کتابخانه Supabase Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --bg-color: #0f0f13;
-            --card-bg: #1a1a24;
-            --primary: #9d4edd;
-            --primary-variant: #7b2cbf;
-            --text-main: #f8f9fa;
-            --text-muted: #adb5bd;
-            --danger: #ef476f;
-            --success: #06d6a0;
-            --warning: #ffd166;
+            --pitch-green-1: #0e3b1c;
+            --pitch-green-2: #072210;
+            --card-glass: rgba(10, 35, 18, 0.75);
+            --border-glass: rgba(0, 255, 102, 0.35);
+            --border-hover: rgba(0, 255, 102, 0.9);
+            --neon-green: #00ff66;
+            --live-red: #ff334b;
+            --text-main: #f0fdf4;
+            --text-sub: #86efac;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(0, 255, 102, 0.15) 0%, transparent 70%), linear-gradient(135deg, var(--pitch-green-2) 0%, var(--pitch-green-1) 100%);
+            --glow-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-main); overflow-x: hidden; padding-bottom: 80px; }
-        
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease-in-out; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-        
-        h1, h2, h3 { margin-bottom: 15px; color: var(--primary); font-weight: 700; }
-        p { margin-bottom: 15px; color: var(--text-muted); line-height: 1.6; font-size: 0.95em; }
-        
-        .form-group { margin-bottom: 18px; position: relative; }
-        label { display: block; margin-bottom: 6px; font-size: 0.9em; color: var(--text-main); font-weight: 500; }
-        input, select { width: 100%; padding: 14px; background: var(--card-bg); border: 1px solid #2d2d3d; color: white; border-radius: 10px; outline: none; font-size: 1em; transition: 0.2s; }
-        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(157, 78, 221, 0.2); }
-        
-        button { width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none; border-radius: 10px; font-weight: bold; font-size: 1em; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(157, 78, 221, 0.3); }
-        button:hover { background: var(--primary-variant); transform: translateY(-1px); }
-        
-        .card { background: var(--card-bg); padding: 20px; border-radius: 14px; margin-bottom: 20px; border: 1px solid #252533; box-shadow: 0 6px 15px rgba(0,0,0,0.4); }
-        
-        .bottom-nav { position: fixed; bottom: 0; width: 100%; background: #15151c; display: flex; justify-content: space-around; padding: 12px 0; border-top: 1px solid #252533; z-index: 1000; backdrop-filter: blur(10px); }
-        .nav-item { color: var(--text-muted); text-align: center; cursor: pointer; font-size: 1.2em; transition: 0.2s; }
-        .nav-item.active { color: var(--primary); transform: scale(1.05); }
-        .nav-item span { display: block; font-size: 0.65em; margin-top: 4px; font-weight: 600; }
-        
-        .exercise-card { background: #222230; padding: 16px; border-radius: 12px; margin-bottom: 14px; border-right: 4px solid var(--primary); }
-        .exercise-header { display: flex; align-items: center; margin-bottom: 8px; }
-        .exercise-icon { width: 50px; height: 50px; background: #2d2d3d; border-radius: 10px; display: flex; justify-content: center; align-items: center; font-size: 22px; margin-left: 15px; color: var(--primary); min-width: 50px; }
-        
-        .food-list { list-style: none; }
-        .food-list li { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #252533; font-size: 0.95em; }
-        .delete-food-btn { background: rgba(239, 71, 111, 0.2); color: var(--danger); border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 0.8em; width: auto; }
-        .delete-food-btn:hover { background: var(--danger); color: #fff; }
-
-        .search-results { background: #222230; border-radius: 10px; max-height: 160px; overflow-y: auto; margin-top: 5px; display: none; position: absolute; width: 100%; z-index: 10; border: 1px solid #3d3d4d; }
-        .search-results div { padding: 12px; border-bottom: 1px solid #2d2d3d; cursor: pointer; display: flex; justify-content: space-between; font-size: 0.9em; }
-        .search-results div:hover { background: #2d2d3d; }
-
-        #workoutModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color); z-index: 2000; display: none; flex-direction: column; justify-content: space-between; padding: 25px; text-align: center; overflow-y: auto; }
-        .timer-display { font-size: 4em; font-weight: bold; color: var(--success); margin: 15px 0; text-shadow: 0 0 20px rgba(6, 214, 160, 0.3); }
-        .workout-progress { font-size: 1.1em; color: var(--text-muted); font-weight: 600; }
-        
-        .diet-plan-box { background: rgba(6, 214, 160, 0.08); border: 1px solid rgba(6, 214, 160, 0.3); padding: 16px; border-radius: 10px; margin-bottom: 15px; }
-        .diet-plan-box h4 { color: var(--success); margin-bottom: 8px; display: flex; align-items: center; gap: 8px; }
-
-        .pedometer-circle {
-            width: 190px; height: 190px; border: 8px solid var(--primary); border-radius: 50%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; margin: 25px auto;
-            box-shadow: 0 0 30px rgba(157, 78, 221, 0.2);
+        .app-container.theme-day {
+            --pitch-green-1: #f1f5f9;
+            --pitch-green-2: #cbd5e1;
+            --card-glass: rgba(255, 255, 255, 0.9);
+            --border-glass: rgba(59, 130, 246, 0.4);
+            --neon-green: #2563eb;
+            --text-main: #0f172a;
+            --text-sub: #334155;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 70%), linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            --glow-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
         }
 
-        .edit-profile-btn { background: rgba(157, 78, 221, 0.15); color: var(--primary); border: 1px solid var(--primary); padding: 8px 14px; font-size: 0.85em; width: auto; border-radius: 8px; font-weight: 600; }
-        .edit-profile-btn:hover { background: var(--primary); color: #fff; }
+        .app-container.theme-pink {
+            --pitch-green-1: #fbcfe8; --pitch-green-2: #be185d;
+            --card-glass: rgba(255, 182, 193, 0.45); --border-glass: rgba(244, 114, 182, 0.6);
+            --neon-green: #f472b6; --text-main: #ffffff; --text-sub: #fbcfe8;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.2) 0%, transparent 70%), linear-gradient(135deg, #831843 0%, #be185d 100%);
+            --glow-shadow: 0 0 20px rgba(244, 114, 182, 0.5);
+        }
 
-        .music-player-box { background: #1e1e2b; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #333344; }
+        .app-container.theme-esteghlal {
+            --pitch-green-1: #003366; --pitch-green-2: #001226;
+            --card-glass: rgba(0, 51, 102, 0.55); --border-glass: rgba(0, 191, 255, 0.6);
+            --neon-green: #00d2ff; --text-main: #ffffff; --text-sub: #99d6ff;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.25) 0%, transparent 70%), linear-gradient(135deg, #000c1a 0%, #002b5c 100%);
+            --glow-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
+        }
+
+        .app-container.theme-persepolis {
+            --pitch-green-1: #660000; --pitch-green-2: #260000;
+            --card-glass: rgba(102, 0, 0, 0.55); --border-glass: rgba(255, 215, 0, 0.6);
+            --neon-green: #ffd700; --text-main: #ffffff; --text-sub: #ffb3b3;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.2) 0%, transparent 70%), linear-gradient(135deg, #1a0000 0%, #5c0000 100%);
+            --glow-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .app-container.theme-zlatan {
+            --pitch-green-1: #1a1a1a; --pitch-green-2: #050505;
+            --card-glass: rgba(20, 20, 20, 0.75); --border-glass: rgba(212, 175, 55, 0.6);
+            --neon-green: #d4af37; --text-main: #ffffff; --text-sub: #e6c667;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.25) 0%, transparent 70%), linear-gradient(135deg, #050505 0%, #1f1f1f 100%);
+            --glow-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
+        }
+
+        .app-container.theme-dark_scary {
+            --pitch-green-1: #200000; --pitch-green-2: #050000;
+            --card-glass: rgba(25, 0, 0, 0.8); --border-glass: rgba(255, 0, 51, 0.6);
+            --neon-green: #ff0033; --text-main: #ffffff; --text-sub: #ff8095;
+            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(255, 0, 51, 0.25) 0%, transparent 70%), linear-gradient(135deg, #050000 0%, #2b0000 100%);
+            --glow-shadow: 0 0 20px rgba(255, 0, 51, 0.6);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            user-select: none;
+        }
+
+        body {
+            background-color: #020503;
+            color: var(--text-main);
+            min-height: 100vh;
+            width: 100vw;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .app-container {
+            width: 100vw;
+            height: 100vh;
+            background: var(--bg-gradient);
+            backdrop-filter: blur(30px);
+            -webkit-backdrop-filter: blur(30px);
+            border: 1px solid var(--border-glass);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--glow-shadow);
+            position: relative;
+            transition: all 0.5s ease;
+        }
+
+        #topNotificationBanner {
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            background: rgba(10, 35, 18, 0.92);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--neon-green);
+            color: var(--text-main);
+            padding: 12px 25px;
+            border-radius: 30px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            z-index: 99999;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px var(--neon-green);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-align: center;
+            max-width: 90%;
+        }
+
+        #topNotificationBanner.show {
+            transform: translateX(-50%) translateY(0);
+        }
+
+        #topNotificationBanner.red {
+            background: rgba(255, 51, 75, 0.95);
+            border-color: #ff334b;
+            color: #ffffff;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px #ff334b;
+        }
+
+        #topNotificationBanner.green {
+            background: rgba(0, 255, 102, 0.95);
+            border-color: #00ff66;
+            color: #030704;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px #00ff66;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 22px;
+            background: rgba(0, 0, 0, 0.65);
+            border-bottom: 1px solid var(--border-glass);
+            z-index: 50;
+        }
+
+        .brand {
+            font-size: 1.4rem;
+            font-weight: 900;
+            color: var(--neon-green);
+            text-shadow: 0 0 15px var(--neon-green);
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .coin-badge {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border-glass);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.88rem;
+            font-weight: bold;
+            color: var(--neon-green);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .cart-icon {
+            background: rgba(0, 0, 0, 0.6);
+            border: 1px solid var(--border-glass);
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .cart-icon:hover {
+            border-color: var(--neon-green);
+            transform: scale(1.1);
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            padding: 10px 18px;
+            background: rgba(0, 0, 0, 0.7);
+            border-bottom: 1px solid var(--border-glass);
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            position: relative;
+        }
+
+        .custom-input {
+            background: rgba(10, 30, 15, 0.85);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            outline: none;
+            color-scheme: dark;
+            cursor: pointer;
+        }
+
+        .custom-dropdown {
+            position: relative;
+            flex: 1;
+            max-width: 220px;
+            min-width: 140px;
+            z-index: 999;
+        }
+
+        .dropdown-select-btn {
+            background: rgba(10, 30, 15, 0.85);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .dropdown-list {
+            position: absolute;
+            top: 115%;
+            right: 0;
+            width: 100%;
+            max-height: 250px;
+            overflow-y: auto;
+            background: rgba(4, 18, 9, 0.98);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--neon-green);
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 999999;
+        }
+
+        .dropdown-list.open { display: block; }
+
+        .dropdown-item {
+            padding: 10px 14px;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            cursor: pointer;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .dropdown-item:hover {
+            background: rgba(0, 255, 102, 0.25);
+            color: var(--neon-green);
+        }
+
+        .btn-action {
+            background: linear-gradient(135deg, rgba(5, 150, 105, 0.9) 0%, rgba(4, 120, 87, 0.9) 100%);
+            border: 1px solid var(--border-glass);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 0 15px;
+            border-bottom: 1px solid var(--border-glass);
+            gap: 8px;
+            overflow-x: auto;
+            z-index: 10;
+        }
+
+        .tab-btn {
+            padding: 11px 18px;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-bottom: none;
+            border-radius: 12px 12px 0 0;
+            color: var(--text-sub);
+            font-weight: 600;
+            font-size: 0.85rem;
+            cursor: pointer;
+            position: relative;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 255, 102, 0.15);
+            border-color: var(--border-glass);
+            color: var(--neon-green);
+        }
+
+        .tab-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0; right: 0; left: 0;
+            height: 3px;
+            background: var(--neon-green);
+            border-radius: 3px 3px 0 0;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 18px 22px;
+            overflow-y: auto;
+            z-index: 5;
+        }
+
+        .matches-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        .match-card {
+            background: var(--card-glass);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 15px 20px;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .card-top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .league-name-tag {
+            font-size: 0.8rem;
+            color: var(--neon-green);
+            font-weight: 700;
+        }
+
+        .match-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .team {
+            flex: 1;
+            font-weight: 600;
+            font-size: 0.95rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            color: var(--text-main);
+        }
+
+        .team.home { text-align: left; }
+        .team.away { text-align: right; }
+
+        .score-box {
+            background: rgba(0, 0, 0, 0.85);
+            border: 1px solid var(--border-glass);
+            padding: 6px 16px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--neon-green);
+            min-width: 85px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(15px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10000;
+        }
+
+        .modal-content {
+            background: rgba(10, 25, 15, 0.95);
+            border: 1px solid var(--neon-green);
+            border-radius: 20px;
+            width: 90%;
+            max-width: 450px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-shadow: var(--glow-shadow);
+            text-align: center;
+            overflow: hidden;
+        }
+
+        .modal-body-scroll {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 65vh;
+            padding-left: 4px;
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            color: var(--neon-green);
+            font-weight: bold;
+            margin-bottom: 12px;
+        }
+
+        .modal-btn {
+            background: var(--neon-green);
+            color: #030704;
+            border: none;
+            padding: 10px 24px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .theme-card {
+            background: rgba(0, 0, 0, 0.55);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 14px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .theme-info h4 { color: var(--text-main); margin-bottom: 4px; text-align: right; }
+        .theme-info p { font-size: 0.8rem; color: var(--text-sub); text-align: right; }
+        .theme-actions { display: flex; gap: 6px; }
+
+        .shop-menu-item {
+            background: rgba(0, 255, 102, 0.1);
+            border: 1px solid var(--border-glass);
+            border-radius: 14px;
+            padding: 16px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .shop-menu-item:hover {
+            border-color: var(--neon-green);
+            background: rgba(0, 255, 102, 0.2);
+        }
+
+        .btn-buy, .btn-preview, .btn-select {
+            padding: 6px 12px;
+            border-radius: 8px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+        }
+
+        .btn-buy { background: #eab308; color: #000; }
+        .btn-preview { background: #3b82f6; color: #fff; }
+        .btn-select { background: #22c55e; color: #fff; }
+        .btn-owned { background: rgba(255,255,255,0.2); color: #aaa; cursor: default; }
+
+        .loading, .empty-msg {
+            text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 1rem;
+        }
+
+        .game-tab-btn {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.4));
+            border: 1px solid rgba(56, 189, 248, 0.6) !important;
+            color: #38bdf8 !important;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+        }
+        .game-tab-btn.active {
+            background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
+            color: #ffffff !important;
+            border-color: #38bdf8 !important;
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
+        }
+
+        .game-setup-card {
+            background: rgba(10, 35, 18, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            border-radius: 20px;
+            padding: 20px;
+            max-width: 520px;
+            margin: 10px auto;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(56, 189, 248, 0.2);
+            text-align: center;
+        }
+
+        .player-list-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            text-align: right;
+            padding: 5px;
+        }
+
+        .player-mini-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 0.8rem;
+        }
+
+        /* گزینه‌های انتخاب رنگ کیت */
+        .kit-color-grid {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        .kit-color-option {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+        }
+        .kit-color-option.selected {
+            border-color: #ffffff;
+            transform: scale(1.15);
+            box-shadow: 0 0 10px #ffffff;
+        }
+
+        /* زمین چمن شیشه‌ای و گرافیکی سه‌بعدی متحرک */
+        .match-live-arena {
+            width: 100%;
+            max-width: 540px;
+            height: 520px;
+            background: radial-gradient(circle at 50% 50%, rgba(14, 101, 52, 0.9) 0%, rgba(7, 45, 22, 0.95) 100%), linear-gradient(180deg, #166534 0%, #14532d 100%);
+            border: 2px solid rgba(56, 189, 248, 0.6);
+            border-radius: 20px;
+            margin: 0 auto 15px auto;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .pitch-line-center {
+            position: absolute;
+            top: 50%; left: 0; width: 100%; height: 2px;
+            background: rgba(255, 255, 255, 0.4);
+        }
+        .pitch-circle-center {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90px; height: 90px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+        }
+
+        .smart-player-node {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+        }
+
+        .player-kit-icon {
+            font-size: 1.8rem;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
+        }
+
+        .player-name-tag {
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(56, 189, 248, 0.5);
+            color: #ffffff;
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 6px;
+            white-space: nowrap;
+            margin-top: -3px;
+        }
+
+        .smart-ball {
+            position: absolute;
+            transform: translate(-50%, -50%);
+            font-size: 1.6rem;
+            filter: drop-shadow(0 0 10px #00ff66);
+            transition: all 0.5s ease-in-out;
+            z-index: 20;
+        }
+
+        .match-commentary-box {
+            background: rgba(10, 25, 15, 0.85);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            border-radius: 14px;
+            padding: 12px 16px;
+            max-width: 540px;
+            margin: 0 auto;
+            text-align: right;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+        }
     </style>
 </head>
 <body>
 
-    <div id="onboardingPage" class="page active">
-        <div style="max-width: 500px; margin: 0 auto; padding-top: 10px;">
-            <h1 style="text-align: center; font-size: 2.2em; margin-bottom: 5px;">NuvoraFit</h1>
-            <p style="text-align: center; margin-bottom: 25px;">سیستم هوشمند تناسب اندام اختصاصی بانوان و آقایان</p>
-            
-            <div class="card">
-                <div class="form-group">
-                    <label>جنسیت:</label>
-                    <select id="gender" onchange="updateFocusOptions()">
-                        <option value="male">مرد</option>
-                        <option value="female">زن</option>
-                    </select>
-                </div>
-                <div class="form-group"><label>سن:</label><input type="number" id="age" placeholder="مثلاً 26"></div>
-                <div class="form-group"><label>قد (سانتی‌متر):</label><input type="number" id="height" placeholder="مثلاً 170"></div>
-                <div class="form-group"><label>وزن فعلی (کیلوگرم):</label><input type="number" id="weight" placeholder="مثلاً 75"></div>
-                <div class="form-group">
-                    <label>هدف اصلی:</label>
-                    <select id="focusArea"></select>
-                </div>
-                <div class="form-group">
-                    <label><i class="fas fa-fire-alt" style="color:var(--warning)"></i> درجه سختی و شتاب کالری‌سوزی:</label>
-                    <select id="difficultyLevel">
-                        <option value="normal">عادی (استاندارد و متعادل - کاهش تدریجی)</option>
-                        <option value="hard" selected>فشرده (چربی‌سوزی سریع و هدف ۱ ماهه)</option>
-                        <option value="extreme">فوق‌سنگین (آزمون آتشین - حداکثر شدت و کالری‌سوزی)</option>
-                    </select>
-                </div>
-                <button onclick="saveProfile()" style="margin-top: 10px;">محاسبه و ورود به برنامه تناسب اندام</button>
+<div id="topNotificationBanner">📢 اعلان سیستم</div>
+
+<div class="app-container" id="appContainer">
+    <header>
+        <div class="brand">⚽ zeucball</div>
+        <div class="header-left">
+            <div class="coin-badge">
+                🪙 <span id="coinCount">50</span> سکه
+            </div>
+            <div class="cart-icon" onclick="openShopModal()">🛒</div>
+        </div>
+    </header>
+
+    <div class="controls" id="topControlsBar">
+        <input type="date" id="matchDate" class="custom-input" onchange="fetchMatchesByDate()">
+        
+        <div class="custom-dropdown" id="customDropdown">
+            <div class="dropdown-select-btn" onclick="toggleDropdown()">
+                <span id="selectedLeagueLabel">همه لیگ‌ها</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+            </div>
+            <div class="dropdown-list" id="dropdownList">
+                <div class="dropdown-item" onclick="selectLeague('ALL', 'همه لیگ‌ها')">همه لیگ‌ها</div>
             </div>
         </div>
+
+        <button class="btn-action" onclick="fetchMatchesByDate()">بروزرسانی</button>
     </div>
 
-    <div id="dashboardPage" class="page">
-        <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
-            <div>
-                <h3>NuvoraFit - روز <span id="streakDays" style="color:var(--primary)">1</span> از ۳۰ (پروژه ۱ ماهه)</h3>
-                <p id="dateDisplay" style="margin-bottom: 12px; font-size: 0.85em;"></p>
-                <button class="edit-profile-btn" onclick="openOnboarding()"><i class="fas fa-user-edit"></i> ویرایش مشخصات و اهداف</button>
-            </div>
-            <i class="fas fa-fire" style="font-size: 2.5em; color: var(--warning);"></i>
-        </div>
-        
-        <div class="card" style="text-align: center;">
-            <h3>وضعیت فشرده چربی‌سوزی و هدف</h3>
-            <div style="font-size: 2.5em; font-weight: bold; color: var(--primary);" id="bmiValue">0</div>
-            <p id="bmiText" style="margin-top: 5px; font-weight:bold;"></p>
-            
-            <div style="background: #222230; padding: 18px; border-radius: 10px; margin-top: 15px; text-align: right; border: 1px solid #2d2d3d;">
-                <p style="margin:0 0 10px 0; color:#fff;" id="weightDiffText"></p>
-                <p style="margin:0; color:#fff;">کالری هدف روزانه (بر اساس درجه سختی): <strong id="tdeeValue" style="color:var(--warning)">0</strong> کیلوکالری</p>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>تنظیم یادآور هوشمند تمرین</h3>
-            <p style="font-size: 0.85em;">ساعتی که می‌خواهید اعلان ورزشی دریافت کنید:</p>
-            <div style="display: flex; gap: 10px;">
-                <input type="time" id="workoutTimeInput">
-                <button onclick="setReminder()" style="width: auto; padding: 0 25px;">ثبت یادآور</button>
-            </div>
-        </div>
-
-        <div class="card">
-            <h3>نمودار پیشرفت تغییرات وزن (kg)</h3>
-            <div style="position: relative; height: 220px; width: 100%;">
-                <canvas id="weightChart"></canvas>
-            </div>
-            <div style="display: flex; gap: 10px; margin-top: 20px;">
-                <input type="number" id="newWeightInput" placeholder="ثبت وزن امروز (kg)" step="0.1">
-                <button onclick="addWeightRecord()" style="width: auto; padding: 0 25px;">ثبت وزن</button>
-            </div>
-        </div>
+    <div class="nav-tabs">
+        <button class="tab-btn" onclick="switchStatusFilter('ALL', this)">همه بازی‌ها</button>
+        <button class="tab-btn active" onclick="switchStatusFilter('LIVE', this)">بازی‌های زنده</button>
+        <button class="tab-btn" onclick="switchStatusFilter('UPCOMING', this)">بازی‌های آینده</button>
+        <button class="tab-btn" onclick="switchStatusFilter('FINISHED', this)">پایان‌یافته</button>
+        <button class="tab-btn" onclick="switchStatusFilter('QUMAR', this)" style="color: #f43f5e;">🎰 قمار</button>
+        <button class="tab-btn game-tab-btn" onclick="switchStatusFilter('GAME', this)">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px #38bdf8);"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
+            GAME
+        </button>
     </div>
 
-    <div id="workoutPage" class="page">
-        <h2>برنامه تمرینی مگا-چربی‌سوزی <span id="todayDayName" style="color: var(--primary);">امروز</span></h2>
-        <p id="workoutCategoryTitle" style="color: var(--success); font-weight: 600; margin-bottom: 15px;"></p>
-        
-        <div class="music-player-box">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h4 style="color: var(--primary); margin: 0;"><i class="fas fa-headphones"></i> پخش‌کننده موزیک انگیزشی ورزشی</h4>
-                <select id="musicSelector" onchange="changeMusicTrack()" style="width: 160px; padding: 6px; font-size: 0.85em;">
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3">موزیک ۱: ریتم تند کاردیو</option>
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3">موزیک ۲: انرژی قدرتی</option>
-                    <option value="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3">موزیک ۳: ضربان بالا</option>
-                </select>
-            </div>
-            <audio id="workoutMusic" controls loop style="width: 100%;">
-                <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-            </audio>
+    <div class="content-area">
+        <div id="content">
+            <div class="loading">در حال بارگذاری زمین مسابقه zeucball...</div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="customAlertModal">
+    <div class="modal-content">
+        <div class="modal-title" id="alertModalTitle">پیام سیستم</div>
+        <div class="modal-desc" id="alertModalDesc">متن پیام اینجا قرار می‌گیرد.</div>
+        <button class="modal-btn" onclick="closeCustomAlert()">متوجه شدم</button>
+    </div>
+</div>
+
+<!-- فروشگاه و پوشه تم‌ها -->
+<div class="modal-overlay" id="shopModal">
+    <div class="modal-content" style="max-width: 450px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; flex-shrink: 0;">
+            <div class="modal-title" id="shopModalTitle" style="margin:0;">🛒 منوی فروشگاه</div>
+            <button onclick="closeShopModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">×</button>
         </div>
 
-        <button onclick="startGuidedWorkout()" style="margin-bottom: 20px; background: var(--success); color:#000; font-size: 1.05em;"><i class="fas fa-play-circle"></i> شروع تمرین صوتی مگا-چربی‌سوزی متناسب با سطح سختی</button>
-        <p id="workoutDesc"></p>
-        <div id="exerciseList"></div>
-    </div>
-
-    <div id="dietPage" class="page">
-        <h2>تغذیه تخصصی و کالری‌شماری</h2>
-        
-        <div class="card" style="text-align: center;">
-            <p>مقایسه کالری دریافتی امروز با سقف مجاز تعیین‌شده</p>
-            <div style="display: flex; justify-content: center; align-items: baseline; gap: 15px; margin: 10px 0;">
-                <div>
-                    <span style="font-size: 0.8em; color: var(--text-muted); display: block;">کالری مصرف شده:</span>
-                    <span id="consumedCalories" style="font-size: 2.2em; font-weight: bold; color: var(--success);">0</span>
-                </div>
-                <span style="font-size: 1.8em; color: var(--text-muted);">/</span>
-                <div>
-                    <span style="font-size: 0.8em; color: var(--text-muted); display: block;">حد مجاز کالری هدف:</span>
-                    <span id="targetCalDisplay" style="font-size: 2.2em; font-weight: bold; color: var(--warning);">0</span>
+        <div class="modal-body-scroll">
+            <div id="shopMainHome">
+                <div class="shop-menu-item" onclick="openThemesMenu()">
+                    <div class="theme-info">
+                        <h4>🎨 پوشه تم‌ها</h4>
+                        <p>مشاهده و انتخاب تم‌های ۳D شیشه‌ای و تم روز رایگان</p>
+                    </div>
+                    <span style="color: var(--neon-green); font-size: 1.2rem; font-weight: bold;">←</span>
                 </div>
             </div>
-            <p id="caloriePenaltyAlert" style="color: var(--danger); font-weight: bold; margin-top: 8px; font-size: 0.9em; display: none;"><i class="fas fa-exclamation-triangle"></i> اخطار: حد مجاز کالری رد شد! جریمه هوازی در بخش قدم‌شمار اعمال شد.</p>
-        </div>
 
-        <div class="card">
-            <h3>نمودار کالری دریافتی روزهای گذشته</h3>
-            <div style="position: relative; height: 200px; width: 100%;">
-                <canvas id="calorieChart"></canvas>
+            <div id="shopThemesView" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <button class="btn-action" onclick="backToShopHome()" style="padding: 6px 14px; font-size: 0.8rem;">← بازگشت</button>
+                    <span style="font-size: 0.9rem; color: var(--neon-green); font-weight: bold;">پوشه تم‌های برنامه</span>
+                </div>
+                <div id="themesListContainer"></div>
             </div>
         </div>
-
-        <div class="card">
-            <h3>رژیم غذایی هوشمند امروز (<span id="dietDayTitle" style="color:var(--primary);"></span>)</h3>
-            <p style="font-size: 0.85em; margin-bottom: 15px;">این منو بر اساس سطح سختی و هدف ۱ ماهه شما تنظیم شده است:</p>
-            <div id="recommendedDiet"></div>
-        </div>
-        
-        <div class="card">
-            <h3>ثبت وعده غذایی از پایگاه داده</h3>
-            <div class="form-group">
-                <input type="text" id="foodSearch" placeholder="جستجوی غذا (مثلاً برنج، مرغ، تخم‌مرغ، جوجه)..." onkeyup="searchFood()">
-                <div id="searchResults" class="search-results"></div>
-            </div>
-            <div class="form-group" style="display:flex; gap:10px;">
-                <input type="text" id="foodName" placeholder="نام غذا">
-                <input type="number" id="foodCal" placeholder="کالری (kcal)" style="width: 120px;">
-            </div>
-            <button onclick="addFood()">ثبت در دفترچه تغذیه</button>
-        </div>
-
-        <div class="card">
-            <h3>تاریخچه تغذیه امروز</h3>
-            <ul class="food-list" id="foodListUl"></ul>
-        </div>
     </div>
+</div>
 
-    <div id="walkPage" class="page">
-        <h2>قدم‌شمار و پیاده‌روی هوازی</h2>
-        <p>با زدن دکمه شروع، تایمر پیاده‌روی، گام‌های تخمینی و میزان کالری‌سوزی محاسبه می‌شود.</p>
+<script>
+    const API_BASE = 'https://football-live-api-x2m6.onrender.com';
+
+    const SUPABASE_URL = 'https://vxpybengqnalhiriqspz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_-GdIgi3ei9hEnccdjpFY6g_z88xdCa5';
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    let userCoins = parseInt(localStorage.getItem('zeuc_coins')) || 50;
+    let unlockedThemes = JSON.parse(localStorage.getItem('zeuc_unlocked')) || ['default', 'day'];
+    let activeTheme = localStorage.getItem('zeuc_active_theme') || 'default';
+    let userPredictions = JSON.parse(localStorage.getItem('zeuc_predictions')) || {};
+
+    let qumarSubView = 'home';
+    let enfesharState = {
+        isPlaying: false,
+        multiplier: 1.00,
+        crashPoint: 1.00,
+        timer: null,
+        bet: 10,
+        cashedOut: false
+    };
+
+    const IRANIAN_FIRST_NAMES = [
+        'آرش', 'سهراب', 'کاوه', 'سیروس', 'داریوش', 'سامان', 'پیمان', 'سهیل', 'فرزاد', 'پویا',
+        'کیان', 'مازیار', 'بهرام', 'سیاوش', 'فرید', 'نوید', 'بابک', 'اشکان', 'پژمان', 'رامین',
+        'بهنام', 'مهرداد', 'شهاب', 'پرهام', 'روزبه', 'احسان', 'میلاد', 'دانیال', 'مهدی', 'رضا'
+    ];
+    const IRANIAN_LAST_NAMES = [
+        'راد', 'رادمنش', 'کریمی', 'مهرابی', 'دلاوری', 'پارسا', 'تالشی', 'نادری', 'سلطانی', 'فرهادی',
+        'جهانگیری', 'زمانی', 'شریفی', 'مقدم', 'کرمی', 'مرادی', 'صادقی', 'حسینی', 'رستمی', 'طاهری',
+        'قاسمی', 'رضایی', 'بیات', 'فلاح', 'عسگری', 'نوری', 'ساکی', 'موسوی', 'جباری', 'نیکو'
+    ];
+
+    let userId = localStorage.getItem('zeuc_user_id');
+    if (!userId) {
+        userId = 'user_' + Math.random().toString(36).substring(2, 11);
+        localStorage.setItem('zeuc_user_id', userId);
+    }
+
+    let gameState = JSON.parse(localStorage.getItem('zeuc_game_state')) || {
+        configured: false,
+        teamName: 'تیم من',
+        kitColor: '#38bdf8',
+        players: []
+    };
+
+    let selectedSetupColor = '#38bdf8';
+
+    let matchmakingState = {
+        searching: false,
+        timer: null,
+        secondsLeft: 60,
+        liveMatchActive: false,
+        matchData: null
+    };
+
+    updateCoinUI();
+    applyTheme(activeTheme);
+
+    function updateCoinUI() {
+        document.getElementById('coinCount').textContent = userCoins;
+        localStorage.setItem('zeuc_coins', userCoins);
+    }
+
+    function showCustomAlert(title, desc) {
+        document.getElementById('alertModalTitle').textContent = title;
+        document.getElementById('alertModalDesc').textContent = desc;
+        document.getElementById('customAlertModal').style.display = 'flex';
+    }
+
+    function closeCustomAlert() {
+        document.getElementById('customAlertModal').style.display = 'none';
+    }
+
+    function showTopBanner(msg, type = 'default') {
+        const banner = document.getElementById('topNotificationBanner');
+        banner.textContent = msg;
+        banner.className = '';
+        if (type === 'red') banner.classList.add('red');
+        else if (type === 'green') banner.classList.add('green');
+        banner.classList.add('show');
+        setTimeout(() => { banner.classList.remove('show'); }, 6000);
+    }
+
+    const FA_TRANSLATIONS = {
+        'Premier League': 'لیگ برتر انگلیس', 'LaLiga': 'لالیگا اسپانیا', 'La Liga': 'لالیگا اسپانیا',
+        'Serie A': 'سری آ ایتالیا', 'Bundesliga': 'بوندسلیگا آلمان', 'Ligue 1': 'لوشامپیونه فرانسه',
+        'Champions League': 'لیگ قهرمانان اروپا', 'Europa League': 'لیگ اروپا', 'Persian Gulf Pro League': 'لیگ برتر ایران',
+        'Real Madrid': 'رئال مادرید', 'Barcelona': 'بارسلونا', 'Manchester United': 'منچستر یونایتد',
+        'Manchester City': 'منچستر سیتی', 'Liverpool': 'لیورپول', 'Arsenal': 'آرسنال',
+        'Chelsea': 'چلسی', 'Tottenham Hotspur': 'توتنهام', 'Bayern Munich': 'بایرن مونیخ',
+        'Borussia Dortmund': 'بوروسیا دورتموند', 'Juventus': 'یوونتوس', 'Inter': 'اینتر میان',
+        'AC Milan': 'آث میلان', 'Paris Saint-Germain': 'پاری سن ژرمن', 'PSG': 'پاری سن ژرمن',
+        'Esteghlal': 'استقلال', 'Persepolis': 'پرسپولیس', 'Sepahan': 'سپاهان', 'Tractor': 'تراکتور'
+    };
+
+    function translateFA(text) {
+        if (!text) return text;
+        if (FA_TRANSLATIONS[text]) return FA_TRANSLATIONS[text];
+        let cleaned = text.replace(/FC|FK|SC|CF|United|City|Club|Dubai/gi, '').trim();
+        return FA_TRANSLATIONS[cleaned] || FA_TRANSLATIONS[text] || text;
+    }
+
+    function applyTheme(themeName) {
+        const container = document.getElementById('appContainer');
+        container.className = 'app-container';
+        if (themeName !== 'default') container.classList.add(`theme-${themeName}`);
+    }
+
+    function previewTheme(themeName) {
+        applyTheme(themeName);
+        setTimeout(() => { applyTheme(activeTheme); }, 5000);
+    }
+
+    function buyTheme(themeName) {
+        if (themeName === 'day' || themeName === 'default') {
+            selectTheme(themeName);
+            return;
+        }
+        if (userCoins >= 15) {
+            userCoins -= 15;
+            unlockedThemes.push(themeName);
+            localStorage.setItem('zeuc_unlocked', JSON.stringify(unlockedThemes));
+            updateCoinUI();
+            selectTheme(themeName);
+            renderShopThemes();
+            showCustomAlert('خرید موفق', 'تم با موفقیت خریداری و فعال گردید!');
+        } else {
+            showCustomAlert('کفایت سکه', 'سکه کافی ندارید! با پیش‌بینی صحیح مسابقات سکه به دست آورید.');
+        }
+    }
+
+    function selectTheme(themeName) {
+        activeTheme = themeName;
+        localStorage.setItem('zeuc_active_theme', themeName);
+        applyTheme(themeName);
+        renderShopThemes();
+    }
+
+    const THEMES_DATA = [
+        { id: 'default', name: 'چمن نئونی ۳D پیش‌فرض', desc: 'استایل نئونی و مدرن زمین چمن', free: true },
+        { id: 'day', name: 'تم روز (سفید و شیشه‌ای)', desc: 'طراحی ساده، روشن، گرافیکی و شیشه‌ای', free: true },
+        { id: 'pink', name: 'تم صورتی پاستیلی', desc: 'طراحی ملایم و شیشه‌ای پاستیلی', free: false },
+        { id: 'esteghlal', name: 'تم آبی استقلال ایران', desc: 'رنگ‌آمیزی آبی با جلوه استقلال', free: false },
+        { id: 'persepolis', name: 'تم پرسپولیس ایران', desc: 'طراحی سرخ و طلایی پرسپولیس', free: false },
+        { id: 'zlatan', name: 'تم زلاتان ابراهیموویچ', desc: 'طراحی سلطنتی مشکی طلایی', free: false },
+        { id: 'dark_scary', name: 'تم سیاه دارک و ترسناک', desc: 'تم تاریک نئونی و قرمز آتشین', free: false }
+    ];
+
+    function openShopModal() {
+        backToShopHome();
+        document.getElementById('shopModal').style.display = 'flex';
+    }
+
+    function closeShopModal() {
+        document.getElementById('shopModal').style.display = 'none';
+    }
+
+    function openThemesMenu() {
+        document.getElementById('shopMainHome').style.display = 'none';
+        document.getElementById('shopThemesView').style.display = 'block';
+        document.getElementById('shopModalTitle').textContent = '🎨 پوشه تم‌ها';
+        renderShopThemes();
+    }
+
+    function backToShopHome() {
+        document.getElementById('shopThemesView').style.display = 'none';
+        document.getElementById('shopMainHome').style.display = 'block';
+        document.getElementById('shopModalTitle').textContent = '🛒 منوی فروشگاه';
+    }
+
+    function renderShopThemes() {
+        const container = document.getElementById('themesListContainer');
+        let html = '';
+        THEMES_DATA.forEach(t => {
+            const isUnlocked = t.free || unlockedThemes.includes(t.id);
+            const isActive = activeTheme === t.id;
+            html += `
+                <div class="theme-card">
+                    <div class="theme-info"><h4>${t.name}</h4><p>${t.desc}</p></div>
+                    <div class="theme-actions">
+                        <button class="btn-preview" onclick="previewTheme('${t.id}')">تست ۵ ثانیه‌ای</button>
+                        ${isUnlocked ? (isActive ? `<button class="btn-owned" disabled>فعال</button>` : `<button class="btn-select" onclick="selectTheme('${t.id}')">انتخاب</button>`) : `<button class="btn-buy" onclick="buyTheme('${t.id}')">خرید (۱۵ سکه)</button>`}
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    }
+
+    const ALL_WORLD_LEAGUES = [
+        'لیگ برتر انگلیس', 'لالیگا اسپانیا', 'سری آ ایتالیا', 'بوندسلیگا آلمان', 
+        'لوشامپیونه فرانسه', 'لیگ قهرمانان اروپا', 'لیگ اروپا', 'لیگ برتر ایران',
+        'اردیویسه هلند', 'لیگ برتر پرتغال', 'سری آ برزیل', 'ام‌ال‌اس آمریکا',
+        'لیگ حرفه‌ای عربستان', 'چمپیونشیپ انگلیس', 'سری ب ایتالیا', 'لیگ برتر روسیه'
+    ];
+
+    let globalLeaguesData = [];
+    let currentStatusFilter = 'LIVE';
+    let currentLeagueFilter = 'ALL';
+    let autoRefreshTimer = null;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('matchDate').value = today;
+        populateStaticLeaguesDropdown();
+        fetchMatchesByDate();
+        startAutoRefresh();
+
+        window.addEventListener('click', (e) => {
+            if (!document.getElementById('customDropdown').contains(e.target)) {
+                document.getElementById('dropdownList').classList.remove('open');
+            }
+        });
+    });
+
+    function toggleDropdown() {
+        document.getElementById('dropdownList').classList.toggle('open');
+    }
+
+    function selectLeague(value, label) {
+        currentLeagueFilter = value;
+        document.getElementById('selectedLeagueLabel').textContent = label;
+        document.getElementById('dropdownList').classList.remove('open');
+        renderMatches();
+    }
+
+    function populateStaticLeaguesDropdown() {
+        const listDiv = document.getElementById('dropdownList');
+        let html = `<div class="dropdown-item" onclick="selectLeague('ALL', 'همه لیگ‌ها')">همه لیگ‌ها</div>`;
+        ALL_WORLD_LEAGUES.forEach((leagueName) => {
+            html += `<div class="dropdown-item" onclick="selectLeague('${leagueName}', '${leagueName}')">${leagueName}</div>`;
+        });
+        listDiv.innerHTML = html;
+    }
+
+    function startAutoRefresh() {
+        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+        autoRefreshTimer = setInterval(() => {
+            const today = new Date().toISOString().split('T')[0];
+            const dateVal = document.getElementById('matchDate').value;
+            if (dateVal === today) silentFetchMatches();
+        }, 30000);
+    }
+
+    async function fetchMatchesByDate() {
+        if (currentStatusFilter === 'GAME') return;
+        const dateVal = document.getElementById('matchDate').value;
+        if (!dateVal) return;
+        const formattedDate = dateVal.replace(/-/g, ''); 
+        const contentDiv = document.getElementById('content');
         
-        <div class="pedometer-circle">
-            <span id="stepCount" style="font-size: 2.4em; font-weight: bold; color: var(--success);">0</span>
-            <p style="margin:0; font-size:0.8em; color:var(--text-muted);">گام‌های تخمینی</p>
-        </div>
+        if (currentStatusFilter !== 'QUMAR' || qumarSubView !== 'home') {
+            contentDiv.innerHTML = '<div class="loading">در حال دریافت جدیدترین مسابقات زمین چمن...</div>';
+        }
+
+        try {
+            let res = await fetch(`${API_BASE}/api/matches/date/${formattedDate}`);
+            if (!res.ok) res = await fetch(`${API_BASE}/api/matches/date/${dateVal}`);
+            const json = await res.json();
+            globalLeaguesData = json?.data?.leagues || json?.leagues || [];
+            renderMatches();
+        } catch (err) {
+            console.error(err);
+            if (currentStatusFilter !== 'QUMAR' || qumarSubView !== 'home') {
+                contentDiv.innerHTML = '<div class="empty-msg">خطا در ارتباط با سرور zeucball.</div>';
+            }
+        }
+    }
+
+    async function silentFetchMatches() {
+        if (currentStatusFilter === 'GAME') return;
+        const dateVal = document.getElementById('matchDate').value;
+        if (!dateVal) return;
+        const formattedDate = dateVal.replace(/-/g, ''); 
+        try {
+            let res = await fetch(`${API_BASE}/api/matches/date/${formattedDate}`);
+            if (!res.ok) res = await fetch(`${API_BASE}/api/matches/date/${dateVal}`);
+            const json = await res.json();
+            const newLeagues = json?.data?.leagues || json?.leagues || [];
+            if (newLeagues.length > 0) {
+                globalLeaguesData = newLeagues;
+                renderMatches();
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    function switchStatusFilter(status, element) {
+        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+        element.classList.add('active');
+        currentStatusFilter = status;
         
-        <div style="text-align: center; margin-bottom: 20px;">
-            <p>زمان پیاده‌روی: <strong id="walkTime" style="color:var(--primary); font-size: 1.2em;">00:00</strong></p>
-            <p>کالری سوزانده شده: <strong id="walkCal" style="color:var(--success); font-size: 1.2em;">0</strong> کیلوکالری</p>
-            <p id="penaltyWalkText" style="color: var(--warning); font-size: 0.85em; margin-top: 5px;"></p>
-        </div>
-        
-        <div style="display: flex; gap: 10px;">
-            <button id="startWalkBtn" onclick="toggleWalk()">شروع پیاده‌روی</button>
-            <button onclick="resetWalk()" style="background: #333; color: white;">ریست</button>
-        </div>
-    </div>
-
-    <div id="workoutModal">
-        <div>
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <button onclick="exitGuidedWorkoutToMenu()" style="width: auto; padding: 8px 16px; background: #333; color: #fff; font-size: 0.9em;"><i class="fas fa-arrow-right"></i> بازگشت به منو</button>
-                <div class="workout-progress" id="gwProgress">حرکت 1 از 6</div>
-                <div style="width: 90px;"></div>
-            </div>
-            <h2 id="gwTitle" style="font-size: 2.2em; margin-bottom: 8px; color: var(--primary);">نام حرکت</h2>
-            <p id="gwCategoryBadge" style="color: var(--success); font-weight: bold; margin-bottom: 10px; font-size: 0.95em;"></p>
-            <p id="gwDesc" style="color: var(--text-muted); margin-bottom: 20px; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.7; font-size: 1em;"></p>
-        </div>
-
-        <div>
-            <i id="gwIcon" class="fas fa-dumbbell" style="font-size: 4em; color: var(--primary); margin-bottom: 15px;"></i>
-            <div class="timer-display" id="gwTimerDisplay">00:50</div>
-        </div>
-
-        <div style="display: flex; gap: 12px; width: 100%; max-width: 400px; margin: 0 auto; padding-bottom: 15px;">
-            <button id="gwActionBtn" onclick="toggleGuidedTimer()" style="background: var(--success); color:#000; font-size: 1.1em;">شروع تایمر</button>
-            <button onclick="nextGuidedWorkout()" style="background: var(--primary); color:#fff; font-size: 1.1em;">حرکت بعدی</button>
-        </div>
-    </div>
-
-    <div class="bottom-nav" id="bottomNav" style="display: none;">
-        <div class="nav-item active" onclick="nav('dashboardPage', this)"><i class="fas fa-home"></i><span>خانه</span></div>
-        <div class="nav-item" onclick="nav('workoutPage', this)"><i class="fas fa-dumbbell"></i><span>تمرین</span></div>
-        <div class="nav-item" onclick="nav('walkPage', this)"><i class="fas fa-shoe-prints"></i><span>قدم‌شمار</span></div>
-        <div class="nav-item" onclick="nav('dietPage', this)"><i class="fas fa-utensils"></i><span>تغذیه</span></div>
-    </div>
-
-    <script>
-        const foodDatabase = [
-            { name: "برنج سفید کته (یک کفگیر پر)", cal: 220 },
-            { name: "نان لواش (یک کف دست)", cal: 25 },
-            { name: "نان سنگک سبوس‌دار (یک کف دست)", cal: 65 },
-            { name: "سینه مرغ آب‌پز/گریل (100 گرم)", cal: 155 },
-            { name: "تخم‌مرغ آب‌پز (یک عدد درشت)", cal: 78 },
-            { name: "پنیر کم‌چرب (یک قوطی کبریت)", cal: 60 },
-            { name: "گوجه و خیار (مقدار دلخواه)", cal: 20 },
-            { name: "موز رسیده (یک عدد متوسط)", cal: 105 },
-            { name: "سیب درختی با پوست (یک عدد)", cal: 85 },
-            { name: "ماکارونی و پاستا (یک لیوان پخته)", cal: 200 },
-            { name: "قرمه سبزی کم‌روغن (یک ملاقه)", cal: 130 },
-            { name: "شیر کم‌چرب (یک لیوان)", cal: 90 },
-            { name: "جوجه کباب سینه (150 گرم)", cal: 195 },
-            { name: "عدسی مقوی خانگی (یک کاسه)", cal: 170 },
-            { name: "سالاد فصل بدون سس (روغن زیتون و آبلیمو)", cal: 45 },
-            { name: "سیب‌زمینی آب‌پز (یک عدد متوسط)", cal: 110 }
-        ];
-
-        const megaWorkoutPoolMale = {
-            sixpack: [
-                [
-                    { name: 'پلانک شکمی پیشرفته ایزومتریک', baseDuration: 60, category: 'فشار حداکثری میان‌تنه', desc: 'روی ساعد و پنجه پا قرار بگیرید. شکم و باسن را کاملاً منقبض کنید و اجازه ندهید کمر آویزان شود. نفس‌گیری منظم داشته باشید.', icon: 'fa-ruler-horizontal' },
-                    { name: 'کرانچ معکوس سرعتی', baseDuration: 55, category: 'چربی‌سوزی زیرشکم', desc: 'به پشت بخوابید، زانوها خم و جفت به سمت سینه بالا بیاورید و بدون تاب دادن کمر، لگن را به آرامی بالا ببرید.', icon: 'fa-bed' },
-                    { name: 'کوهنورد انفجاری (Mountain Climber)', baseDuration: 60, category: 'کاردیو شکم فشرده', desc: 'در حالت شنا قرار بگیرید و به نوبت زانوها را با حداکثر سرعت و قدرت به سمت سینه پرتاب کنید.', icon: 'fa-fire' },
-                    { name: 'چرخش روسی سرعتی با وزنه', baseDuration: 50, category: 'عضلات اریب و پهلو', desc: 'بالاتنه را کمی به عقب بدهید، زانوها خم و پاها معلق؛ با چرخش منظم بالاتنه، پهلوها را تحت فشار بگذارید.', icon: 'fa-sync' },
-                    { name: 'پلانک از پهلو پویا', baseDuration: 45, category: 'تفکیک پهلو', desc: 'روی یک ساعد قرار بگیرید و لگن را با کنترل بالا و پایین ببرید تا فشار موضعی روی دیواره شکم اعمال شود.', icon: 'fa-shield-alt' },
-                    { name: 'دراز و نشست قدرتی فشرده', baseDuration: 50, category: 'بالاتنه شکم', desc: 'با دستان ضربدری روی سینه، بالا بیایید و با انقباض حداکثری عضلات راست شکمی به حالت شروع بازگردید.', icon: 'fa-child' }
-                ],
-                [
-                    { name: 'برپی سرعتی چربی‌سوز', baseDuration: 55, category: 'کالری‌سوزی حداکثری ۱ ماهه', desc: 'به حالت اسکوات نشسته، پاها را به عقب پرتاب کنید (شنا)، سریع جمع کرده و با تمام قدرت به هوا بپرید.', icon: 'fa-bolt' },
-                    { name: 'طناب‌زنی سرعتی (بدون طناب)', baseDuration: 60, category: 'هوازی فوق‌سنگین', desc: 'با ریتم تند روی پنجه پا بپرید و دستانتان را طوری حرکت دهید انگار طناب واقعی می‌زنید.', icon: 'fa-running' },
-                    { name: 'اسکوات پرشی انفجاری', baseDuration: 50, category: 'پایین‌تنه و هوازی', desc: 'از اسکوات عمیق با قدرت به سمت بالا بپرید و در زمان فرود زانوها را برای جذب ضربه خم کنید.', icon: 'fa-arrow-up' },
-                    { name: 'کرانچ دوچرخه خوابیده', baseDuration: 55, category: 'شکم و پهلو متراکم', desc: 'آرنج دست راست را به زانو چپ نزدیک کنید و متناوباً سمت مخالف را تکرار کنید.', icon: 'fa-sync' },
-                    { name: 'پلانک آپ-داون (پویا)', baseDuration: 50, category: 'استقامت کل بدن', desc: 'به نوبت از حالت ساعد به کف دست جابجا شوید و سعی کنید لگن کمترین چرخش را داشته باشد.', icon: 'fa-ruler-horizontal' },
-                    { name: 'پروانه سرعتی هوازی', baseDuration: 60, category: 'چربی‌سوزی کل بدن', desc: 'همزمان با پرش، دست‌ها بالای سر و پاها باز و بسته شوند تا ضربان قلب به اوج برسد.', icon: 'fa-child' }
-                ]
-            ],
-            shred: [
-                [
-                    { name: 'برپی سنگین (Burpee)', baseDuration: 60, category: 'مگا کالری‌سوزی', desc: 'پایه اصلی چربی‌سوزی سریع ۱ ماهه با ترکیب قدرت، استقامت و کاردیوی شدید.', icon: 'fa-bolt' },
-                    { name: 'کوهنورد ضربدری سرعتی', baseDuration: 60, category: 'آب کردن پهلوها', desc: 'زانو را به سمت آرنج مخالف هدایت کنید تا عضلات اریب شکمی به شدت درگیر شوند.', icon: 'fa-fire' },
-                    { name: 'اسکوات پرشی قدرتی', baseDuration: 55, category: 'عضله و هوازی', desc: 'حرکت انفجاری برای افزایش ترشح هورمون‌های چربی‌سوز.', icon: 'fa-arrow-up' },
-                    { name: 'شنا سوئدی انفجاری', baseDuration: 50, category: 'بالاتنه', desc: 'پایین آمدن کنترل‌شده و بالا آمدن با شتاب بالا جهت تقویت سینه و پشت بازو.', icon: 'fa-dumbbell' },
-                    { name: 'پرش درجا با زانو بلند', baseDuration: 60, category: 'کاردیو شدید', desc: 'ران‌ها را تا سطح لگن بالا بیاورید تا بیشترین کالری ممکن سوزانده شود.', icon: 'fa-running' },
-                    { name: 'پلانک ایزومتریک استقامتی', baseDuration: 50, category: 'محافظت و فرم میان‌تنه', desc: 'بدن کاملاً صاف، شکم منقبض و نگاه رو به زمین.', icon: 'fa-ruler-horizontal' }
-                ],
-                [
-                    { name: 'پرتاب پا و لانج پرشی', baseDuration: 55, category: 'سوزاندن چربی ران', desc: 'در حالت لانج با پرش جای پاها را عوض کنید تا عضلات پا به آتش کشیده شوند.', icon: 'fa-walking' },
-                    { name: 'پروانه سرعتی استقامتی', baseDuration: 60, category: 'کاردیو ممتد', desc: 'حفظ ریتم تند تنفسی برای پایداری ضربان قلب بالا.', icon: 'fa-child' },
-                    { name: 'کوهنورد کلاسیک پرسرعت', baseDuration: 60, category: 'چربی‌سوزی شکم', desc: 'سرعت پمپاژ بالا بدون افت فرم استاندارد.', icon: 'fa-fire' },
-                    { name: 'شنا دست‌جمع سخت', baseDuration: 45, category: 'پشت بازو و سینه', desc: 'فاصله دست‌ها به اندازه عرض شانه برای درگیری بیشتر پشت بازو.', icon: 'fa-shield-alt' },
-                    { name: 'پلانک پهلو با کشش', baseDuration: 45, category: 'پهلو', desc: 'حفظ تعادل کامل روی یک بازو و تمرکز روی انقباض پهلو.', icon: 'fa-sync' },
-                    { name: 'اسکوات ایزومتریک دیوار', baseDuration: 50, category: 'عضله‌سازی و چربی‌سوزی پا', desc: 'پشت به دیوار، زانوها زاویه ۹۰ درجه ایجاد کنند و ثابت بمانید.', icon: 'fa-arrow-down' }
-                ]
-            ],
-            muscle: [
-                [
-                    { name: 'شنا سوئدی استاندارد قدرتی', baseDuration: 60, category: 'حجم و فرم سینه', desc: 'دامنه حرکتی کامل؛ سینه نزدیک زمین شود و دست‌ها کاملاً صاف شوند.', icon: 'fa-dumbbell' },
-                    { name: 'اسکوات عمیق با وزن بدن', baseDuration: 60, category: 'حجم پایین‌تنه', desc: 'باسن به موازات زانو یا پایین‌تر بیاید تا چهارسر و باسن حداکثر رشد را تجربه کنند.', icon: 'fa-arrow-down' },
-                    { name: 'پوش‌آپ دست‌جمع', baseDuration: 50, category: 'پشت بازو قدرتمند', desc: 'آرنج‌ها نزدیک پهلو طی حرکت پایین و بالا روند.', icon: 'fa-shield-alt' },
-                    { name: 'لانج رو به جلو پمپاژی', baseDuration: 55, category: 'تفکیک چهارسر ران', desc: 'بدون بازگشت کامل به بالا، چند پالس کوچک در پایین حرکت اجرا کنید.', icon: 'fa-walking' },
-                    { name: 'پلانک شکمی پیشرفته', baseDuration: 50, category: 'میان‌تنه', desc: 'انقباض صددرصدی عضلات شکم و قفسه سینه.', icon: 'fa-ruler-horizontal' },
-                    { name: 'برپی سرعتی فرم‌دهنده', baseDuration: 50, category: 'چربی‌سوزی حین عضله‌سازی', desc: 'حفظ استقامت عضلانی کل بدن.', icon: 'fa-bolt' }
-                ],
-                [
-                    { name: 'شنای شیب‌دار دست‌باز', baseDuration: 55, category: 'بخش خارجی سینه', desc: 'تمرکز بر پهنای عضلات سینه با کنترل کامل.', icon: 'fa-dumbbell' },
-                    { name: 'اسکوات پرشیتی', baseDuration: 50, category: 'قدرت انفجاری پا', desc: 'پرش کوتاه از پایین اسکوات جهت توسعه فیبرهای تندانقباض.', icon: 'fa-arrow-up' },
-                    { name: 'شنا الماسی', baseDuration: 45, category: 'پشت بازو کلفت', desc: 'شست‌ها و انگشتان اشاره به شکل الماس روی زمین قرار گیرند.', icon: 'fa-shield-alt' },
-                    { name: 'کوهنورد قدرتی', baseDuration: 55, category: 'شکم خشک', desc: 'تمرکز بر اجرای دقیق و عمیق.', icon: 'fa-fire' },
-                    { name: 'لانج معکوس', baseDuration: 50, category: 'باسن و همستینگ', desc: 'قدم به عقب با کنترل کامل تعادل.', icon: 'fa-walking' },
-                    { name: 'پلانک پهلو آرنجی', baseDuration: 45, category: 'پهلو', desc: 'حفظ خط صاف بدن از سر تا پا.', icon: 'fa-shield-alt' }
-                ]
-            ]
-        };
-
-        const megaWorkoutPoolFemale = {
-            shred: [
-                [
-                    { name: 'پروانه هوازی سرعتی', baseDuration: 60, category: 'چربی‌سوزی کل بدن', desc: 'پرش طرفین با ریتم بالا و تنفس منظم.', icon: 'fa-child' },
-                    { name: 'برپی زنانه فشرده', baseDuration: 55, category: 'کالری‌سوزی فوق‌العاده ۱ ماهه', desc: 'نسخه بهینه‌شده برپی؛ اسکوات، قدم به عقب، و پرش بالا.', icon: 'fa-bolt' },
-                    { name: 'کوهنورد هوازی متراکم', baseDuration: 60, category: 'شکم و پهلو تخت', desc: 'سرعت بالای پاها برای سوزاندن چربی‌های پهلو و شکم.', icon: 'fa-fire' },
-                    { name: 'پرش درجا با زانو بالا', baseDuration: 50, category: 'کاردیو سوزاننده', desc: 'دویدن پرانرژی درجا.', icon: 'fa-running' },
-                    { name: 'اسکوات سومو پرشی', baseDuration: 45, category: 'فرم پایین‌تنه و چربی‌سوزی', desc: 'پاهای بازتر از عرض شانه و پرش ملایم.', icon: 'fa-arrow-up' },
-                    { name: 'پلانک ایزومتریک شکمی', baseDuration: 50, category: 'سفت کردن شکم', desc: 'حفظ انقباض عمقی شکم.', icon: 'fa-ruler-horizontal' }
-                ],
-                [
-                    { name: 'کیک‌بک ایستاده سرعتی', baseDuration: 55, category: 'فرم باسن و پهلو', desc: 'پرتاب پا به عقب و طرفین با تمرکز روی فرم لگن.', icon: 'fa-walking' },
-                    { name: 'پروانه استقامتی', baseDuration: 60, category: 'کالری‌سوزی', desc: 'حفظ ضربان قلب در محدوده چربی‌سوزی.', icon: 'fa-child' },
-                    { name: 'لانج متناوب پرشی', baseDuration: 50, category: 'ران و باسن', desc: 'پرش و جابجایی کنترل‌شده پاها.', icon: 'fa-arrow-up' },
-                    { name: 'کرانچ شکم خوابیده', baseDuration: 50, category: 'شکم', desc: 'بالا آوردن سر و شانه با انقباض مستقیم.', icon: 'fa-bed' },
-                    { name: 'کوهنورد ضربدری', baseDuration: 50, category: 'پهلو', desc: 'زانو به آرنج مخالف با ریتم یکنواخت.', icon: 'fa-fire' },
-                    { name: 'پلانک از پهلو', baseDuration: 45, category: 'تفکیک پهلو', desc: 'ثابت روی ساعد برای فرم‌دهی.', icon: 'fa-shield-alt' }
-                ]
-            ],
-            breast: [
-                [
-                    { name: 'پرس سینه خوابیده خانگی با بطری/وزنه', baseDuration: 60, category: 'فرم‌دهی و لیفت سینه', desc: 'به پشت بخوابید، وزنه‌ها را از بالای سینه به سمت بالا پرس کنید.', icon: 'fa-dumbbell' },
-                    { name: 'شنا روی زانو کنترل‌شده', baseDuration: 50, category: 'عضلات سینه', desc: 'روی زانوها قرار بگیرید و شنای اصولی برای لیفت بالاتنه انجام دهید.', icon: 'fa-child' },
-                    { name: 'پروانه سینه ایستاده', baseDuration: 55, category: 'عضلات پکتورال', desc: 'دست‌ها را باز کنید و با انقباض سینه به هم نزدیک کنید.', icon: 'fa-shield-alt' },
-                    { name: 'پلانک شکمی', baseDuration: 50, category: 'استقامت فرم', desc: 'سفت کردن بالاتنه و میان‌تنه.', icon: 'fa-ruler-horizontal' },
-                    { name: 'شنای ایزومتریک سینه', baseDuration: 45, category: 'توقف در پایین حرکت', desc: 'چند ثانیه مکث در پایین‌ترین نقطه شنا.', icon: 'fa-dumbbell' },
-                    { name: 'کالری‌سوزی هوازی سبک', baseDuration: 50, category: 'کاهش چربی موضعی', desc: 'پرش درجا با ریتم ملایم.', icon: 'fa-running' }
-                ],
-                [
-                    { name: 'پرس سینه دست‌جمع', baseDuration: 55, category: 'بخش داخلی سینه', desc: 'کنترل کامل وزنه حین اجرای حرکت.', icon: 'fa-dumbbell' },
-                    { name: 'شنای شیب‌دار دیواری', baseDuration: 50, category: 'بالاتنه', desc: 'فشار به دیوار با کنترل روی عضلات سینه.', icon: 'fa-child' },
-                    { name: 'پروانه سینه خم', baseDuration: 50, category: 'پشت و سینه', desc: 'کشش دست‌ها با زاویه ملایم بالاتنه.', icon: 'fa-shield-alt' },
-                    { name: 'کوهنورد آرام', baseDuration: 50, category: 'شکم', desc: 'اجرای کنترل‌شده و بدون شتاب.', icon: 'fa-fire' },
-                    { name: 'پلانک پهلو', baseDuration: 45, category: 'تعادل', desc: 'حفظ تعادل و تقویت عضلات عمقی.', icon: 'fa-shield-alt' },
-                    { name: 'پرش پروانه', baseDuration: 60, category: 'هوازی', desc: 'ریتم تند برای شادابی و کالری‌سوزی.', icon: 'fa-child' }
-                ]
-            ],
-            buttocks: [
-                [
-                    { name: 'پل باسن تک‌پا (Hip Thrust)', baseDuration: 60, category: 'حجم و فرم‌دهی باسن', desc: 'به پشت بخوابید، لگن را بالا بیاورید و در اوج حرکت باسن را کاملاً منقبض کنید.', icon: 'fa-child' },
-                    { name: 'دانکی کیک چهار دست و پا', baseDuration: 55, category: 'لیفت و فرم لگن', desc: 'در حالت چهار دست و پا، کف پا را به سمت سقف فشار دهید.', icon: 'fa-arrow-up' },
-                    { name: 'اسکوات سومو عمیق', baseDuration: 60, category: 'عضلات داخلی ران و باسن', desc: 'پاهای بازتر از شانه برای درگیری حداکثری عضلات باسن.', icon: 'fa-child' },
-                    { name: 'کیک‌بک پهلو', baseDuration: 50, category: 'بخش خارجی باسن', desc: 'پرتاب پا به طرفین برای فرم‌دهی خط لگن.', icon: 'fa-walking' },
-                    { name: 'لانج معکوس', baseDuration: 50, category: 'همستینگ و باسن', desc: 'قدم به عقب و پایین آمدن کنترل‌شده.', icon: 'fa-arrow-down' },
-                    { name: 'پلانک شکم', baseDuration: 45, category: 'میان‌تنه', desc: 'ثابت و منقبض.', icon: 'fa-ruler-horizontal' }
-                ],
-                [
-                    { name: 'پل باسن با نگه داشتن', baseDuration: 60, category: 'ایزومتریک باسن', desc: 'در بالاترین نقطه پل باسن، ۱۰ ثانیه مکث و انقباض شدید داشته باشید.', icon: 'fa-child' },
-                    { name: 'اسکوات پرشی ملایم', baseDuration: 50, category: 'انفجار عضلانی باسن', desc: 'پرش کوتاه از اسکوات برای تحریک رشد عضلانی.', icon: 'fa-bolt' },
-                    { name: 'دانکی کیک ضربدری', baseDuration: 50, category: 'فرم لگن', desc: 'فشار پا به صورت مایل جهت درگیری بخش خارجی باسن.', icon: 'fa-arrow-up' },
-                    { name: 'کوهنورد', baseDuration: 50, category: 'شکم و کاردیو', desc: 'سرعت متوسط و پایدار.', icon: 'fa-fire' },
-                    { name: 'لانج پیاده‌رو', baseDuration: 55, category: 'ران و باسن', desc: 'قدم‌های بلند و تمرکز روی تعادل.', icon: 'fa-walking' },
-                    { name: 'پلانک پهلو', baseDuration: 45, category: 'پهلو', desc: 'ثابت و متمرکز.', icon: 'fa-shield-alt' }
-                ]
-            ],
-            muscle: [
-                [
-                    { name: 'اسکوات قدرتی بانوان متراکم', baseDuration: 60, category: 'عضله‌سازی متقارن', desc: 'اسکوات عمیق و اصولی برای فرم‌دهی کلی پایین‌تنه.', icon: 'fa-child' },
-                    { name: 'لانج رو به جلو سرعتی', baseDuration: 55, category: 'ران و لگن', desc: 'قدم‌های پمپاژی برای تفکیک عضلات پا.', icon: 'fa-walking' },
-                    { name: 'پل باسن', baseDuration: 60, category: 'باسن', desc: 'انقباض بالا برای حجم‌دهی باسن.', icon: 'fa-arrow-up' },
-                    { name: 'شنا روی زانو', baseDuration: 50, category: 'بالاتنه', desc: 'کنترل کامل بازو و سینه.', icon: 'fa-dumbbell' },
-                    { name: 'کوهنورد', baseDuration: 50, category: 'شکم', desc: 'پرش پا با ریتم منظم.', icon: 'fa-fire' },
-                    { name: 'پلانک', baseDuration: 50, category: 'هسته بدن', desc: 'ایزومتریک استاندارد.', icon: 'fa-ruler-horizontal' }
-                ],
-                [
-                    { name: 'اسکوات سومو', baseDuration: 60, category: 'فرم پایین‌تنه', desc: 'پاهای باز و تمرکز روی ران داخلی.', icon: 'fa-child' },
-                    { name: 'دانکی کیک', baseDuration: 55, category: 'باسن', desc: 'فشار رو به عقب باسن.', icon: 'fa-arrow-up' },
-                    { name: 'پروانه', baseDuration: 60, category: 'هوازی', desc: 'ریتم تند برای چربی‌سوزی.', icon: 'fa-child' },
-                    { name: 'پوش‌آپ دیواری', baseDuration: 50, category: 'سینه و دست', desc: 'فشار به دیوار با کنترل.', icon: 'fa-dumbbell' },
-                    { name: 'کرانچ', baseDuration: 50, category: 'شکم', desc: 'بالا کشیدن شانه.', icon: 'fa-bed' },
-                    { name: 'پلانک پهلو', baseDuration: 45, category: 'پهلو', desc: 'تعادل پایدار.', icon: 'fa-shield-alt' }
-                ]
-            ]
-        };
-
-        const weeklyDietMale = {
-            sixpack: {
-                0: { name: "شنبه", breakfast: "۲ عدد تخم‌مرغ آب‌پز + نان سنگک + چای سبز", lunch: "۱ کفگیر برنج کته + سینه مرغ گریل + سالاد", dinner: "سینه مرغ ریش‌ریش + سالاد کاهو بزرگ" },
-                1: { name: "یکشنبه", breakfast: "عدسی پر پروتئین + نان", lunch: "خورشت قرمه سبزی کم‌روغن + ۱ کفگیر برنج", dinner: "تن ماهی بدون روغن + سبزیجات" },
-                2: { name: "دوشنبه", breakfast: "املت سفیده تخم‌مرغ + نان جو", lunch: "جوجه کباب سینه + سالاد فصل", dinner: "ماست یونانی + خیار و نعناع" },
-                3: { name: "سه‌شنبه", breakfast: "پنیر کم‌چرب + گردو + نان سبوس‌دار", lunch: "ماکارونی رژیمی کم‌چرب", dinner: "سوپ جو سبزیجات سبک" },
-                4: { name: "چهارشنبه", breakfast: "شیر کم‌چرب + موز", lunch: "گوشت گوساله آب‌پز + نان", dinner: "سیب‌زمینی آب‌پز + تخم‌مرغ آب‌پز" },
-                5: { name: "پنجشنبه", breakfast: "کره بادام‌زمینی + نان تست", lunch: "خورشت قیمه کم‌روغن + برنج", dinner: "سالاد پروتئینی مرغ" },
-                6: { name: "جمعه", breakfast: "نیمرو با حداقل روغن + نان سنگک", lunch: "ماهی گریل شده + برنج کته", dinner: "سوپ مرغ خانگی" }
-            },
-            shred: {
-                0: { name: "شنبه", breakfast: "تخم‌مرغ آب‌پز + نان سنگک + چای", lunch: "سینه مرغ گریل + سالاد بدون سس", dinner: "سوپ سبزیجات رژیمی" },
-                1: { name: "یکشنبه", breakfast: "عدسی رژیمی + نان جو", lunch: "خورشت سبزی کم‌چرب + مقدار کم برنج", dinner: "تن ماهی بدون روغن + خیار و گوجه" },
-                2: { name: "دوشنبه", breakfast: "پنیر کم‌چرب + گوجه و خیار", lunch: "جوجه کباب + سالاد فصل", dinner: "ماست کم‌چرب + چند قطره آبلیمو" },
-                3: { name: "سه‌شنبه", breakfast: "شیر کم‌چرب + ۲ عدد خرما", lunch: "مرغ آب‌پز + برنج کته نصف کفگیر", dinner: "سالاد کاهو و کلم بدون سس" },
-                4: { name: "چهارشنبه", breakfast: "تخم‌مرغ آب‌پز + نان تست", lunch: "گوشت گوساله گریل + سبزیجات", dinner: "سیب‌زمینی آب‌پز کوچک" },
-                5: { name: "پنجشنبه", breakfast: "املت گوجه‌فرنگی رژیمی", lunch: "خورشت قیمه رژیمی + برنج کم", dinner: "سوپ جو سبک" },
-                6: { name: "جمعه", breakfast: "نان سنگک + پنیر و سبزی", lunch: "ماهی سفید گریل + سالاد شیرازی", dinner: "سالاد تن ماهی" }
-            },
-            muscle: {
-                0: { name: "شنبه", breakfast: "۳ عدد تخم‌مرغ کامل + ۲ کف دست نان سنگک", lunch: "۱.۵ کفگیر برنج + ۱۵۰ گرم مرغ گریل + سالاد", dinner: "سیب‌زمینی بزرگ آب‌پز + تن ماهی" },
-                1: { name: "یکشنبه", breakfast: "عدسی پر از سیب‌زمینی + نان", lunch: "خورشت قرمه سبزی پرگوشت + برنج", dinner: "گوشت چرخ‌کرده کبابی + سبزیجات" },
-                2: { name: "دوشنبه", breakfast: "املت ۳ تخم‌مرغی با قارچ", lunch: "جوجه کباب سینه مرغ + برنج", dinner: "ماست پرچرب + موز" },
-                3: { name: "سه‌شنبه", breakfast: "پنیر لیقوان + گردو + نان", lunch: "ماکارونی پرگوشت + سالاد", dinner: "سینه مرغ ریش‌ریش + کاهو" },
-                4: { name: "چهارشنبه", breakfast: "شیر + موز + خرما", lunch: "استیک گوشت گوساله + پوره", dinner: "سوپ جو مقوی" },
-                5: { name: "پنجشنبه", breakfast: "کره بادام‌زمینی + نان تست جو", lunch: "خورشت قیمه با گوشت لخم + برنج", dinner: "املت قارچ و تخم‌مرغ" },
-                6: { name: "جمعه", breakfast: "نیمرو (۲ عدد) + نان سنگک", lunch: "ماهی گریل زعفرانی + برنج", dinner: "سالاد مرغ و تخم‌مرغ" }
-            }
-        };
-
-        const weeklyDietFemale = {
-            shred: {
-                0: { name: "شنبه", breakfast: "۱ عدد تخم‌مرغ آب‌پز + نان سبوس‌دار + چای سبز", lunch: "۱ کفگیر برنج کته + سینه مرغ گریل + سالاد", dinner: "سوپ سبزیجات سبک" },
-                1: { name: "یکشنبه", breakfast: "عدسی گرم و کم‌چرب + نان", lunch: "قرمه سبزی کم‌روغن + نصف کفگیر برنج", dinner: "تن ماهی بدون روغن + سبزی" },
-                2: { name: "دوشنبه", breakfast: "پنیر کم‌چرب + گردو + نان", lunch: "جوجه کباب + سالاد فصل", dinner: "املت رژیمی گوجه" },
-                3: { name: "سه‌شنبه", breakfast: "شیر کم‌چرب + موز کوچک", lunch: "پاستا سبوس‌دار با سس گوجه خانگی", dinner: "ماست یونانی + خیارشور" },
-                4: { name: "چهارشنبه", breakfast: "کره بادام‌زمینی + نان تست", lunch: "گوشت بوقلمون آب‌پز + نان", dinner: "سالاد سزار رژیمی" },
-                5: { name: "پنجشنبه", breakfast: "املت قارچ رژیمی", lunch: "خورشت قیمه کم‌چرب + برنج", dinner: "سیب‌زمینی آب‌پز متوسط" },
-                6: { name: "جمعه", breakfast: "نان و پنیر و نعناع", lunch: "ماهی قزل‌آلا گریل + سالاد شیرازی", dinner: "سوپ جو سبک" }
-            },
-            breast: {
-                0: { name: "شنبه", breakfast: "تخم‌مرغ آب‌پز + شیر کم‌چرب + نان", lunch: "برنج کته + سینه مرغ گریل + سالاد", dinner: "خوراک مرغ و قارچ" },
-                1: { name: "یکشنبه", breakfast: "عدسی مقوی + نان سنگک", lunch: "خورشت بادمجان رژیمی با مرغ + برنج", dinner: "ماهی گریل شده + سبزیجات" },
-                2: { name: "دوشنبه", breakfast: "املت قارچ و پنیر + نان جو", lunch: "جوجه کباب سینه + سالاد", dinner: "ماست و خیار + مغز گردو" },
-                3: { name: "سه‌شنبه", breakfast: "شیر و موز + ۲ عدد خرما", lunch: "ماکارونی با گوشت چرخ‌کرده کم‌چرب", dinner: "سوپ مرغ مقوی" },
-                4: { name: "چهارشنبه", breakfast: "کره بادام‌زمینی + تست جو", lunch: "گوشت گوساله کبابی + سبزی", dinner: "سالاد مرغ پروتئینی" },
-                5: { name: "پنجشنبه", breakfast: "تخم‌مرغ آب‌پز + پنیر و گردو", lunch: "خورشت فسنجان ملایم (رژیمی) + برنج", dinner: "املت سبزیجات" },
-                6: { name: "جمعه", breakfast: "نیمرو رژیمی + نان سنگک", lunch: "ماهی کبابی + برنج زعفرانی", dinner: "سالاد فصل با مرغ گریل" }
-            },
-            buttocks: {
-                0: { name: "شنبه", breakfast: "تخم‌مرغ آب‌پز کامل + موز + نان", lunch: "برنج کته + سینه مرغ گریل + سیب‌زمینی", dinner: "خوراک لوبیا چیتی با قارچ" },
-                1: { name: "یکشنبه", breakfast: "عدسی پر از سیب‌زمینی + نان", lunch: "قرمه سبزی پرگوشت + برنج کته", dinner: "تن ماهی + سیب‌زمینی آب‌پز" },
-                2: { name: "دوشنبه", breakfast: "املت تخم‌مرغ و قارچ + نان سنگک", lunch: "جوجه کباب سینه مرغ + برنج", dinner: "ماست یونانی + موز خرد شده" },
-                3: { name: "سه‌شنبه", breakfast: "پنیر + کره بادام‌زمینی + نان", lunch: "ماکارونی با گوشت و پنیر رژیمی", dinner: "سینه مرغ آب‌پز + سبزیجات" },
-                4: { name: "چهارشنبه", breakfast: "شیر و خرما + نان سبوس‌دار", lunch: "استیک گوشت گوساله + پوره سیب‌زمینی", dinner: "سوپ جو با مرغ ریش‌ریش" },
-                5: { name: "پنجشنبه", breakfast: "املت گوجه‌فرنگی + نان", lunch: "خورشت قیمه با گوشت لخم + برنج", dinner: "سیب‌زمینی تنوری + پنیر کم‌چرب" },
-                6: { name: "جمعه", breakfast: "نیمرو (۲ عدد) + نان تازه", lunch: "ماهی قزل‌آلا + برنج کته", dinner: "سالاد پروتئینی تخم‌مرغ و مرغ" }
-            },
-            muscle: {
-                0: { name: "شنبه", breakfast: "تخم‌مرغ آب‌پز + نان سنگک + شیر", lunch: "برنج کته + سینه مرغ گریل + سالاد", dinner: "سوپ جو مقوی" },
-                1: { name: "یکشنبه", breakfast: "عدسی گرم + نان", lunch: "خورشت سبزی با گوشت لخم + برنج", dinner: "تن ماهی + سبزیجات" },
-                2: { name: "دوشنبه", breakfast: "پنیر کم‌چرب + گردو + نان", lunch: "جوجه کباب + سالاد فصل", dinner: "ماست کم‌چرب + موز" },
-                3: { name: "سه‌شنبه", breakfast: "کره بادام‌زمینی + نان تست", lunch: "ماکارونی رژیمی پرگوشت", dinner: "سینه مرغ آب‌پز" },
-                4: { name: "چهارشنبه", breakfast: "شیر و موز + خرما", lunch: "گوشت گوساله گریل + پوره", dinner: "سالاد مرغ رژیمی" },
-                5: { name: "پنجشنبه", breakfast: "املت قارچ + نان", lunch: "خورشت قیمه + برنج", dinner: "سیب‌زمینی آب‌پز" },
-                6: { name: "جمعه", breakfast: "نیمرو + نان سنگک", lunch: "ماهی گریل + برنج", dinner: "سوپ سبزیجات" }
-            }
-        };
-
-        let userProfile = JSON.parse(localStorage.getItem('nuvoraFitProfile'));
-        let weightHistory = JSON.parse(localStorage.getItem('nuvoraWeightHistory')) || [];
-        let foodDiary = JSON.parse(localStorage.getItem('nuvoraFoodDiary')) || [];
-        
-        let weightChartObj = null;
-        let calorieChartObj = null;
-        let guidedIndex = 0;
-        let guidedTimerInterval = null;
-        let timeLeft = 0;
-        let isTimerRunning = false;
-
-        window.onload = function() {
-            updateFocusOptions();
-            if(userProfile) {
-                document.getElementById('onboardingPage').classList.remove('active');
-                document.getElementById('dashboardPage').classList.add('active');
-                document.getElementById('bottomNav').style.display = 'flex';
-                loadDashboard();
-                initCharts();
-                checkTimeForNotification();
-            }
-        };
-
-        function updateFocusOptions() {
-            const gender = document.getElementById('gender').value;
-            const focusSelect = document.getElementById('focusArea');
-            focusSelect.innerHTML = '';
-
-            if(gender === 'male') {
-                focusSelect.innerHTML = `
-                    <option value="sixpack">ساخت سیکس‌پک</option>
-                    <option value="shred">چربی‌سوزی</option>
-                    <option value="muscle">عضله‌سازی</option>
-                `;
-            } else {
-                focusSelect.innerHTML = `
-                    <option value="shred">چربی‌سوزی</option>
-                    <option value="breast">فرم‌دهی سینه</option>
-                    <option value="buttocks">فرم‌دهی باسن</option>
-                    <option value="muscle">عضله‌سازی</option>
-                `;
-            }
-        }
-
-        function openOnboarding() {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById('onboardingPage').classList.add('active');
-            document.getElementById('bottomNav').style.display = 'none';
-            if(userProfile) {
-                document.getElementById('age').value = userProfile.age || '';
-                document.getElementById('height').value = userProfile.height || '';
-                document.getElementById('weight').value = userProfile.weight || '';
-                document.getElementById('gender').value = userProfile.gender || 'male';
-                updateFocusOptions();
-                document.getElementById('focusArea').value = userProfile.focus || 'sixpack';
-                document.getElementById('difficultyLevel').value = userProfile.difficulty || 'hard';
-            }
-        }
-
-        function saveProfile() {
-            const age = parseInt(document.getElementById('age').value);
-            const height = parseInt(document.getElementById('height').value);
-            const weight = parseInt(document.getElementById('weight').value);
-            const gender = document.getElementById('gender').value;
-            const focus = document.getElementById('focusArea').value;
-            const difficulty = document.getElementById('difficultyLevel').value;
-
-            if(!age || !height || !weight) { alert('لطفاً تمامی فیلدها را به دقت پر کنید!'); return; }
-
-            const heightM = height / 100;
-            const bmi = parseFloat((weight / (heightM * heightM)).toFixed(1));
-            
-            let idealWeightMin, idealWeightMax;
-            if(gender === 'female') {
-                const base = 21.5;
-                idealWeightMin = Math.round(base * (heightM * heightM) - 1);
-                idealWeightMax = Math.round(base * (heightM * heightM) + 4);
-            } else {
-                const base = 23.5;
-                idealWeightMin = Math.round(base * (heightM * heightM) - 1);
-                idealWeightMax = Math.round(base * (heightM * heightM) + 5);
-            }
-            const targetRefWeight = (idealWeightMin + idealWeightMax) / 2;
-
-            let bmr = (10 * weight) + (6.25 * height) - (5 * age);
-            bmr = gender === 'male' ? bmr + 5 : bmr - 161;
-            
-            let deficit = 400;
-            if(difficulty === 'normal') deficit = 350;
-            else if(difficulty === 'hard') deficit = gender === 'female' ? 650 : 850;
-            else if(difficulty === 'extreme') deficit = gender === 'female' ? 950 : 1200;
-
-            let tdee = Math.round(bmr * 1.12);
-            if(weight > targetRefWeight) {
-                tdee -= deficit;
-            } else {
-                tdee -= 200;
-            }
-            if(tdee < 1050) tdee = 1050;
-
-            const existingStartDate = userProfile ? userProfile.startDate : new Date().getTime();
-            userProfile = { age, height, weight, gender, focus, difficulty, bmi, targetRefWeight, targetCal: tdee, startDate: existingStartDate };
-            
-            const todayStr = new Date().toLocaleDateString('fa-IR');
-            const lastRecord = weightHistory[weightHistory.length - 1];
-            if(!lastRecord || lastRecord.date !== todayStr) {
-                weightHistory.push({ date: todayStr, weight: weight });
-            } else {
-                lastRecord.weight = weight;
-            }
-            
-            localStorage.setItem('nuvoraFitProfile', JSON.stringify(userProfile));
-            localStorage.setItem('nuvoraWeightHistory', JSON.stringify(weightHistory));
-            location.reload();
-        }
-
-        function loadDashboard() {
-            const todayStr = new Date().toLocaleDateString('fa-IR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            document.getElementById('dateDisplay').innerText = todayStr;
-
-            const jsDay = new Date().getDay();
-            const persianDays = ['یکشنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنجشنبه', 'جمعه', 'شنبه'];
-            document.getElementById('todayDayName').innerText = persianDays[jsDay];
-
-            document.getElementById('bmiValue').innerText = userProfile.bmi;
-            document.getElementById('tdeeValue').innerText = userProfile.targetCal;
-            document.getElementById('targetCalDisplay').innerText = userProfile.targetCal;
-
-            let weightDiff = userProfile.weight - userProfile.targetRefWeight;
-            let diffText = "";
-            let bmiStatus = "";
-            const diffNameMap = { normal: 'عادی و متعادل', hard: 'فشرده (۱ ماهه)', extreme: 'فوق‌سنگین (آزمون آتشین)' };
-
-            if (weightDiff > 1) {
-                diffText = `فاصله تا هدف: حدود <strong style="color:var(--danger)">${Math.round(weightDiff)} کیلوگرم اضافه وزن</strong> | سطح سختی: <strong>${diffNameMap[userProfile.difficulty || 'hard']}</strong>`;
-                bmiStatus = "وضعیت: برنامه چربی‌سوزی فعال";
-            } else if (weightDiff < -1) {
-                diffText = `فاصله تا هدف: حدود <strong style="color:var(--warning)">${Math.abs(Math.round(weightDiff))} کیلوگرم کمبود</strong> | سطح سختی: <strong>${diffNameMap[userProfile.difficulty || 'hard']}</strong>`;
-                bmiStatus = "وضعیت: عضله‌سازی و حجم";
-            } else {
-                diffText = `فاصله تا هدف: <strong style="color:var(--success)">دقیقاً در نقطه ایده‌آل وزنی قرار دارید!</strong>`;
-                bmiStatus = "وضعیت: حفظ اوج آمادگی فیزیکی";
-            }
-            
-            document.getElementById('weightDiffText').innerHTML = diffText;
-            document.getElementById('bmiText').innerText = bmiStatus;
-
-            const msDiff = new Date().getTime() - userProfile.startDate;
-            const daysPassed = Math.floor(msDiff / (1000 * 60 * 60 * 24)) + 1;
-            document.getElementById('streakDays').innerText = daysPassed > 0 ? (daysPassed > 30 ? 30 : daysPassed) : 1;
-
-            loadWorkouts();
-            generateDynamicDietPlan();
-            updateDietUI();
-        }
-
-        function loadWorkouts() {
-            const list = document.getElementById('exerciseList');
-            list.innerHTML = '';
-            
-            const jsDay = new Date().getDay();
-            const poolIndex = jsDay % 2;
-            const diff = userProfile.difficulty || 'hard';
-            
-            let multiplier = 1.0;
-            if(diff === 'normal') multiplier = 0.80;
-            if(diff === 'extreme') multiplier = 1.25;
-
-            let currentWorkouts = [];
-            let focusTitleText = "";
-
-            if(userProfile.gender === 'male') {
-                const pool = megaWorkoutPoolMale[userProfile.focus] || megaWorkoutPoolMale.sixpack;
-                currentWorkouts = pool[poolIndex];
-                focusTitleText = `🔥 برنامه چربی‌سوزی آقایان (سطح: ${diff === 'normal' ? 'عادی' : diff === 'hard' ? 'فشرده' : 'فوق‌سنگین'})`;
-            } else {
-                const pool = megaWorkoutPoolFemale[userProfile.focus] || megaWorkoutPoolFemale.shred;
-                currentWorkouts = pool[poolIndex];
-                focusTitleText = `✨ برنامه چربی‌سوزی بانوان (سطح: ${diff === 'normal' ? 'عادی' : diff === 'hard' ? 'فشرده' : 'فوق‌سنگین'})`;
-            }
-
-            document.getElementById('workoutCategoryTitle').innerText = focusTitleText;
-
-            currentWorkouts.forEach(ex => {
-                const adjustedDuration = Math.round(ex.baseDuration * multiplier);
-                list.innerHTML += `
-                    <div class="exercise-card">
-                        <div class="exercise-header">
-                            <div class="exercise-icon"><i class="fas ${ex.icon}"></i></div>
-                            <div>
-                                <h4 style="color:var(--text-main); margin-bottom:3px; font-size: 1.05em;">${ex.name}</h4>
-                                <span style="font-size:0.8em; color:var(--success); font-weight:600;">${ex.category} | زمان: ${adjustedDuration} ثانیه</span>
-                            </div>
-                        </div>
-                        <p style="margin: 8px 0 0 0; font-size: 0.9em; color: var(--text-muted); line-height: 1.6;">${ex.desc}</p>
-                    </div>`;
-            });
-            document.getElementById('workoutDesc').innerText = "تمامی حرکات بالا با راهنمای اجرایی و متناسب با درجه سختی انتخابی شما بهینه‌سازی شده‌اند.";
-        }
-
-        function speakText(text) {
-            if ('speechSynthesis' in window) {
-                try {
-                    window.speechSynthesis.cancel();
-                    const utterance = new SpeechSynthesisUtterance(text);
-                    utterance.lang = 'fa-IR';
-                    utterance.rate = 1.1; 
-                    utterance.pitch = 1.1;
-                    
-                    const voices = window.speechSynthesis.getVoices();
-                    const voice = voices.find(v => v.lang.includes('fa') || v.lang.includes('fa_IR'));
-                    if (voice) utterance.voice = voice;
-
-                    window.speechSynthesis.speak(utterance);
-                } catch (e) {
-                    console.log("Speech Error:", e);
+        if (status === 'GAME') {
+            document.getElementById('topControlsBar').style.display = 'none';
+        } else {
+            document.getElementById('topControlsBar').style.display = 'flex';
+            if (status === 'QUMAR') {
+                qumarSubView = 'home';
+                if (globalLeaguesData.length === 0) {
+                    fetchMatchesByDate();
                 }
             }
         }
+        renderMatches();
+    }
 
-        function getCurrentActiveWorkoutsList() {
-            const jsDay = new Date().getDay();
-            const poolIndex = jsDay % 2;
-            const diff = userProfile.difficulty || 'hard';
-            let multiplier = 1.0;
-            if(diff === 'normal') multiplier = 0.80;
-            if(diff === 'extreme') multiplier = 1.25;
+    function openQumarSub(subName) {
+        qumarSubView = subName;
+        if (subName === 'predict' && globalLeaguesData.length === 0) {
+            fetchMatchesByDate();
+        }
+        renderMatches();
+    }
 
-            let rawList = [];
-            if(userProfile.gender === 'male') {
-                const pool = megaWorkoutPoolMale[userProfile.focus] || megaWorkoutPoolMale.sixpack;
-                rawList = pool[poolIndex];
-            } else {
-                const pool = megaWorkoutPoolFemale[userProfile.focus] || megaWorkoutPoolFemale.shred;
-                rawList = pool[poolIndex];
+    function backToQumarHome() {
+        if (enfesharState.isPlaying) {
+            showTopBanner('بازی در جریان است! نمی‌توانید خارج شوید.', 'red');
+            return;
+        }
+        qumarSubView = 'home';
+        renderMatches();
+    }
+
+    function setSetupKitColor(color, element) {
+        selectedSetupColor = color;
+        document.querySelectorAll('.kit-color-option').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    async function generateAndSaveUniquePlayers(teamName, kitColor) {
+        let positions = ['دروازه‌بان', 'مدافع', 'مدافع', 'مدافع', 'مدافع', 'هافبک', 'هافبک', 'هافبک', 'مهاجم', 'مهاجم', 'مهاجم'];
+        
+        let { data: existingPlayers } = await supabaseClient.from('players').select('name');
+        let usedNames = new Set(existingPlayers ? existingPlayers.map(p => p.name) : []);
+
+        let newPlayers = [];
+        positions.forEach((pos, idx) => {
+            let fName = IRANIAN_FIRST_NAMES[Math.floor(Math.random() * IRANIAN_FIRST_NAMES.length)];
+            let lName = IRANIAN_LAST_NAMES[Math.floor(Math.random() * IRANIAN_LAST_NAMES.length)];
+            let fullName = `${fName} ${lName}`;
+            while (usedNames.has(fullName)) {
+                fName = IRANIAN_FIRST_NAMES[Math.floor(Math.random() * IRANIAN_FIRST_NAMES.length)];
+                lName = IRANIAN_LAST_NAMES[Math.floor(Math.random() * IRANIAN_LAST_NAMES.length)];
+                fullName = `${fName} ${lName}`;
             }
+            usedNames.add(fullName);
 
-            return rawList.map(ex => ({
-                ...ex,
-                duration: Math.round(ex.baseDuration * multiplier)
-            }));
+            let power = Math.floor(Math.random() * 10) + 1;
+            let skillName = 'مهارت';
+            if (pos === 'دروازه‌بان') skillName = 'قدرت سیو';
+            else if (pos === 'مدافع') skillName = 'قدرت دفاع';
+            else if (pos === 'هافبک') skillName = 'قدرت بازی‌سازی';
+            else if (pos === 'مهاجم') skillName = 'دریبل و گل‌زنی';
+
+            newPlayers.push({
+                user_id: userId,
+                name: fullName,
+                position: pos,
+                power: power,
+                skill_desc: skillName
+            });
+        });
+
+        await supabaseClient.from('teams').upsert({ user_id: userId, team_name: teamName, kit_color: kitColor });
+        await supabaseClient.from('players').insert(newPlayers);
+
+        gameState = {
+            configured: true,
+            teamName: teamName,
+            kitColor: kitColor,
+            players: newPlayers
+        };
+        localStorage.setItem('zeuc_game_state', JSON.stringify(gameState));
+    }
+
+    async function saveGameSetup() {
+        const teamNameInput = document.getElementById('setupTeamName').value.trim();
+        if (!teamNameInput) {
+            showTopBanner('لطفاً نام تیم خود را وارد کنید!', 'red');
+            return;
         }
 
-        function startGuidedWorkout() {
-            guidedIndex = 0;
-            document.getElementById('workoutModal').style.display = 'flex';
-            setupGuidedExercise();
-        }
+        showTopBanner('در حال ساخت تیم و ثبت دائم نام و رنگ لباس در دیتابیس...', 'green');
+        await generateAndSaveUniquePlayers(teamNameInput, selectedSetupColor);
+        showTopBanner('تیم شما با موفقیت ثبت شد و غیرقابل تغییر است!', 'green');
+        renderMatches();
+    }
 
-        function setupGuidedExercise() {
-            clearInterval(guidedTimerInterval);
-            isTimerRunning = false;
-            document.getElementById('gwActionBtn').innerText = "شروع تایمر";
-            document.getElementById('gwActionBtn').style.background = "var(--success)";
+    let matchLoopInterval = null;
 
-            const currentWorkouts = getCurrentActiveWorkoutsList();
-            const ex = currentWorkouts[guidedIndex];
-            
-            timeLeft = ex.duration;
-            document.getElementById('gwTitle').innerText = ex.name;
-            document.getElementById('gwCategoryBadge').innerText = ex.category;
-            document.getElementById('gwDesc').innerText = ex.desc;
-            document.getElementById('gwIcon').className = `fas ${ex.icon}`;
-            document.getElementById('gwProgress').innerText = `حرکت ${guidedIndex + 1} از ${currentWorkouts.length}`;
-            updateTimerDisplay();
-            
-            speakText(`آماده باشید. ${ex.name}.`);
-        }
+    async function startMatchmaking() {
+        if (matchmakingState.searching || matchmakingState.liveMatchActive) return;
+        matchmakingState.searching = true;
+        matchmakingState.secondsLeft = 60;
+        renderMatches();
 
-        function updateTimerDisplay() {
-            const mins = Math.floor(timeLeft / 60).toString().padStart(2, '0');
-            const secs = (timeLeft % 60).toString().padStart(2, '0');
-            document.getElementById('gwTimerDisplay').innerText = `${mins}:${secs}`;
-        }
+        let userTotalPower = gameState.players.reduce((sum, p) => sum + p.power, 0);
 
-        function toggleGuidedTimer() {
-            const btn = document.getElementById('gwActionBtn');
-            if(isTimerRunning) {
-                clearInterval(guidedTimerInterval);
-                isTimerRunning = false;
-                btn.innerText = "ادامه تایمر";
-                btn.style.background = "var(--success)";
-            } else {
-                isTimerRunning = true;
-                btn.innerText = "توقف موقت";
-                btn.style.background = "var(--danger)";
-                
-                guidedTimerInterval = setInterval(() => {
-                    timeLeft--;
-                    updateTimerDisplay();
-                    
-                    if(timeLeft > 0 && timeLeft <= 10) {
-                        speakText(timeLeft.toString());
-                    }
-                    
-                    if(timeLeft <= 0) {
-                        clearInterval(guidedTimerInterval);
-                        isTimerRunning = false;
-                        speakText("پایان این حرکت. عالی بود!");
-                        setTimeout(() => {
-                            nextGuidedWorkout();
-                        }, 1200);
-                    }
-                }, 1000);
-            }
-        }
+        await supabaseClient.from('match_queue').upsert({
+            user_id: userId,
+            team_name: gameState.teamName,
+            total_power: userTotalPower
+        });
 
-        function nextGuidedWorkout() {
-            clearInterval(guidedTimerInterval);
-            const currentWorkouts = getCurrentActiveWorkoutsList();
+        matchmakingState.timer = setInterval(async () => {
+            matchmakingState.secondsLeft--;
+            renderMatches();
 
-            guidedIndex++;
-            if(guidedIndex >= currentWorkouts.length) {
-                speakText("فوق‌العاده بود! تمرین امروز با موفقیت کامل شد.");
-                alert('فوق‌العاده بود! کالری‌سوزی جلسه امروز با ضریب تعیین‌شده ثبت شد.');
-                closeGuidedWorkout();
-            } else {
-                setupGuidedExercise();
-            }
-        }
+            let { data: opponents } = await supabaseClient
+                .from('match_queue')
+                .select('*')
+                .neq('user_id', userId)
+                .limit(1);
 
-        function exitGuidedWorkoutToMenu() {
-            clearInterval(guidedTimerInterval);
-            if ('speechSynthesis' in window) {
-                try { window.speechSynthesis.cancel(); } catch(e) {}
-            }
-            document.getElementById('workoutModal').style.display = 'none';
-        }
-
-        function closeGuidedWorkout() {
-            exitGuidedWorkoutToMenu();
-        }
-
-        function changeMusicTrack() {
-            const selector = document.getElementById('musicSelector');
-            const audioPlayer = document.getElementById('workoutMusic');
-            audioPlayer.src = selector.value;
-            audioPlayer.play().catch(e => console.log("Auto-play blocked"));
-        }
-
-        function generateDynamicDietPlan() {
-            const jsDay = new Date().getDay();
-            const mapDayIndex = [6, 0, 1, 2, 3, 4, 5]; 
-            const todayIndex = mapDayIndex[jsDay];
-            
-            let dietDatabase = {};
-            if(userProfile.gender === 'male') {
-                dietDatabase = weeklyDietMale[userProfile.focus] || weeklyDietMale.sixpack;
-            } else {
-                dietDatabase = weeklyDietFemale[userProfile.focus] || weeklyDietFemale.shred;
-            }
-
-            const todayDiet = dietDatabase[todayIndex];
-            document.getElementById('dietDayTitle').innerText = todayDiet.name;
-
-            const box = document.getElementById('recommendedDiet');
-            const cal = userProfile.targetCal;
-            
-            box.innerHTML = `
-                <div class="diet-plan-box">
-                    <h4><i class="fas fa-sun"></i> صبحانه متناسب (حدود ${Math.round(cal * 0.25)} کالری)</h4>
-                    <p style="margin:0; color:#fff; font-size:0.95em;">${todayDiet.breakfast}</p>
-                </div>
-                <div class="diet-plan-box">
-                    <h4><i class="fas fa-utensils"></i> ناهار پروتئینی هدفمند (حدود ${Math.round(cal * 0.45)} کالری)</h4>
-                    <p style="margin:0; color:#fff; font-size:0.95em;">${todayDiet.lunch}</p>
-                </div>
-                <div class="diet-plan-box">
-                    <h4><i class="fas fa-moon"></i> شام سبک و چربی‌سوز (حدود ${Math.round(cal * 0.30)} کالری)</h4>
-                    <p style="margin:0; color:#fff; font-size:0.95em;">${todayDiet.dinner}</p>
-                </div>`;
-        }
-
-        function searchFood() {
-            const q = document.getElementById('foodSearch').value.trim();
-            const resBox = document.getElementById('searchResults');
-            resBox.innerHTML = '';
-            if(q.length < 2) { resBox.style.display = 'none'; return; }
-            const res = foodDatabase.filter(f => f.name.includes(q));
-            if(res.length > 0) {
-                resBox.style.display = 'block';
-                res.forEach(f => {
-                    resBox.innerHTML += `<div onclick="selectFood('${f.name}', ${f.cal})"><span>${f.name}</span> <span style="color:var(--success); font-weight:bold;">${f.cal} کالری</span></div>`;
-                });
-            } else { resBox.style.display = 'none'; }
-        }
-
-        function selectFood(name, cal) {
-            document.getElementById('foodName').value = name;
-            document.getElementById('foodCal').value = cal;
-            document.getElementById('foodSearch').value = '';
-            document.getElementById('searchResults').style.display = 'none';
-        }
-
-        function addFood() {
-            const name = document.getElementById('foodName').value.trim();
-            const cal = parseInt(document.getElementById('foodCal').value);
-            if(!name || isNaN(cal)) { alert('لطفاً نام غذا و مقدار کالری معتبر را وارد کنید.'); return; }
-            
-            const todayStr = new Date().toLocaleDateString('fa-IR');
-            foodDiary.push({ id: Date.now() + Math.random(), name, cal, date: todayStr });
-            localStorage.setItem('nuvoraFoodDiary', JSON.stringify(foodDiary));
-            
-            document.getElementById('foodName').value = '';
-            document.getElementById('foodCal').value = '';
-            updateDietUI();
-            initCharts();
-        }
-
-        function deleteFood(id) {
-            foodDiary = foodDiary.filter(item => item.id !== id);
-            localStorage.setItem('nuvoraFoodDiary', JSON.stringify(foodDiary));
-            updateDietUI();
-            initCharts();
-        }
-
-        function updateDietUI() {
-            const todayStr = new Date().toLocaleDateString('fa-IR');
-            const todayFoods = foodDiary.filter(f => f.date === todayStr);
-            const total = todayFoods.reduce((sum, item) => sum + item.cal, 0);
-            
-            document.getElementById('consumedCalories').innerText = total;
-            document.getElementById('targetCalDisplay').innerText = userProfile.targetCal;
-
-            const penaltyAlert = document.getElementById('caloriePenaltyAlert');
-            const penaltyWalkText = document.getElementById('penaltyWalkText');
-
-            if(total > userProfile.targetCal) {
-                penaltyAlert.style.display = 'block';
-                penaltyWalkText.innerText = "🚨 اخطار: به دلیل عبور از کالری مجاز، هدف قدم‌شمار برای جبران افزایش یافت!";
-            } else {
-                penaltyAlert.style.display = 'none';
-                penaltyWalkText.innerText = "وضعیت دریافت کالری در محدوده تعیین‌شده قرار دارد.";
-            }
-
-            const ul = document.getElementById('foodListUl');
-            ul.innerHTML = '';
-            if(todayFoods.length === 0) {
-                ul.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin:10px 0;">هنوز وعده‌ای برای امروز ثبت نکرده‌اید.</p>`;
+            if (opponents && opponents.length > 0) {
+                let opp = opponents[0];
+                await supabaseClient.from('match_queue').delete().in('user_id', [userId, opp.user_id]);
+                clearInterval(matchmakingState.timer);
+                matchmakingState.searching = false;
+                initLiveMatch(opp.team_name, opp.total_power, userTotalPower);
                 return;
             }
-            todayFoods.forEach((f) => {
-                if(!f.id) f.id = Date.now() + Math.random();
-                ul.innerHTML += `
-                    <li>
-                        <span>${f.name} <strong style="color:var(--success);">(${f.cal} کالری)</strong></span>
-                        <button class="delete-food-btn" onclick="deleteFood(${f.id})"><i class="fas fa-trash"></i> حذف</button>
-                    </li>`;
-            });
+
+            if (matchmakingState.secondsLeft <= 0) {
+                clearInterval(matchmakingState.timer);
+                await supabaseClient.from('match_queue').delete().eq('user_id', userId);
+                matchmakingState.searching = false;
+                initLiveMatch('شاهین رباتیک', Math.floor(userTotalPower * (0.8 + Math.random() * 0.4)), userTotalPower);
+            }
+        }, 1000);
+    }
+
+    async function cancelMatchmaking() {
+        if (matchmakingState.timer) clearInterval(matchmakingState.timer);
+        await supabaseClient.from('match_queue').delete().eq('user_id', userId);
+        matchmakingState.searching = false;
+        renderMatches();
+    }
+
+    function initLiveMatch(oppName, oppPower, userPower) {
+        matchmakingState.liveMatchActive = true;
+
+        let diff = userPower - oppPower;
+        let userGoals = 0, oppGoals = 0;
+        let randVal = Math.random() * 100;
+        if (diff > 15) {
+            userGoals = Math.floor(Math.random() * 3) + 1;
+            oppGoals = Math.floor(Math.random() * 2);
+        } else if (diff < -15) {
+            userGoals = Math.floor(Math.random() * 2);
+            oppGoals = Math.floor(Math.random() * 3) + 1;
+        } else {
+            if (randVal < 40) { userGoals = Math.floor(Math.random() * 2); oppGoals = userGoals; }
+            else if (randVal < 70) { userGoals = Math.floor(Math.random() * 3) + 1; oppGoals = Math.floor(Math.random() * 2); }
+            else { userGoals = Math.floor(Math.random() * 2); oppGoals = Math.floor(Math.random() * 3) + 1; }
         }
 
-        function initCharts() {
-            const ctxW = document.getElementById('weightChart').getContext('2d');
-            if(weightChartObj) weightChartObj.destroy();
-            weightChartObj = new Chart(ctxW, {
-                type: 'line',
-                data: {
-                    labels: weightHistory.map(w => w.date),
-                    datasets: [{ label: 'وزن (kg)', data: weightHistory.map(w => w.weight), borderColor: '#9d4edd', backgroundColor: 'rgba(157, 78, 221, 0.15)', borderWidth: 3, fill: true, tension: 0.35, pointRadius: 5 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#adb5bd' } }, y: { ticks: { color: '#adb5bd' } } } }
-            });
+        matchmakingState.matchData = {
+            homeTeam: gameState.teamName,
+            awayTeam: oppName,
+            homeScore: 0,
+            awayScore: 0,
+            targetHomeGoals: userGoals,
+            targetAwayGoals: oppGoals,
+            currentMinute: 0,
+            half: 1,
+            commentary: 'مسابقه آغاز شد! بازیکنان در زمین مستقر شدند.'
+        };
 
-            const ctxC = document.getElementById('calorieChart').getContext('2d');
-            const recentDates = [...new Set(foodDiary.map(f => f.date))].slice(-5);
-            const recentCals = recentDates.map(d => foodDiary.filter(f => f.date === d).reduce((s, i) => s + i.cal, 0));
+        renderMatches();
+        startLiveMatchEngine();
+    }
 
-            if(calorieChartObj) calorieChartObj.destroy();
-            calorieChartObj = new Chart(ctxC, {
-                type: 'bar',
-                data: {
-                    labels: recentDates.length ? recentDates : ['امروز'],
-                    datasets: [{ label: 'کالری دریافتی', data: recentCals.length ? recentCals : [0], backgroundColor: '#06d6a0', borderRadius: 6 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#fff' } } }, scales: { x: { ticks: { color: '#adb5bd' } }, y: { ticks: { color: '#adb5bd' } } } }
-            });
-        }
+    function startLiveMatchEngine() {
+        if (matchLoopInterval) clearInterval(matchLoopInterval);
 
-        function addWeightRecord() {
-            const w = document.getElementById('newWeightInput').value;
-            if(!w) return;
-            const weightVal = parseFloat(w);
-            weightHistory.push({ date: new Date().toLocaleDateString('fa-IR'), weight: weightVal });
-            userProfile.weight = weightVal;
-            userProfile.bmi = (weightVal / Math.pow(userProfile.height/100, 2)).toFixed(1);
-            localStorage.setItem('nuvoraFitProfile', JSON.stringify(userProfile));
-            localStorage.setItem('nuvoraWeightHistory', JSON.stringify(weightHistory));
-            document.getElementById('newWeightInput').value = '';
-            loadDashboard();
-            initCharts();
-            alert('وزن جدید با موفقیت ثبت شد!');
-        }
+        let tick = 0;
+        matchLoopInterval = setInterval(() => {
+            if (!matchmakingState.liveMatchActive) {
+                clearInterval(matchLoopInterval);
+                return;
+            }
 
-        let walkTimer; let walkSeconds = 0; let isWalking = false; let steps = 0;
-        function toggleWalk() {
-            const btn = document.getElementById('startWalkBtn');
-            const todayStr = new Date().toLocaleDateString('fa-IR');
-            const todayFoods = foodDiary.filter(f => f.date === todayStr);
-            const totalCals = todayFoods.reduce((sum, item) => sum + item.cal, 0);
-            
-            const diff = userProfile.difficulty || 'hard';
-            let diffFactor = 1.15;
-            if(diff === 'normal') diffFactor = 1.0;
-            if(diff === 'extreme') diffFactor = 1.35;
+            tick++;
+            matchmakingState.matchData.currentMinute = tick;
 
-            const strictMultiplier = totalCals > userProfile.targetCal ? diffFactor * 1.15 : diffFactor;
-
-            if(isWalking) {
-                clearInterval(walkTimer);
-                btn.innerText = 'ادامه پیاده‌روی';
-                btn.style.background = 'var(--primary)';
+            if (tick === 45) {
+                matchmakingState.matchData.half = 2;
+                matchmakingState.matchData.commentary = 'سوت پایان نیمه اول! بازیکنان برای استراحت کوتاه آماده می‌شوند.';
+            } else if (tick === 90) {
+                matchmakingState.matchData.commentary = 'سوت پایان مسابقه! نتیجه نهایی ثبت شد.';
+                matchmakingState.liveMatchActive = false;
+                clearInterval(matchLoopInterval);
             } else {
-                walkTimer = setInterval(() => {
-                    walkSeconds++;
-                    steps += Math.round(2.5 * strictMultiplier);
-                    const mins = Math.floor(walkSeconds / 60).toString().padStart(2, '0');
-                    const secs = (walkSeconds % 60).toString().padStart(2, '0');
-                    document.getElementById('walkTime').innerText = `${mins}:${secs}`;
-                    document.getElementById('stepCount').innerText = steps;
-                    const cal = (((userProfile.weight * 3.8 * 3.5) / 200) * (walkSeconds / 60)) * strictMultiplier;
-                    document.getElementById('walkCal').innerText = cal.toFixed(1);
-                }, 1000);
-                btn.innerText = 'توقف';
-                btn.style.background = 'var(--danger)';
-            }
-            isWalking = !isWalking;
-        }
+                let randomEvent = Math.random();
+                let randomPlayer = gameState.players[Math.floor(Math.random() * gameState.players.length)].name;
 
-        function resetWalk() {
-            clearInterval(walkTimer); isWalking = false; walkSeconds = 0; steps = 0;
-            document.getElementById('walkTime').innerText = "00:00";
-            document.getElementById('stepCount').innerText = "0";
-            document.getElementById('walkCal').innerText = "0";
-            document.getElementById('startWalkBtn').innerText = 'شروع پیاده‌روی';
-            document.getElementById('startWalkBtn').style.background = 'var(--primary)';
-        }
-
-        function setReminder() {
-            if ("Notification" in window && Notification.permission !== "granted") {
-                Notification.requestPermission();
-            }
-            const timeVal = document.getElementById('workoutTimeInput').value;
-            if(!timeVal) return;
-            localStorage.setItem('nuvoraWorkoutTime', timeVal);
-            alert(`یادآور تمرین برای ساعت ${timeVal} تنظیم شد.`);
-        }
-
-        function checkTimeForNotification() {
-            setInterval(() => {
-                const targetTime = localStorage.getItem('nuvoraWorkoutTime');
-                if(!targetTime) return;
-                const now = new Date();
-                const currentStr = `${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-                if(currentStr === targetTime && localStorage.getItem('nuvoraLastNotified') !== now.toLocaleDateString()) {
-                    if (Notification.permission === "granted") {
-                        new Notification("NuvoraFit - وقت تمرین!", { body: "زمان مقرر برای انجام تمرینات ورزشی فرا رسیده است." });
-                    } else {
-                        alert("وقت تمرینه! برای رسیدن به هدف تلاش کن!");
-                    }
-                    localStorage.setItem('nuvoraLastNotified', now.toLocaleDateString());
+                if (randomEvent < 0.15 && matchmakingState.matchData.homeScore < matchmakingState.matchData.targetHomeGoals) {
+                    matchmakingState.matchData.homeScore++;
+                    matchmakingState.matchData.commentary = `⚽ گل فوق‌العاده برای ${gameState.teamName} توسط ${randomPlayer}! (دقیقه ${tick})`;
+                } else if (randomEvent > 0.85 && matchmakingState.matchData.awayScore < matchmakingState.matchData.targetAwayGoals) {
+                    matchmakingState.matchData.awayScore++;
+                    matchmakingState.matchData.commentary = `⚽ گل برای تیم ${matchmakingState.matchData.awayTeam}! (دقیقه ${tick})`;
+                } else if (randomEvent < 0.4) {
+                    matchmakingState.matchData.commentary = `⚡ پاسکاری زیبا در خط هافبک توسط ${randomPlayer}...`;
+                } else if (randomEvent < 0.7) {
+                    matchmakingState.matchData.commentary = `🛡️ دفاع محکم و دفع توپ توسط ${randomPlayer}.`;
+                } else {
+                    matchmakingState.matchData.commentary = `⏱️ جریان بازی در جریان است... (دقیقه ${tick})`;
                 }
-            }, 60000);
+            }
+
+            updatePitchAnimationPositions();
+            renderMatches();
+        }, 1000);
+    }
+
+    function updatePitchAnimationPositions() {
+        const ballEl = document.getElementById('smartBallNode');
+        if (ballEl) {
+            let randX = 20 + Math.random() * 60;
+            let randY = 15 + Math.random() * 70;
+            ballEl.style.top = randY + '%';
+            ballEl.style.left = randX + '%';
+        }
+    }
+
+    function startEnfesharGame() {
+        if (enfesharState.isPlaying) return;
+        const betInput = document.getElementById('enfesharBetInput');
+        const betVal = parseInt(betInput ? betInput.value : enfesharState.bet) || 10;
+
+        if (betVal <= 0) {
+            showTopBanner('لطفاً مقدار سکه معتبری برای شروع بازی وارد کنید!', 'red');
+            return;
+        }
+        if (betVal > userCoins) {
+            showTopBanner('موجودی سکه شما برای این مبلغ کافی نیست!', 'red');
+            return;
         }
 
-        function nav(pId, el) {
-            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-            document.getElementById(pId).classList.add('active');
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            el.classList.add('active');
+        enfesharState.bet = betVal;
+        userCoins -= betVal;
+        updateCoinUI();
+
+        enfesharState.isPlaying = true;
+        enfesharState.multiplier = 1.00;
+        enfesharState.cashedOut = false;
+
+        let rand = Math.random();
+        if (rand < 0.12) {
+            enfesharState.crashPoint = 1.00;
+        } else {
+            enfesharState.crashPoint = parseFloat((1.01 + Math.pow(Math.random(), 2.3) * 6.00).toFixed(2));
         }
-    </script>
+
+        renderMatches();
+
+        if (enfesharState.timer) clearInterval(enfesharState.timer);
+
+        enfesharState.timer = setInterval(() => {
+            if (!enfesharState.isPlaying) {
+                clearInterval(enfesharState.timer);
+                return;
+            }
+
+            enfesharState.multiplier += 0.01;
+            let currentPercentage = Math.round((enfesharState.multiplier - 1) * 100);
+            
+            const displayEl = document.getElementById('enfesharMultiplierDisplay');
+            if (displayEl) {
+                displayEl.textContent = currentPercentage + '% (ضریب ' + enfesharState.multiplier.toFixed(2) + 'x)';
+            }
+
+            if (enfesharState.multiplier >= enfesharState.crashPoint) {
+                clearInterval(enfesharState.timer);
+                enfesharState.isPlaying = false;
+                if (!enfesharState.cashedOut) {
+                    showTopBanner(`💥 بازی منفجر شد روی ضریب ${enfesharState.multiplier.toFixed(2)}x! متأسفانه باختید.`, 'red');
+                }
+                renderMatches();
+            }
+        }, 100);
+    }
+
+    function cashoutEnfeshar() {
+        if (!enfesharState.isPlaying || enfesharState.cashedOut) return;
+        enfesharState.cashedOut = true;
+        clearInterval(enfesharState.timer);
+        enfesharState.isPlaying = false;
+
+        let winnings = Math.floor(enfesharState.bet * enfesharState.multiplier);
+        userCoins += winnings;
+        updateCoinUI();
+
+        let wonPercent = Math.round((enfesharState.multiplier - 1) * 100);
+        showTopBanner(`🎉 تبریک! در درصد ${wonPercent}% (ضریب ${enfesharState.multiplier.toFixed(2)}x) برداشت کردید و ${winnings} سکه برنده شدید!`, 'green');
+        renderMatches();
+    }
+
+    function setOutcomePick(matchId, pick) {
+        if (userPredictions[matchId] && userPredictions[matchId].locked) return;
+        if (!userPredictions[matchId]) userPredictions[matchId] = {};
+        userPredictions[matchId].winnerPick = pick;
+        localStorage.setItem('zeuc_predictions', JSON.stringify(userPredictions));
+        renderMatches();
+    }
+
+    function saveFullPrediction(matchId) {
+        if (userPredictions[matchId] && userPredictions[matchId].locked) {
+            showTopBanner('این پیش‌بینی قبلاً ثبت شده و قابل تغییر نیست!', 'red');
+            return;
+        }
+
+        const homeVal = document.getElementById(`h_${matchId}`).value;
+        const awayVal = document.getElementById(`a_${matchId}`).value;
+        const betInputVal = document.getElementById(`bet_${matchId}`).value;
+        const wagerCoins = parseInt(betInputVal) || 0;
+
+        if (wagerCoins > userCoins) {
+            showTopBanner('مبلغ سکه وارد شده برای شرط‌بندی بیشتر از موجودی شماست!', 'red');
+            return;
+        }
+
+        if (wagerCoins > 0) {
+            userCoins -= wagerCoins;
+            updateCoinUI();
+        }
+
+        if (!userPredictions[matchId]) userPredictions[matchId] = {};
+        if (homeVal !== '' && awayVal !== '') {
+            userPredictions[matchId].home = parseInt(homeVal);
+            userPredictions[matchId].away = parseInt(awayVal);
+        }
+
+        userPredictions[matchId].wager = wagerCoins;
+        userPredictions[matchId].locked = true;
+        localStorage.setItem('zeuc_predictions', JSON.stringify(userPredictions));
+        showTopBanner('پیش‌بینی و سرمایه‌گذاری سکه شما با موفقیت ثبت شد.', 'green');
+        renderMatches();
+    }
+
+    function renderMatches() {
+        const contentDiv = document.getElementById('content');
+
+        if (currentStatusFilter === 'GAME') {
+            if (!gameState.configured) {
+                contentDiv.innerHTML = `
+                    <div class="game-setup-card">
+                        <h3 style="color: #38bdf8; margin-bottom: 10px; font-size: 1.3rem;">⚽ ثبت دائم تیم و رنگ کیت</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">پس از ثبت، نام تیم و رنگ لباس قفل شده و قابل تغییر نخواهند بود.</p>
+                        
+                        <div style="margin-bottom: 12px; text-align: right;">
+                            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 6px;">نام تیم:</label>
+                            <input type="text" id="setupTeamName" class="custom-input" placeholder="مثلاً: عقاب‌های سرخ..." style="width: 100%; max-width: 100%;">
+                        </div>
+
+                        <div style="margin-bottom: 15px; text-align: right;">
+                            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 8px;">انتخاب رنگ لباس تیم:</label>
+                            <div class="kit-color-grid">
+                                <div class="kit-color-option selected" style="background: #38bdf8;" onclick="setSetupKitColor('#38bdf8', this)"></div>
+                                <div class="kit-color-option" style="background: #ef4444;" onclick="setSetupKitColor('#ef4444', this)"></div>
+                                <div class="kit-color-option" style="background: #22c55e;" onclick="setSetupKitColor('#22c55e', this)"></div>
+                                <div class="kit-color-option" style="background: #eab308;" onclick="setSetupKitColor('#eab308', this)"></div>
+                                <div class="kit-color-option" style="background: #a855f7;" onclick="setSetupKitColor('#a855f7', this)"></div>
+                            </div>
+                        </div>
+
+                        <button class="btn-action" onclick="saveGameSetup()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0ea5e9, #0284c7); font-size: 1rem;">ثبت نهایی و دریافت بازیکنان 🌟</button>
+                    </div>
+                `;
+            } else {
+                if (matchmakingState.searching) {
+                    contentDiv.innerHTML = `
+                        <div class="game-setup-card" style="text-align: center; padding: 30px;">
+                            <h3 style="color: #38bdf8; margin-bottom: 15px;">🔍 در حال جستجوی آنلاین حریف (Supabase)...</h3>
+                            <p style="font-size: 1.2rem; font-weight: bold; color: var(--neon-green); margin-bottom: 20px;">زمان باقی‌مانده: ${matchmakingState.secondsLeft} ثانیه</p>
+                            <div class="loading" style="padding: 20px 0;">منتظر اتصال با حریف واقعی در شبکه...</div>
+                            <button class="btn-action" onclick="cancelMatchmaking()" style="background: #ff334b; margin-top: 15px; padding: 10px 20px;">لغو جستجو</button>
+                        </div>
+                    `;
+                    return;
+                }
+
+                if (matchmakingState.liveMatchActive || matchmakingState.matchData) {
+                    let mData = matchmakingState.matchData;
+                    let isFinished = !matchmakingState.liveMatchActive;
+
+                    let positionsGrid = [
+                        { top: '85%', left: '50%' },
+                        { top: '65%', left: '25%' }, { top: '65%', left: '42%' }, { top: '65%', left: '58%' }, { top: '65%', left: '75%' },
+                        { top: '45%', left: '30%' }, { top: '45%', left: '50%' }, { top: '45%', left: '70%' },
+                        { top: '25%', left: '35%' }, { top: '25%', left: '65%' },
+                        { top: '15%', left: '50%' }
+                    ];
+
+                    let playersHTML = '';
+                    gameState.players.forEach((p, idx) => {
+                        let pos = positionsGrid[idx] || { top: '50%', left: '50%' };
+                        playersHTML += `
+                            <div class="smart-player-node" style="top: ${pos.top}; left: ${pos.left};">
+                                <div class="player-kit-icon" style="color: ${gameState.kitColor || '#38bdf8'};">👕</div>
+                                <div class="player-name-tag">${p.name}</div>
+                            </div>
+                        `;
+                    });
+
+                    contentDiv.innerHTML = `
+                        <div style="max-width: 540px; margin: 0 auto;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(10,35,18,0.85); border: 1px solid rgba(56,189,248,0.5); padding: 10px 20px; border-radius: 14px; margin-bottom: 10px; backdrop-filter: blur(15px);">
+                                <span style="font-weight: bold; font-size: 0.95rem; color: #38bdf8;">${mData.homeTeam}</span>
+                                <div style="text-align: center;">
+                                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--neon-green); letter-spacing: 2px;">${mData.homeScore} - ${mData.awayScore}</div>
+                                    <div style="font-size: 0.75rem; color: #ff334b; font-weight: bold;">⏱️ دقیقه ${mData.currentMinute} (${mData.half === 1 ? 'نیمه اول' : 'نیمه دوم'})</div>
+                                </div>
+                                <span style="font-weight: bold; font-size: 0.95rem; color: #ff334b;">${mData.awayTeam}</span>
+                            </div>
+
+                            <div class="match-live-arena">
+                                <div class="pitch-line-center"></div>
+                                <div class="pitch-circle-center"></div>
+                                ${playersHTML}
+                                <div id="smartBallNode" class="smart-ball" style="top: 50%; left: 50%;">⚽</div>
+                            </div>
+
+                            <div class="match-commentary-box">
+                                <div style="font-size: 0.75rem; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">🎙️ گزارشگر زنده مسابقه:</div>
+                                <div style="font-size: 0.88rem; color: var(--text-main);">${mData.commentary}</div>
+                            </div>
+
+                            ${isFinished ? `
+                                <div style="text-align: center; margin-top: 15px;">
+                                    <button class="btn-action" onclick="matchmakingState.matchData = null; renderMatches();" style="background: #0ea5e9; padding: 10px 25px;">بازگشت به منوی تیم</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                    return;
+                }
+
+                let playersHTML = '';
+                gameState.players.forEach(p => {
+                    playersHTML += `
+                        <div class="player-mini-card">
+                            <div style="font-weight: bold; color: #38bdf8; margin-bottom: 2px;">${p.name}</div>
+                            <div style="font-size: 0.75rem; color: var(--text-sub);">${p.position} | ${p.skill_desc || p.skillDesc}: <b>${p.power}/10</b></div>
+                        </div>
+                    `;
+                });
+
+                contentDiv.innerHTML = `
+                    <div style="max-width: 520px; margin: 0 auto;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                            <span style="font-size: 0.95rem; color: #38bdf8; font-weight: bold; display: flex; align-items: center; gap: 8px;">
+                                🏟️ تیم: ${gameState.teamName} 
+                                <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${gameState.kitColor || '#38bdf8'};"></span>
+                            </span>
+                        </div>
+
+                        <div class="game-setup-card" style="margin-bottom: 15px; padding: 15px;">
+                            <h4 style="color: var(--neon-green); margin-bottom: 10px; font-size: 1rem;">👥 لیست ۱۱ بازیکن اختصاصی شما (دیتابیس آنلاین)</h4>
+                            <div class="player-list-grid">
+                                ${playersHTML}
+                            </div>
+                            <button class="btn-action" onclick="startMatchmaking()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); font-size: 1rem; font-weight: bold; box-shadow: 0 0 15px rgba(34,197,94,0.4);">⚔️ شروع بازی آنلاین با حریف (هر نیمه ۲ دقیقه)</button>
+                        </div>
+                    </div>
+                `;
+            }
+            return;
+        }
+
+        if (currentStatusFilter === 'QUMAR') {
+            if (qumarSubView === 'home') {
+                contentDiv.innerHTML = `
+                    <div class="matches-grid">
+                        <div class="shop-menu-item" onclick="openQumarSub('enfeshar')" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.4);">
+                            <div class="theme-info">
+                                <h4 style="color: #f43f5e;">🚀 بازی انفجار</h4>
+                                <p>بازی ضریب و درصد رندوم با قابلیت کسب سکه</p>
+                            </div>
+                            <span style="color: #f43f5e; font-size: 1.2rem; font-weight: bold;">←</span>
+                        </div>
+                        <div class="shop-menu-item" onclick="openQumarSub('predict')" style="background: rgba(0,255,102,0.1); border-color: var(--border-glass);">
+                            <div class="theme-info">
+                                <h4 style="color: var(--neon-green);">🎯 پیش‌بینی مسابقات</h4>
+                                <p>پیش‌بینی نتیجه و گل‌ها برای دریافت سکه جایزه</p>
+                            </div>
+                            <span style="color: var(--neon-green); font-size: 1.2rem; font-weight: bold;">←</span>
+                        </div>
+                    </div>
+                `;
+            } else if (qumarSubView === 'enfeshar') {
+                let currentPct = Math.round((enfesharState.multiplier - 1) * 100);
+                contentDiv.innerHTML = `
+                    <div class="matches-grid">
+                        <div class="match-card" style="text-align: center; padding: 30px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                <button class="btn-action" onclick="backToQumarHome()" style="padding: 6px 14px; font-size: 0.8rem;" ${enfesharState.isPlaying ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>← بازگشت به منوی قمار</button>
+                                <span style="font-size: 0.9rem; color: #f43f5e; font-weight: bold;">🚀 بازی انفجار zeucball</span>
+                            </div>
+                            <div style="margin: 25px 0;">
+                                <div id="enfesharMultiplierDisplay" style="font-size: 3rem; font-weight: 900; color: #f43f5e; text-shadow: 0 0 25px rgba(244,63,94,0.6);">${currentPct}% (ضریب ${enfesharState.multiplier.toFixed(2)}x)</div>
+                            </div>
+                            <div style="margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
+                                <span style="font-weight: bold; font-size: 0.9rem;">🪙 تعداد سکه برای شرط:</span>
+                                <input type="number" id="enfesharBetInput" class="pred-input" style="width: 80px;" value="${enfesharState.bet}" min="1" ${enfesharState.isPlaying ? 'disabled' : ''}>
+                            </div>
+                            <div style="display: flex; justify-content: center; gap: 10px;">
+                                <button id="enfesharStartBtn" class="btn-action" onclick="startEnfesharGame()" style="background: linear-gradient(135deg, #f43f5e, #be185d); padding: 12px 28px; font-size: 1rem; ${enfesharState.isPlaying ? 'display:none;' : ''}">شروع بازی انفجار</button>
+                                <button id="enfesharCashoutBtn" class="btn-action" onclick="cashoutEnfeshar()" style="background: #22c55e; padding: 12px 28px; font-size: 1rem; ${!enfesharState.isPlaying ? 'display:none;' : ''}">برداشت جایزه (Cashout)</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            } else if (qumarSubView === 'predict') {
+                renderPredictionView(contentDiv, true);
+            }
+            return;
+        }
+
+        let allMatchesList = [];
+        globalLeaguesData.forEach(league => {
+            const leagueRaw = league.name || league.primaryId || 'مسابقات';
+            const leagueNameFA = translateFA(leagueRaw);
+            const matches = league.matches || league.events || [];
+
+            matches.forEach((m, idx) => {
+                let isLive = false;
+                let isFinished = false;
+                let isUpcoming = false;
+
+                if (m.status) {
+                    if (typeof m.status === 'string') {
+                        if (m.status.includes('پایان') || m.status.toLowerCase().includes('ft')) isFinished = true;
+                        else if (m.status.toLowerCase().includes('live')) isLive = true;
+                        else isUpcoming = true;
+                    } else {
+                        if (m.status.finished) isFinished = true;
+                        else if (m.status.started) isLive = true;
+                        else isUpcoming = true;
+                    }
+                } else {
+                    isUpcoming = true;
+                }
+
+                let timestamp = m.status?.utcTime ? new Date(m.status.utcTime).getTime() : 0;
+                let matchId = m.id || `${leagueNameFA}_${idx}_${timestamp}`;
+
+                allMatchesList.push({
+                    matchId: matchId,
+                    matchData: m,
+                    leagueNameFA: leagueNameFA,
+                    isLive: isLive,
+                    isFinished: isFinished,
+                    isUpcoming: isUpcoming,
+                    timestamp: timestamp
+                });
+            });
+        });
+
+        let filteredMatches = allMatchesList.filter(item => {
+            if (currentLeagueFilter !== 'ALL' && item.leagueNameFA !== currentLeagueFilter) return false;
+            if (currentStatusFilter === 'LIVE') return item.isLive;
+            if (currentStatusFilter === 'FINISHED') return item.isFinished;
+            if (currentStatusFilter === 'UPCOMING') return item.isUpcoming;
+            return true;
+        });
+
+        filteredMatches.sort((a, b) => {
+            if (currentStatusFilter === 'FINISHED' || currentStatusFilter === 'ALL') return b.timestamp - a.timestamp;
+            return a.timestamp - b.timestamp;
+        });
+
+        if (filteredMatches.length === 0) {
+            contentDiv.innerHTML = '<div class="empty-msg">مسابقه‌ای با این وضعیت برای فیلتر انتخابی یافت نشد.</div>';
+            return;
+        }
+
+        let html = '<div class="matches-grid">';
+
+        filteredMatches.forEach(item => {
+            const m = item.matchData;
+            const homeRaw = m.home?.name || m.homeTeam?.name || m.home || 'میزبان';
+            const awayRaw = m.away?.name || m.awayTeam?.name || m.away || 'میهمان';
+            const homeNameFA = translateFA(homeRaw);
+            const awayNameFA = translateFA(awayRaw);
+
+            const homeScore = m.homeScore ?? m.score?.home ?? (typeof m.status?.scoreStr === 'string' ? m.status.scoreStr.split('-')[0] : '-');
+            const awayScore = m.awayScore ?? m.score?.away ?? (typeof m.status?.scoreStr === 'string' ? m.status.scoreStr.split('-')[1] : '-');
+            
+            let statusText = 'برنامه‌ریزی شده';
+            let isLive = item.isLive;
+
+            if (m.status) {
+                if (typeof m.status === 'string') {
+                    statusText = m.status;
+                } else {
+                    if (m.status.finished) {
+                        statusText = 'پایان یافته';
+                    } else if (m.status.started) {
+                        let liveTimeStr = '';
+                        if (m.status.liveTime) {
+                            if (typeof m.status.liveTime === 'string') liveTimeStr = m.status.liveTime;
+                            else if (typeof m.status.liveTime === 'object') liveTimeStr = m.status.liveTime.short || m.status.liveTime.value || '';
+                        }
+                        statusText = liveTimeStr ? `در جریان (${liveTimeStr})` : 'در حال برگزاری';
+                    } else if (m.status.utcTime) {
+                        try {
+                            const dateObj = new Date(m.status.utcTime);
+                            statusText = 'ساعت ' + dateObj.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
+                        } catch (e) {
+                            statusText = 'به زودی';
+                        }
+                    }
+                }
+            }
+
+            let predHtml = '';
+            const pData = userPredictions[item.matchId];
+            if (pData && pData.locked) {
+                let pickText = '';
+                if (pData.winnerPick === 'HOME') pickText = `برد ${homeNameFA}`;
+                else if (pData.winnerPick === 'AWAY') pickText = `برد ${awayNameFA}`;
+                else if (pData.winnerPick === 'DRAW') pickText = `مساوی`;
+
+                predHtml = `
+                    <div style="margin-top: 10px; padding: 8px 12px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; font-size: 0.82rem; color: #38bdf8; display: flex; justify-content: space-between; align-items: center;">
+                        <span>🎯 پیش‌بینی شما: ${pData.home !== '' && pData.away !== '' ? `نتیجه ${pData.home}-${pData.away}` : ''} ${pickText ? `(${pickText})` : ''}</span>
+                        ${pData.wager > 0 ? `<span>🪙 سرمایه: ${pData.wager} سکه</span>` : ''}
+                    </div>
+                `;
+            }
+
+            html += `
+                <div class="match-card">
+                    <div class="card-top-bar">
+                        <div class="league-name-tag">
+                            ⚽ <span>${item.leagueNameFA}</span>
+                        </div>
+                        <div class="status-badge ${isLive ? 'live' : ''}">
+                            ${isLive ? '<div class="live-dot"></div>' : ''}
+                            <span>${statusText}</span>
+                        </div>
+                    </div>
+                    <div class="match-info">
+                        <div class="team home"><span>${homeNameFA}</span></div>
+                        <div class="score-box">${homeScore} - ${awayScore}</div>
+                        <div class="team away"><span>${awayNameFA}</span></div>
+                    </div>
+                    ${predHtml}
+                </div>
+            `;
+        });
+
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+
+    function renderPredictionView(contentDiv, isSubView = false) {
+        let allMatchesList = [];
+
+        globalLeaguesData.forEach(league => {
+            const leagueRaw = league.name || league.primaryId || 'مسابقات';
+            const leagueNameFA = translateFA(leagueRaw);
+            const matches = league.matches || league.events || [];
+
+            matches.forEach((m, idx) => {
+                let isUpcoming = true;
+                if (m.status) {
+                    if (typeof m.status === 'string') {
+                        if (m.status.includes('پایان') || m.status.toLowerCase().includes('ft') || m.status.toLowerCase().includes('live') || m.status.toLowerCase().includes('started')) {
+                            isUpcoming = false;
+                        }
+                    } else {
+                        if (m.status.finished || m.status.started) {
+                            isUpcoming = false;
+                        }
+                    }
+                }
+
+                let timestamp = m.status?.utcTime ? new Date(m.status.utcTime).getTime() : 0;
+                let matchId = m.id || `${leagueNameFA}_${idx}_${timestamp}`;
+
+                if (isUpcoming) {
+                    allMatchesList.push({
+                        matchId: matchId,
+                        matchData: m,
+                        leagueNameFA: leagueNameFA
+                    });
+                }
+            });
+        });
+
+        let html = '<div class="matches-grid">';
+        if (isSubView) {
+            html += `
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                    <button class="btn-action" onclick="backToQumarHome()" style="padding: 6px 14px; font-size: 0.8rem;">← بازگشت به منوی قمار</button>
+                    <span style="font-size: 0.9rem; color: var(--neon-green); font-weight: bold;">🎯 بخش پیش‌بینی مسابقات واقعی آینده</span>
+                </div>
+            `;
+        }
+        html += '<p style="color:var(--neon-green); text-align:center; margin-bottom:10px;">🎯 پیش‌بینی رایگان (+۵ یا +۲۵ سکه) + قابلیت گذاشتن سکه دلخواه (دریافت ۳ برابر در صورت برد!):</p>';
+
+        if (allMatchesList.length === 0) {
+            contentDiv.innerHTML = html + '<div class="empty-msg">هیچ مسابقه شروع‌نشده‌ای برای تاریخ انتخابی یافت نشد. تاریخ دیگری را انتخاب کنید.</div></div>';
+            return;
+        }
+
+        allMatchesList.forEach(item => {
+            const m = item.matchData;
+            const homeRaw = m.home?.name || m.homeTeam?.name || m.home || 'میزبان';
+            const awayRaw = m.away?.name || m.awayTeam?.name || m.away || 'میهمان';
+            const homeNameFA = translateFA(homeRaw);
+            const awayNameFA = translateFA(awayRaw);
+            const pKey = item.matchId;
+            const savedPred = userPredictions[pKey] || { home: '', away: '', winnerPick: '', wager: 0, locked: false };
+
+            html += `
+                <div class="match-card">
+                    <div class="card-top-bar">
+                        <div class="league-name-tag">⚽ <span>${item.leagueNameFA}</span></div>
+                    </div>
+                    <div class="prediction-wrapper">
+                        <div class="prediction-row">
+                            <div class="team home"><span>${homeNameFA}</span></div>
+                            <div class="exact-score-box">
+                                <input type="number" id="h_${pKey}" class="pred-input" value="${savedPred.home ?? ''}" placeholder="گل" ${savedPred.locked ? 'disabled' : ''}>
+                                <span>-</span>
+                                <input type="number" id="a_${pKey}" class="pred-input" value="${savedPred.away ?? ''}" placeholder="گل" ${savedPred.locked ? 'disabled' : ''}>
+                            </div>
+                            <div class="team away"><span>${awayNameFA}</span></div>
+                        </div>
+                        <div class="bet-input-container">
+                            <span>🪙 سکه دلخواه برای ۳ برابر کردن:</span>
+                            <input type="number" id="bet_${pKey}" class="bet-input" value="${savedPred.wager || 0}" min="0" placeholder="تعداد" ${savedPred.locked ? 'disabled' : ''}>
+                        </div>
+                        <div class="outcome-btns">
+                            <button class="btn-outcome ${savedPred.winnerPick === 'HOME' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'HOME')">برد ${homeNameFA}</button>
+                            <button class="btn-outcome ${savedPred.winnerPick === 'DRAW' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'DRAW')">مساوی</button>
+                            <button class="btn-outcome ${savedPred.winnerPick === 'AWAY' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'AWAY')">برد ${awayNameFA}</button>
+                        </div>
+                        ${savedPred.locked ? 
+                            `<div class="predicted-badge">✓ پیش‌بینی‌شده و قفل شده</div>` :
+                            `<button class="btn-save-pred" onclick="saveFullPrediction('${pKey}')">ثبت قطعی پیش‌بینی</button>`
+                        }
+                    </div>
+                </div>
+            `;
+        });
+        html += '</div>';
+        contentDiv.innerHTML = html;
+    }
+</script>
+
 </body>
 </html>
