@@ -10,7 +10,7 @@
         :root {
             --primary-purple: #7b2cbf;
             --accent-pink: #ff007f;
-            --glass-bg: rgba(25, 20, 45, 0.8);
+            --glass-bg: rgba(25, 20, 45, 0.85);
             --glass-border: rgba(255, 255, 255, 0.15);
         }
 
@@ -372,7 +372,7 @@
         let timer = 60;
         let score = { home: 0, away: 0 };
         let matchInterval = null;
-        let myQueueId = null;
+        let matchmakingInterval = null;
 
         function createTeam() {
             const name = document.getElementById('team-name-input').value.trim();
@@ -443,86 +443,59 @@
             });
         }
 
-        // سیستم مچ‌میکینگ کاملاً پایدار مبتنی بر دیتابیس Supabase
+        // سیستم جستجوی هوشمند و چرخشی (Polling Matchmaking)
         async function startMatchmaking() {
             document.getElementById('search-modal').style.display = 'flex';
 
-            // ۱. بررسی اینکه آیا کسی در صف انتظار هست یا خیر
-            const { data: existingQueue, error: fetchError } = await supabaseClient
-                .from('matchmaking_queue')
-                .select('*')
-                .order('created_at', { ascending: true })
-                .limit(1);
+            // ۱. پاکسازی صف‌های قدیمی احتمالی خودم از قبل
+            await supabaseClient.from('matchmaking_queue').delete().eq('player_data->>id', myTeam.id);
 
-            if (existingQueue && existingQueue.length > 0) {
-                // حریف پیدا شد! نفر اول را از صف بردار و بازی را شروع کن
-                let opponentRecord = existingQueue[0];
-                
-                // مطمئن شو خودمان نیستیم
-                if (opponentRecord.player_data.id !== myTeam.id) {
-                    opponentTeam = opponentRecord.player_data;
-                    isHost = true; // کسی که حریف را پیدا کرده میزبان است
+            // ۲. ثبت نام خود در صف انتظار
+            await supabaseClient.from('matchmaking_queue').insert([{ player_data: myTeam }]);
 
-                    // حذف از صف
-                    await supabaseClient.from('matchmaking_queue').delete().eq('id', opponentRecord.id);
+            // ۳. بررسی مداوم برای یافتن حریف هر ۱.۵ ثانیه
+            matchmakingInterval = setInterval(async () => {
+                // دریافت تمام افراد داخل صف به ترتیب زمان
+                const { data: queueList, error } = await supabaseClient
+                    .from('matchmaking_queue')
+                    .select('*')
+                    .order('created_at', { ascending: true });
 
+                if (error || !queueList || queueList.length < 2) return;
+
+                // اولین و دومین نفر در صف
+                let firstPlayer = queueList[0];
+                let secondPlayer = queueList[1];
+
+                // اگر من نفر اول یا دوم این جفت هستم، بازی را شروع کن
+                if (firstPlayer.player_data.id === myTeam.id) {
+                    // من میزبان هستم و حریفم نفر دوم است
+                    opponentTeam = secondPlayer.player_data;
+                    isHost = true;
+                    
+                    // پاک کردن هر دو از صف دیتابیس
+                    await supabaseClient.from('matchmaking_queue').delete().in('id', [firstPlayer.id, secondPlayer.id]);
+                    
+                    clearInterval(matchmakingInterval);
                     startMatch();
-                    return;
+                } 
+                else if (secondPlayer.player_data.id === myTeam.id && firstPlayer.player_data.id !== myTeam.id) {
+                    // من مهمان هستم و حریفم نفر اول است
+                    opponentTeam = firstPlayer.player_data;
+                    isHost = false;
+
+                    // پاک کردن هر دو از صف دیتابیس
+                    await supabaseClient.from('matchmaking_queue').delete().in('id', [firstPlayer.id, secondPlayer.id]);
+
+                    clearInterval(matchmakingInterval);
+                    startMatch();
                 }
-            }
-
-            // ۲. اگر کسی نبود، خودمان را در صف انتظار قرار می‌دهیم
-            const { data: inserted, error: insertError } = await supabaseClient
-                .from('matchmaking_queue')
-                .insert([{ player_data: myTeam }])
-                .select();
-
-            if (inserted && inserted.length > 0) {
-                myQueueId = inserted[0].id;
-            }
-
-            // ۳. گوش دادن به جدول صف برای اینکه ببینیم کسی ما را برداشت یا حریفی آمد
-            window.queueChannel = supabaseClient.channel('db_matchmaking')
-                .on('postgres_changes', { event: 'DELETE', schema: 'public', table: 'matchmaking_queue' }, (payload) => {
-                    // اگر رکورد ما از صف حذف شد یعنی کسی با ما مچ شده
-                    if (myQueueId && payload.old.id === myQueueId) {
-                        // دریافت اطلاعات حریف از طریق Broadcast یا چک کردن آخرین وضعیت
-                    }
-                })
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'matchmaking_queue' }, async (payload) => {
-                    // اگر کسی جدید آمد و ما زودتر در صف بودیم
-                    if (payload.new.player_data.id !== myTeam.id) {
-                        // بررسی کنیم آیا ما اولین نفر صف هستیم
-                        const { data: qCheck } = await supabaseClient
-                            .from('matchmaking_queue')
-                            .select('*')
-                            .order('created_at', { ascending: true })
-                            .limit(1);
-
-                        if (qCheck && qCheck.length > 0 && qCheck[0].player_data.id === myTeam.id) {
-                            opponentTeam = payload.new.player_data;
-                            isHost = false; // مهمان
-
-                            // پاک کردن هر دو از صف
-                            await supabaseClient.from('matchmaking_queue').delete().eq('id', qCheck[0].id);
-                            await supabaseClient.from('matchmaking_queue').delete().eq('id', payload.new.id);
-
-                            if(window.queueChannel) supabaseClient.removeChannel(window.queueChannel);
-                            startMatch();
-                        }
-                    }
-                })
-                .subscribe();
+            }, 1500);
         }
 
         async function cancelMatchmaking() {
-            if (myQueueId) {
-                await supabaseClient.from('matchmaking_queue').delete().eq('id', myQueueId);
-                myQueueId = null;
-            }
-            if (window.queueChannel) {
-                supabaseClient.removeChannel(window.queueChannel);
-            }
+            clearInterval(matchmakingInterval);
+            await supabaseClient.from('matchmaking_queue').delete().eq('player_data->>id', myTeam.id);
             document.getElementById('search-modal').style.display = 'none';
         }
 
