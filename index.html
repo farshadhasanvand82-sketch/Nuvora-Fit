@@ -65,15 +65,23 @@
             color: #d1d1d1;
         }
 
+        /* شیشه‌ای کردن منوهای کشویی و اینپوت‌ها */
         input[type="text"], select {
             width: 100%;
             padding: 12px 15px;
             border-radius: 12px;
             border: 1px solid var(--glass-border);
-            background: rgba(0, 0, 0, 0.4);
-            color: #fff;
+            background: rgba(15, 10, 30, 0.9) !important;
+            color: #fff !important;
             outline: none;
             font-size: 15px;
+            backdrop-filter: blur(10px);
+        }
+
+        select option {
+            background: #150b2e;
+            color: #fff;
+            padding: 10px;
         }
 
         input[type="color"] {
@@ -108,18 +116,22 @@
         #dashboard-screen, #lobby-screen, #match-screen {
             display: none;
             width: 100%;
-            max-width: 950px;
+            max-width: 1000px;
             flex-direction: column;
             align-items: center;
             padding: 15px;
         }
 
-        .dashboard-header {
+        .dashboard-top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
             width: 100%;
             margin-bottom: 15px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
             padding: 15px 25px;
         }
 
@@ -133,16 +145,64 @@
             font-size: 14px;
         }
 
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid var(--glass-border);
+            width: 45px;
+            height: 45px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 20px;
+            cursor: pointer;
+            transition: 0.3s;
+            color: #fff;
+        }
+        .icon-btn:hover { background: rgba(255, 255, 255, 0.2); transform: scale(1.05); }
+
+        /* دکمه پخش سه‌بعدی که شامل لابی آنلاین هم شده است */
+        .dashboard-actions {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 15px;
+        }
+
+        .play-3d-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 16px;
+            background: linear-gradient(135deg, #ff007f, #7b2cbf);
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(255, 0, 127, 0.5), inset 0 2px 5px rgba(255, 255, 255, 0.4);
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .play-3d-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(255, 0, 127, 0.8), inset 0 2px 8px rgba(255, 255, 255, 0.6);
+        }
+
         .pitch-container {
             position: relative;
             width: 100%;
-            height: 520px;
+            height: 560px;
             background: repeating-linear-gradient(
                 0deg,
                 #236b27,
-                #236b27 45px,
-                #1d5a21 45px,
-                #1d5a21 90px
+                #236b27 50px,
+                #1d5a21 50px,
+                #1d5a21 100px
             );
             border: 4px solid #fff;
             border-radius: 15px;
@@ -159,21 +219,33 @@
         .pitch-circle {
             position: absolute;
             top: 50%; left: 50%; transform: translate(-50%, -50%);
-            width: 110px; height: 110px;
+            width: 120px; height: 120px;
             border: 2px solid rgba(255, 255, 255, 0.6);
             border-radius: 50%;
         }
 
-        /* کیت شیشه‌ای متحرک */
+        .goal-post-top, .goal-post-bottom {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 30px;
+            border: 3px solid rgba(255, 255, 255, 0.8);
+            background: rgba(255, 255, 255, 0.15);
+            z-index: 5;
+        }
+        .goal-post-top { top: 0; border-top: none; border-radius: 0 0 12px 12px; }
+        .goal-post-bottom { bottom: 0; border-bottom: none; border-radius: 12px 12px 0 0; }
+
         .glass-kit {
             position: absolute;
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.15);
+            background: rgba(255, 255, 255, 0.18);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
+            border: 2px solid rgba(255, 255, 255, 0.5);
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -185,6 +257,7 @@
             transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             transform: translate(-50%, -50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 10;
         }
 
         .kit-name {
@@ -196,10 +269,17 @@
             margin-top: 1px;
         }
 
-        .kit-power {
-            font-size: 7px;
-            color: #ffcc00;
+        .card-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 14px; height: 18px;
+            border-radius: 2px;
+            border: 1px solid #fff;
+            z-index: 15;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.5);
         }
+        .yellow-card { background: #ffeb3b; }
+        .red-card { background: #f44336; }
 
         .lobby-box {
             background: var(--glass-bg);
@@ -243,33 +323,28 @@
         }
         .challenge-btn:hover { background: #218838; }
 
-        /* مودال‌های شیشه‌ای سفارشی */
-        #custom-alert-modal, #request-modal, #goal-modal, #announcement-modal {
+        #settings-modal, #shop-modal, #custom-alert-modal, #request-modal, #goal-modal, #announcement-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             z-index: 300;
         }
 
-        /* انیمیشن گل نئونی زیبا */
         .goal-popup {
-            font-size: 38px;
+            font-size: 40px;
             font-weight: 900;
             color: #ff007f;
             text-transform: uppercase;
             text-shadow: 0 0 15px #ff007f, 0 0 30px #ff0055, 0 0 45px #fff;
             animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
             background: var(--glass-bg);
-            padding: 20px 40px;
+            padding: 25px 45px;
             border-radius: 20px;
             border: 1px solid var(--glass-border);
-            box-shadow: 0 0 30px rgba(255,0,127,0.4);
-            word-break: break-all;
             text-align: center;
         }
 
@@ -280,15 +355,27 @@
         }
 
         .announcement-popup {
-            font-size: 24px;
+            font-size: 26px;
             font-weight: bold;
             color: #ffcc00;
             text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
             text-align: center;
             background: var(--glass-bg);
-            padding: 20px 30px;
+            padding: 20px 35px;
             border-radius: 20px;
             border: 1px solid var(--glass-border);
+        }
+
+        .confetti {
+            position: absolute;
+            width: 10px; height: 10px;
+            background-color: #ff007f;
+            animation: fall 2s linear infinite;
+            z-index: 350;
+        }
+        @keyframes fall {
+            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(360deg); opacity: 0; }
         }
 
         .match-scorebar {
@@ -307,14 +394,14 @@
 
         .ball {
             position: absolute;
-            width: 18px; height: 18px;
+            width: 20px; height: 20px;
             background: #fff;
             border-radius: 50%;
             border: 2px solid #000;
-            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             transform: translate(-50%, -50%);
-            z-index: 20;
-            box-shadow: 0 0 12px #fff;
+            z-index: 25;
+            box-shadow: 0 0 15px #fff;
         }
 
         #match-log {
@@ -336,14 +423,46 @@
             width: 100%;
             max-width: 400px;
         }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: scale(0.95); }
-            to { opacity: 1; transform: scale(1); }
-        }
     </style>
 </head>
 <body>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playWhistleSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let osc = audioCtx.createOscillator();
+            let gain = audioCtx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(2500, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1800, audioCtx.currentTime + 0.4);
+            gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.4);
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.4);
+        }
+
+        function playGoalSound() {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            let now = audioCtx.currentTime;
+            let notes = [523.25, 659.25, 783.99, 1046.50];
+            notes.forEach((freq, idx) => {
+                let osc = audioCtx.createOscillator();
+                let gain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+                gain.gain.setValueAtTime(0.3, now + idx * 0.15);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + idx * 0.15 + 0.3);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(now + idx * 0.15);
+                osc.stop(now + idx * 0.15 + 0.3);
+            });
+        }
+    </script>
 
     <!-- صفحه ۱: ساخت تیم -->
     <div id="create-team-screen" class="glass-card">
@@ -359,26 +478,17 @@
         <button class="btn" onclick="createTeam()">ذخیره و ورود به بازی</button>
     </div>
 
-    <!-- صفحه ۲: داشبورد اصلی -->
+    <!-- صفحه ۲: داشبورد اصلی جدید -->
     <div id="dashboard-screen">
-        <div class="glass-card dashboard-header" style="max-width: 100%;">
+        <div class="dashboard-top-bar">
             <div>
-                <h3 id="dash-team-name" style="margin:0;">-</h3>
-                <small id="dash-team-power" style="color: var(--accent-pink);">قدرت کلی: ۰</small>
+                <h3 id="dash-team-name" style="margin:0; font-size: 18px;">-</h3>
+                <small id="dash-team-power" style="color: var(--accent-pink);">قدرت کل: ۰</small>
             </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-                <div class="coins-badge">💰 سکه: <span id="player-coins">50</span></div>
-                <select id="formation-select" onchange="updateTactics()">
-                    <option value="4-4-2">ترکیب: ۴-۴-۲</option>
-                    <option value="4-3-3">ترکیب: ۴-۳-۳</option>
-                    <option value="3-5-2">ترکیب: ۳-۵-۲</option>
-                    <option value="5-3-2">ترکیب: ۵-۳-۲</option>
-                </select>
-                <select id="style-select" onchange="updateTactics()">
-                    <option value="balanced">تاکتیک: متعادل</option>
-                    <option value="attacking">تاکتیک: هجومی</option>
-                    <option value="defensive">تاکتیک: دفاعی</option>
-                </select>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div class="coins-badge">💰 <span id="player-coins">50</span></div>
+                <div class="icon-btn" onclick="openSettings()" title="تنظیمات تیم">⚙️</div>
+                <div class="icon-btn" onclick="openShop()" title="فروشگاه">🛒</div>
             </div>
         </div>
 
@@ -387,9 +497,44 @@
             <div class="pitch-circle"></div>
         </div>
 
-        <button class="btn" style="margin-top: 15px; width: 100%; max-width: 400px;" onclick="openLobby()">
-            🌐 ورود به لابی آنلاین (یافتن حریف)
-        </button>
+        <!-- دکمه شروع بازی شیشه‌ای و سه‌بعدی (که لابی آنلاین در آن ادغام شده است) -->
+        <div class="dashboard-actions">
+            <button class="play-3d-btn" onclick="openLobby()">▶ شروع بازی (یافتن حریف)</button>
+        </div>
+    </div>
+
+    <!-- مودال تنظیمات تیم با منوهای کاملاً شیشه‌ای -->
+    <div id="settings-modal">
+        <div class="glass-card">
+            <h3>تنظیمات تیم</h3>
+            <div class="form-group">
+                <label>ترکیب تیم:</label>
+                <select id="formation-select" onchange="updateTactics()">
+                    <option value="4-4-2">۴-۴-۲</option>
+                    <option value="4-3-3">۴-۳-۳</option>
+                    <option value="3-5-2">۳-۵-۲</option>
+                    <option value="5-3-2">۵-۳-۲</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>تاکتیک بازی:</label>
+                <select id="style-select" onchange="updateTactics()">
+                    <option value="balanced">متعادل</option>
+                    <option value="attacking">هجومی</option>
+                    <option value="defensive">دفاعی</option>
+                </select>
+            </div>
+            <button class="btn" onclick="closeSettings()">ذخیره و بازگشت</button>
+        </div>
+    </div>
+
+    <!-- مودال فروشگاه -->
+    <div id="shop-modal">
+        <div class="glass-card">
+            <h3>🛒 فروشگاه مستر لیگ</h3>
+            <p style="color: #ccc; font-size: 14px; margin-bottom: 20px;">به زودی آیتم‌های جذاب برای تقویت تیم اضافه خواهد شد!</p>
+            <button class="btn" onclick="closeShop()">بستن</button>
+        </div>
     </div>
 
     <!-- صفحه ۳: لابی آنلاین -->
@@ -404,7 +549,7 @@
         </div>
     </div>
 
-    <!-- مودال هشدار شیشه‌ای سفارشی (جایگزین Alert مرورگر) -->
+    <!-- مودال هشدار شیشه‌ای -->
     <div id="custom-alert-modal">
         <div class="glass-card" style="max-width: 350px;">
             <h3 style="color: var(--accent-pink);">پیام سیستم</h3>
@@ -439,11 +584,13 @@
     <div id="match-screen">
         <div class="match-scorebar">
             <div id="home-team-display" style="color: #ff0055;">تیم من: ۰</div>
-            <div id="match-timer" style="color: #ffcc00;">نیمه اول | 01:00</div>
+            <div id="match-timer" style="color: #ffcc00;">پیش از شروع | 01:00</div>
             <div id="away-team-display" style="color: #00ccff;">حریف: ۰</div>
         </div>
 
         <div class="pitch-container" id="match-pitch">
+            <div class="goal-post-top"></div>
+            <div class="goal-post-bottom"></div>
             <div class="pitch-line-center"></div>
             <div class="pitch-circle"></div>
             <div id="ball" class="ball" style="left: 50%; top: 50%;"></div>
@@ -451,7 +598,6 @@
 
         <div id="match-log"></div>
 
-        <!-- دکمه ورود به صفحه اصلی پس از پایان بازی -->
         <button id="return-home-btn" class="btn" onclick="returnToDashboardFromMatch()">
             🏠 بازگشت به صفحه اصلی
         </button>
@@ -483,6 +629,7 @@
         let matchRoomId = null;
         let half = 1;
         let timer = 60;
+        let matchStarted = false;
         let score = { home: 0, away: 0 };
         let matchInterval = null;
         let onlineRef = null;
@@ -496,6 +643,22 @@
 
         function closeCustomAlert() {
             document.getElementById('custom-alert-modal').style.display = 'none';
+        }
+
+        function openSettings() {
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function openShop() {
+            document.getElementById('shop-modal').style.display = 'flex';
+        }
+
+        function closeShop() {
+            document.getElementById('shop-modal').style.display = 'none';
         }
 
         window.onload = function() {
@@ -513,8 +676,10 @@
                 document.getElementById('create-team-screen').style.display = 'none';
                 document.getElementById('dashboard-screen').style.display = 'flex';
                 document.getElementById('dash-team-name').innerText = myTeam.name;
-                document.getElementById('dash-team-power').innerText = `قدرت کلی تیم: ${myTeam.totalPower}`;
+                document.getElementById('dash-team-power').innerText = `قدرت کل: ${myTeam.totalPower}`;
                 document.getElementById('player-coins').innerText = myTeam.coins;
+                document.getElementById('formation-select').value = myTeam.formation;
+                document.getElementById('style-select').value = myTeam.style;
                 renderPreviewPitch();
             }
         };
@@ -551,7 +716,8 @@
                     id: i,
                     name: rName,
                     power: pPower,
-                    role: i === 1 ? 'دروازه‌بان' : (i <= 5 ? 'مدافع' : (i <= 9 ? 'هافبک' : 'مهاجم'))
+                    role: i === 1 ? 'دروازه‌بان' : (i <= 5 ? 'مدافع' : (i <= 9 ? 'هافبک' : 'مهاجم')),
+                    card: null
                 });
                 myTeam.totalPower += pPower;
             }
@@ -562,7 +728,7 @@
             document.getElementById('create-team-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'flex';
             document.getElementById('dash-team-name').innerText = myTeam.name;
-            document.getElementById('dash-team-power').innerText = `قدرت کلی تیم: ${myTeam.totalPower}`;
+            document.getElementById('dash-team-power').innerText = `قدرت کل: ${myTeam.totalPower}`;
             document.getElementById('player-coins').innerText = myTeam.coins;
 
             renderPreviewPitch();
@@ -575,14 +741,30 @@
             renderPreviewPitch();
         }
 
-        function getCoordinates(formation, style, isOpponent = false, attackPhase = 0) {
-            let coords = [{ x: 50, y: isOpponent ? 5 + attackPhase : 95 - attackPhase }];
+        function getCoordinates(formation, style, isOpponent = false, attackPhase = 0, isStarted = true) {
+            if (!isStarted) {
+                let coords = [{ x: 50, y: isOpponent ? 8 : 92 }];
+                let formParts = formation.split('-').map(Number);
+                let currentY = isOpponent ? 22 : 78;
+                let stepY = isOpponent ? 15 : -15;
+
+                formParts.forEach(lineCount => {
+                    let stepX = 100 / (lineCount + 1);
+                    for (let i = 1; i <= lineCount; i++) {
+                        coords.push({ x: stepX * i, y: currentY });
+                    }
+                    currentY += stepY;
+                });
+                return coords;
+            }
+
+            let coords = [{ x: 50, y: isOpponent ? 8 + attackPhase : 92 - attackPhase }];
             let formParts = formation.split('-').map(Number);
             let yOffset = style === 'attacking' ? -6 : (style === 'defensive' ? 6 : 0);
             if(isOpponent) yOffset = -yOffset;
 
-            let currentY = isOpponent ? 22 + attackPhase : 78 - attackPhase;
-            let stepY = isOpponent ? 24 : -24;
+            let currentY = isOpponent ? 25 + attackPhase : 75 - attackPhase;
+            let stepY = isOpponent ? 18 : -18;
 
             formParts.forEach(lineCount => {
                 let stepX = 100 / (lineCount + 1);
@@ -597,7 +779,7 @@
         function renderPreviewPitch() {
             const pitch = document.getElementById('preview-pitch');
             pitch.querySelectorAll('.glass-kit').forEach(el => el.remove());
-            let coords = getCoordinates(myTeam.formation, myTeam.style);
+            let coords = getCoordinates(myTeam.formation, myTeam.style, false, 0, true);
 
             myTeam.players.forEach((p, idx) => {
                 let kit = document.createElement('div');
@@ -605,7 +787,7 @@
                 kit.style.borderColor = myTeam.color;
                 kit.style.left = `${coords[idx].x}%`;
                 kit.style.top = `${coords[idx].y}%`;
-                kit.innerHTML = `<span>#${p.id}</span><span class="kit-name">${p.name.split(' ')[0]}</span><span class="kit-power">${p.power}</span>`;
+                kit.innerHTML = `<span>#${p.id}</span><span class="kit-name">${p.name.split(' ')[0]}</span>`;
                 pitch.appendChild(kit);
             });
         }
@@ -663,7 +845,7 @@
 
         function sendChallenge(targetPlayer) {
             matchRoomId = 'room_' + Math.min(myTeam.id, targetPlayer.id) + '_' + Math.max(myTeam.id, targetPlayer.id);
-            db.ref('lobby/requests/' + targetPlayer.id).set({ challenger: myTeam, roomId: matchRoomId });
+            db.ref('lobby/requests/' + targetPlayer.id).set({ challenger: myTeam, roomId: matchRoomId, hostId: myTeam.id });
             showCustomAlert(`درخواست مسابقه به تیم "${targetPlayer.name}" ارسال شد.`);
 
             db.ref('lobby/responses/' + myTeam.id).on('value', (snap) => {
@@ -707,26 +889,38 @@
             document.getElementById('home-team-display').innerText = `${myTeam.name}: ۰`;
             document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ۰`;
 
-            logEvent(`مسابقه هوشمند بین ${myTeam.name} و ${opponentTeam.name} آغاز شد!`);
-            renderMatchPitch(0);
+            matchStarted = false;
+            logEvent(`تیم‌ها در زمین مستقر شدند. آماده برای سوت آغاز مسابقه...`);
+            renderMatchPitchForMe(0, 50, 50, false);
 
             if (isHost) {
-                matchInterval = setInterval(gameLoopHost, 1500);
+                score = { home: 0, away: 0 };
+                timer = 60;
+                half = 1;
+                
+                setTimeout(() => {
+                    playWhistleSound();
+                    matchStarted = true;
+                    showAnnouncement("سوت آغاز مسابقه به صدا درآمد!");
+                    matchInterval = setInterval(gameLoopHost, 1500);
+                }, 3000);
+
             } else {
                 db.ref('matches/' + matchRoomId).on('value', (snapshot) => {
                     const gameState = snapshot.val();
                     if (gameState) {
-                        updateMatchUI(gameState);
+                        matchStarted = gameState.matchStarted;
+                        updateMatchUIForMe(gameState);
                     }
                 });
             }
         }
 
-        function renderMatchPitch(attackPhase = 0) {
+        function renderMatchPitchForMe(attackPhase, ballX, ballY, isStarted) {
             const pitch = document.getElementById('match-pitch');
             pitch.querySelectorAll('.glass-kit').forEach(el => el.remove());
 
-            let myCoords = getCoordinates(myTeam.formation, myTeam.style, half === 2, attackPhase);
+            let myCoords = getCoordinates(myTeam.formation, myTeam.style, half === 2, attackPhase, isStarted);
             myTeam.players.forEach((p, idx) => {
                 let kit = document.createElement('div');
                 kit.className = 'glass-kit';
@@ -734,10 +928,21 @@
                 kit.style.left = `${myCoords[idx].x}%`;
                 kit.style.top = `${myCoords[idx].y}%`;
                 kit.innerHTML = `<span>#${p.id}</span><span class="kit-name">${p.name.split(' ')[0]}</span>`;
+                
+                if (p.card === 'yellow') {
+                    let card = document.createElement('div');
+                    card.className = 'card-badge yellow-card';
+                    kit.appendChild(card);
+                } else if (p.card === 'red') {
+                    let card = document.createElement('div');
+                    card.className = 'card-badge red-card';
+                    kit.appendChild(card);
+                }
+
                 pitch.appendChild(kit);
             });
 
-            let oppCoords = getCoordinates(opponentTeam.formation, opponentTeam.style, half === 1, -attackPhase);
+            let oppCoords = getCoordinates(opponentTeam.formation, opponentTeam.style, half === 1, -attackPhase, isStarted);
             opponentTeam.players.forEach((p, idx) => {
                 let kit = document.createElement('div');
                 kit.className = 'glass-kit';
@@ -745,36 +950,55 @@
                 kit.style.left = `${oppCoords[idx].x}%`;
                 kit.style.top = `${oppCoords[idx].y}%`;
                 kit.innerHTML = `<span>#${p.id}</span><span class="kit-name">${p.name.split(' ')[0]}</span>`;
+
+                if (p.card === 'yellow') {
+                    let card = document.createElement('div');
+                    card.className = 'card-badge yellow-card';
+                    kit.appendChild(card);
+                } else if (p.card === 'red') {
+                    let card = document.createElement('div');
+                    card.className = 'card-badge red-card';
+                    kit.appendChild(card);
+                }
+
                 pitch.appendChild(kit);
             });
+
+            let ball = document.getElementById('ball');
+            let adjustedBallY = isHost ? ballY : (100 - ballY);
+            ball.style.left = `${ballX}%`;
+            ball.style.top = `${adjustedBallY}%`;
         }
 
         function gameLoopHost() {
             timer--;
-            let attackPhase = Math.floor(Math.random() * 15) - 7;
+            let attackPhase = Math.floor(Math.random() * 18) - 9;
             let ballX = Math.floor(Math.random() * 70 + 15);
             let ballY = Math.floor(Math.random() * 70 + 15);
 
             let eventText = null;
             let goalScored = null;
+            let cardUpdate = null;
 
             if (timer % 7 === 0) {
                 let eventType = Math.random();
                 if (eventType < 0.20) {
                     let isYellow = Math.random() > 0.3;
-                    let teamName = Math.random() > 0.5 ? myTeam.name : opponentTeam.name;
-                    eventText = `⚠️ خطای بازیکن ${teamName} و کارت ${isYellow ? 'زرد 🟟' : 'قرمز 🟥'}.`;
+                    let pIdx = Math.floor(Math.random() * myTeam.players.length);
+                    myTeam.players[pIdx].card = isYellow ? 'yellow' : 'red';
+                    cardUpdate = { team: 'home', playerIndex: pIdx, cardType: myTeam.players[pIdx].card };
+                    eventText = `⚠️ خطای بازیکن ${myTeam.players[pIdx].name} و دریافت کارت ${isYellow ? 'زرد 🟟' : 'قرمز 🟥'}.`;
                 } else if (eventType < 0.35) {
                     eventText = `🚩 پرچم کمک داور بالا رفت! اعلام آفساید.`;
                 } else if (eventType < 0.55) {
                     eventText = `🛡️ تکل موفق و توپ‌گیری عالی توسط خط دفاعی!`;
                 } else if (eventType < 0.70) {
-                    eventText = `⚡ حرکت تکنیکی و شوت سنگین به سمت دروازه!`;
-                } else if (eventType < 0.82) {
+                    eventText = `⚡ حرکت تکنیکی و شوت سنگین به سمت دروازه حریف!`;
+                } else if (eventType < 0.81) {
                     score.home++;
                     goalScored = 'home';
                     eventText = `⚽️ گل فوق‌العاده برای ${myTeam.name}!`;
-                } else if (eventType < 0.94) {
+                } else if (eventType < 0.92) {
                     score.away++;
                     goalScored = 'away';
                     eventText = `⚽️ گل برای حریف (${opponentTeam.name})!`;
@@ -789,7 +1013,7 @@
                 clearInterval(matchInterval);
                 if (score.home > score.away) {
                     myTeam.coins += 15;
-                    eventText = `🏁 پایان مسابقه! شما برنده شدید 🏆 (+۱۵ سکه)`;
+                    eventText = `🏁 پایان مسابقه! تبریک! شما برنده شدید 🏆 (+۱۵ سکه)`;
                 } else if (score.home < score.away) {
                     myTeam.coins = Math.max(0, myTeam.coins - 5);
                     eventText = `🏁 پایان مسابقه! شکست خوردید ❌ (-۵ سکه)`;
@@ -799,62 +1023,66 @@
                 saveCoins();
             }
 
-            db.ref('matches/' + matchRoomId).set({
+            const stateData = {
                 timer: timer,
                 half: half,
-                scoreHome: score.home,
-                scoreAway: score.away,
+                hostScore: score.home,
+                guestScore: score.away,
                 ballX: ballX,
                 ballY: ballY,
                 attackPhase: attackPhase,
                 event: eventText,
                 goal: goalScored,
+                matchStarted: matchStarted,
+                cardUpdate: cardUpdate,
                 isFinished: (timer <= 0 && half === 2)
-            });
+            };
 
-            updateMatchUI({
-                timer: timer,
-                half: half,
-                scoreHome: score.home,
-                scoreAway: score.away,
-                ballX: ballX,
-                ballY: ballY,
-                attackPhase: attackPhase,
-                event: eventText,
-                goal: goalScored,
-                isFinished: (timer <= 0 && half === 2)
-            });
+            db.ref('matches/' + matchRoomId).set(stateData);
+            updateMatchUIForHost(stateData);
         }
 
-        function updateMatchUI(state) {
+        function updateMatchUIForHost(state) {
             let minutes = Math.floor(state.timer / 60).toString().padStart(2, '0');
             let seconds = (state.timer % 60).toString().padStart(2, '0');
             document.getElementById('match-timer').innerText = `نیمه ${state.half === 1 ? 'اول' : 'دوم'} | ${minutes}:${seconds}`;
 
-            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${state.scoreHome}`;
-            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${state.scoreAway}`;
+            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${state.hostScore}`;
+            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${state.guestScore}`;
 
-            let ball = document.getElementById('ball');
-            ball.style.left = `${state.ballX}%`;
-            ball.style.top = `${state.ballY}%`;
-
-            renderMatchPitch(state.attackPhase || 0);
-
-            if (state.event) {
-                logEvent(state.event);
+            if (state.cardUpdate && state.cardUpdate.team === 'home') {
+                myTeam.players[state.cardUpdate.playerIndex].card = state.cardUpdate.cardType;
             }
 
+            renderMatchPitchForMe(state.attackPhase || 0, state.ballX, state.ballY, state.matchStarted);
+
+            if (state.event) logEvent(state.event);
             if (state.goal) {
+                playGoalSound();
                 triggerGoalAnimation();
             }
-
-            if (state.half === 2 && state.timer === 60 && state.event && state.event.includes('نیمه اول')) {
-                showAnnouncement("نیمه دوم آغاز شد");
-            }
-
             if (state.isFinished) {
-                showAnnouncement("پایان مسابقه!");
-                document.getElementById('return-home-btn').style.display = 'block';
+                handleMatchEnd(state.hostScore, state.guestScore);
+            }
+        }
+
+        function updateMatchUIForMe(state) {
+            let minutes = Math.floor(state.timer / 60).toString().padStart(2, '0');
+            let seconds = (state.timer % 60).toString().padStart(2, '0');
+            document.getElementById('match-timer').innerText = `نیمه ${state.half === 1 ? 'اول' : 'دوم'} | ${minutes}:${seconds}`;
+
+            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${state.guestScore}`;
+            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${state.hostScore}`;
+
+            renderMatchPitchForMe(state.attackPhase || 0, state.ballX, state.ballY, state.matchStarted);
+
+            if (state.event) logEvent(state.event);
+            if (state.goal) {
+                playGoalSound();
+                triggerGoalAnimation();
+            }
+            if (state.isFinished) {
+                handleMatchEnd(state.guestScore, state.hostScore);
             }
         }
 
@@ -869,6 +1097,32 @@
             document.getElementById('announcement-text').innerText = text;
             modal.style.display = 'flex';
             setTimeout(() => { modal.style.display = 'none'; }, 2500);
+        }
+
+        function triggerConfetti() {
+            for (let i = 0; i < 50; i++) {
+                let conf = document.createElement('div');
+                conf.className = 'confetti';
+                conf.style.left = Math.random() * 100 + 'vw';
+                conf.style.backgroundColor = ['#ff007f', '#ffd700', '#00ffcc', '#ffffff'][Math.floor(Math.random() * 4)];
+                conf.style.animationDuration = (Math.random() * 1.5 + 1) + 's';
+                document.body.appendChild(conf);
+                setTimeout(() => conf.remove(), 3000);
+            }
+        }
+
+        function handleMatchEnd(myFinalScore, oppFinalScore) {
+            showAnnouncement("پایان مسابقه!");
+            document.getElementById('return-home-btn').style.display = 'block';
+
+            if (myFinalScore > oppFinalScore) {
+                triggerConfetti();
+                showCustomAlert("🏆 تبریک! شما برنده مسابقه شدید و ۱۵ سکه جایزه گرفتید!");
+            } else if (myFinalScore < oppFinalScore) {
+                showCustomAlert("❌ متأسفانه شکست خوردید! ۵ سکه از شما کسر شد.");
+            } else {
+                showCustomAlert("🤝 بازی با نتیجه مساوی به پایان رسید.");
+            }
         }
 
         function logEvent(msg) {
