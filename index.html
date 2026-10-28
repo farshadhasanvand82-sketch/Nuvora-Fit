@@ -3,1796 +3,556 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>zeucball - نتایج زنده فوتبال</title>
-    <!-- اضافه کردن کتابخانه Supabase Client -->
+    <title>فوتبال آنلاین - مستر لیگ</title>
+    <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            --pitch-green-1: #0e3b1c;
-            --pitch-green-2: #072210;
-            --card-glass: rgba(10, 35, 18, 0.75);
-            --border-glass: rgba(0, 255, 102, 0.35);
-            --border-hover: rgba(0, 255, 102, 0.9);
-            --neon-green: #00ff66;
-            --live-red: #ff334b;
-            --text-main: #f0fdf4;
-            --text-sub: #86efac;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(0, 255, 102, 0.15) 0%, transparent 70%), linear-gradient(135deg, var(--pitch-green-2) 0%, var(--pitch-green-1) 100%);
-            --glow-shadow: 0 0 20px rgba(0, 255, 102, 0.4);
-        }
-
-        .app-container.theme-day {
-            --pitch-green-1: #f1f5f9;
-            --pitch-green-2: #cbd5e1;
-            --card-glass: rgba(255, 255, 255, 0.9);
-            --border-glass: rgba(59, 130, 246, 0.4);
-            --neon-green: #2563eb;
-            --text-main: #0f172a;
-            --text-sub: #334155;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.15) 0%, transparent 70%), linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
-            --glow-shadow: 0 0 20px rgba(59, 130, 246, 0.25);
-        }
-
-        .app-container.theme-pink {
-            --pitch-green-1: #fbcfe8; --pitch-green-2: #be185d;
-            --card-glass: rgba(255, 182, 193, 0.45); --border-glass: rgba(244, 114, 182, 0.6);
-            --neon-green: #f472b6; --text-main: #ffffff; --text-sub: #fbcfe8;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.2) 0%, transparent 70%), linear-gradient(135deg, #831843 0%, #be185d 100%);
-            --glow-shadow: 0 0 20px rgba(244, 114, 182, 0.5);
-        }
-
-        .app-container.theme-esteghlal {
-            --pitch-green-1: #003366; --pitch-green-2: #001226;
-            --card-glass: rgba(0, 51, 102, 0.55); --border-glass: rgba(0, 191, 255, 0.6);
-            --neon-green: #00d2ff; --text-main: #ffffff; --text-sub: #99d6ff;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.25) 0%, transparent 70%), linear-gradient(135deg, #000c1a 0%, #002b5c 100%);
-            --glow-shadow: 0 0 20px rgba(0, 210, 255, 0.5);
-        }
-
-        .app-container.theme-persepolis {
-            --pitch-green-1: #660000; --pitch-green-2: #260000;
-            --card-glass: rgba(102, 0, 0, 0.55); --border-glass: rgba(255, 215, 0, 0.6);
-            --neon-green: #ffd700; --text-main: #ffffff; --text-sub: #ffb3b3;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.2) 0%, transparent 70%), linear-gradient(135deg, #1a0000 0%, #5c0000 100%);
-            --glow-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
-        }
-
-        .app-container.theme-zlatan {
-            --pitch-green-1: #1a1a1a; --pitch-green-2: #050505;
-            --card-glass: rgba(20, 20, 20, 0.75); --border-glass: rgba(212, 175, 55, 0.6);
-            --neon-green: #d4af37; --text-main: #ffffff; --text-sub: #e6c667;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(212, 175, 55, 0.25) 0%, transparent 70%), linear-gradient(135deg, #050505 0%, #1f1f1f 100%);
-            --glow-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-        }
-
-        .app-container.theme-dark_scary {
-            --pitch-green-1: #200000; --pitch-green-2: #050000;
-            --card-glass: rgba(25, 0, 0, 0.8); --border-glass: rgba(255, 0, 51, 0.6);
-            --neon-green: #ff0033; --text-main: #ffffff; --text-sub: #ff8095;
-            --bg-gradient: radial-gradient(circle at 50% 50%, rgba(255, 0, 51, 0.25) 0%, transparent 70%), linear-gradient(135deg, #050000 0%, #2b0000 100%);
-            --glow-shadow: 0 0 20px rgba(255, 0, 51, 0.6);
+            --primary-purple: #7b2cbf;
+            --accent-pink: #ff007f;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
         }
 
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             user-select: none;
         }
 
         body {
-            background-color: #020503;
-            color: var(--text-main);
+            background: linear-gradient(135deg, #0f0c20, #1a103c, #2b1055);
+            color: #fff;
             min-height: 100vh;
-            width: 100vw;
-            overflow: hidden;
             display: flex;
             justify-content: center;
             align-items: center;
+            overflow-x: hidden;
         }
 
-        .app-container {
-            width: 100vw;
-            height: 100vh;
-            background: var(--bg-gradient);
-            backdrop-filter: blur(30px);
-            -webkit-backdrop-filter: blur(30px);
-            border: 1px solid var(--border-glass);
-            display: flex;
-            flex-direction: column;
-            box-shadow: var(--glow-shadow);
-            position: relative;
-            transition: all 0.5s ease;
-        }
-
-        #topNotificationBanner {
-            position: absolute;
-            top: 15px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-100px);
-            background: rgba(10, 35, 18, 0.92);
-            backdrop-filter: blur(20px);
-            border: 1px solid var(--neon-green);
-            color: var(--text-main);
-            padding: 12px 25px;
-            border-radius: 30px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            z-index: 99999;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px var(--neon-green);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            text-align: center;
-            max-width: 90%;
-        }
-
-        #topNotificationBanner.show {
-            transform: translateX(-50%) translateY(0);
-        }
-
-        #topNotificationBanner.red {
-            background: rgba(255, 51, 75, 0.95);
-            border-color: #ff334b;
-            color: #ffffff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px #ff334b;
-        }
-
-        #topNotificationBanner.green {
-            background: rgba(0, 255, 102, 0.95);
-            border-color: #00ff66;
-            color: #030704;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 15px #00ff66;
-        }
-
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 22px;
-            background: rgba(0, 0, 0, 0.65);
-            border-bottom: 1px solid var(--border-glass);
-            z-index: 50;
-        }
-
-        .brand {
-            font-size: 1.4rem;
-            font-weight: 900;
-            color: var(--neon-green);
-            text-shadow: 0 0 15px var(--neon-green);
-            letter-spacing: 1px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .coin-badge {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border-glass);
-            padding: 6px 14px;
+        /* --- افکت شیشه‌ای (Glassmorphism UI) --- */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
             border-radius: 20px;
-            font-size: 0.88rem;
-            font-weight: bold;
-            color: var(--neon-green);
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            width: 90%;
+            max-width: 450px;
+            text-align: center;
+            animation: fadeIn 0.5s ease-in-out;
         }
 
-        .cart-icon {
-            background: rgba(0, 0, 0, 0.6);
-            border: 1px solid var(--border-glass);
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.3s;
+        h2, h3 {
+            margin-bottom: 20px;
+            font-weight: 600;
+            letter-spacing: 1px;
         }
 
-        .cart-icon:hover {
-            border-color: var(--neon-green);
-            transform: scale(1.1);
+        .form-group {
+            margin-bottom: 18px;
+            text-align: right;
         }
 
-        .controls {
-            display: flex;
-            gap: 10px;
-            padding: 10px 18px;
-            background: rgba(0, 0, 0, 0.7);
-            border-bottom: 1px solid var(--border-glass);
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            position: relative;
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #d1d1d1;
         }
 
-        .custom-input {
-            background: rgba(10, 30, 15, 0.85);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            padding: 8px 12px;
+        input[type="text"], select {
+            width: 100%;
+            padding: 12px 15px;
             border-radius: 12px;
-            font-size: 0.85rem;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.3);
+            color: #fff;
             outline: none;
-            color-scheme: dark;
-            cursor: pointer;
+            font-size: 15px;
         }
 
-        .custom-dropdown {
-            position: relative;
-            flex: 1;
-            max-width: 220px;
-            min-width: 140px;
-            z-index: 999;
-        }
-
-        .dropdown-select-btn {
-            background: rgba(10, 30, 15, 0.85);
-            border: 1px solid var(--border-glass);
-            color: var(--text-main);
-            padding: 8px 12px;
+        input[type="color"] {
+            width: 100%;
+            height: 45px;
             border-radius: 12px;
-            font-size: 0.85rem;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.3);
             cursor: pointer;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(45deg, var(--primary-purple), var(--accent-pink));
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 0, 127, 0.3);
+            margin-top: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 0, 127, 0.5);
+        }
+
+        /* --- صفحه داشبورد و تنظیمات تیم --- */
+        #dashboard-screen, #match-screen {
+            display: none;
+            width: 100%;
+            max-width: 900px;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            white-space: nowrap;
-        }
-
-        .dropdown-list {
-            position: absolute;
-            top: 115%;
-            right: 0;
             width: 100%;
-            max-height: 250px;
-            overflow-y: auto;
-            background: rgba(4, 18, 9, 0.98);
-            backdrop-filter: blur(25px);
-            border: 1px solid var(--neon-green);
-            border-radius: 12px;
-            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.95);
-            display: none;
-            z-index: 999999;
+            margin-bottom: 15px;
+            padding: 15px 25px;
         }
 
-        .dropdown-list.open { display: block; }
-
-        .dropdown-item {
-            padding: 10px 14px;
-            font-size: 0.85rem;
-            color: var(--text-main);
-            cursor: pointer;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        .pitch-container {
+            position: relative;
+            width: 100%;
+            height: 500px;
+            background: repeating-linear-gradient(
+                0deg,
+                #2e7d32,
+                #2e7d32 40px,
+                #256327 40px,
+                #256327 80px
+            );
+            border: 4px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
 
-        .dropdown-item:hover {
-            background: rgba(0, 255, 102, 0.25);
-            color: var(--neon-green);
+        /* خطوط زمین فوتبال */
+        .pitch-line-center {
+            position: absolute;
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.6);
         }
 
-        .btn-action {
-            background: linear-gradient(135deg, rgba(5, 150, 105, 0.9) 0%, rgba(4, 120, 87, 0.9) 100%);
-            border: 1px solid var(--border-glass);
-            color: white;
-            padding: 8px 16px;
-            border-radius: 12px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 0.85rem;
-            white-space: nowrap;
+        .pitch-circle {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 100px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
         }
 
-        .nav-tabs {
+        /* کیت (بازیکنان) */
+        .player-kit {
+            position: absolute;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #fff;
             display: flex;
-            background: rgba(0, 0, 0, 0.5);
-            padding: 0 15px;
-            border-bottom: 1px solid var(--border-glass);
-            gap: 8px;
-            overflow-x: auto;
+            justify-content: center;
+            align-items: center;
+            font-size: 11px;
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 0 3px #000;
+            transition: all 0.5s ease;
+            transform: translate(-50%, -50%);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+        }
+
+        .player-power {
+            position: absolute;
+            bottom: -15px;
+            font-size: 9px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 1px 4px;
+            border-radius: 4px;
+        }
+
+        /* --- صفحه بازی --- */
+        .match-scorebar {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .ball {
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #fff;
+            border-radius: 50%;
+            border: 2px solid #000;
+            transition: all 0.4s ease;
+            transform: translate(-50%, -50%);
             z-index: 10;
         }
 
-        .tab-btn {
-            padding: 11px 18px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-bottom: none;
-            border-radius: 12px 12px 0 0;
-            color: var(--text-sub);
-            font-weight: 600;
-            font-size: 0.85rem;
-            cursor: pointer;
-            position: relative;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .tab-btn.active {
-            background: rgba(0, 255, 102, 0.15);
-            border-color: var(--border-glass);
-            color: var(--neon-green);
-        }
-
-        .tab-btn.active::after {
-            content: '';
-            position: absolute;
-            bottom: 0; right: 0; left: 0;
-            height: 3px;
-            background: var(--neon-green);
-            border-radius: 3px 3px 0 0;
-        }
-
-        .content-area {
-            flex: 1;
-            padding: 18px 22px;
-            overflow-y: auto;
-            z-index: 5;
-        }
-
-        .matches-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-width: 950px;
-            margin: 0 auto;
-        }
-
-        .match-card {
-            background: var(--card-glass);
-            border: 1px solid var(--border-glass);
-            border-radius: 16px;
-            padding: 15px 20px;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-        }
-
-        .card-top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding-bottom: 6px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .league-name-tag {
-            font-size: 0.8rem;
-            color: var(--neon-green);
-            font-weight: 700;
-        }
-
-        .match-info {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .team {
-            flex: 1;
-            font-weight: 600;
-            font-size: 0.95rem;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: var(--text-main);
-        }
-
-        .team.home { text-align: left; }
-        .team.away { text-align: right; }
-
-        .score-box {
-            background: rgba(0, 0, 0, 0.85);
-            border: 1px solid var(--border-glass);
-            padding: 6px 16px;
-            border-radius: 12px;
-            font-size: 1.2rem;
-            font-weight: 900;
-            letter-spacing: 2px;
-            color: var(--neon-green);
-            min-width: 85px;
-            text-align: center;
-            flex-shrink: 0;
-        }
-
-        .modal-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(15px);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 10000;
-        }
-
-        .modal-content {
-            background: rgba(10, 25, 15, 0.95);
-            border: 1px solid var(--neon-green);
-            border-radius: 20px;
-            width: 90%;
-            max-width: 450px;
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-            padding: 20px;
-            box-shadow: var(--glow-shadow);
-            text-align: center;
-            overflow: hidden;
-        }
-
-        .modal-body-scroll {
-            flex: 1;
-            overflow-y: auto;
-            max-height: 65vh;
-            padding-left: 4px;
-        }
-
-        .modal-title {
-            font-size: 1.2rem;
-            color: var(--neon-green);
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .modal-btn {
-            background: var(--neon-green);
-            color: #030704;
-            border: none;
-            padding: 10px 24px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 0.9rem;
-        }
-
-        .theme-card {
-            background: rgba(0, 0, 0, 0.55);
-            border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 14px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .theme-info h4 { color: var(--text-main); margin-bottom: 4px; text-align: right; }
-        .theme-info p { font-size: 0.8rem; color: var(--text-sub); text-align: right; }
-        .theme-actions { display: flex; gap: 6px; }
-
-        .shop-menu-item {
-            background: rgba(0, 255, 102, 0.1);
-            border: 1px solid var(--border-glass);
-            border-radius: 14px;
-            padding: 16px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .shop-menu-item:hover {
-            border-color: var(--neon-green);
-            background: rgba(0, 255, 102, 0.2);
-        }
-
-        .btn-buy, .btn-preview, .btn-select {
-            padding: 6px 12px;
-            border-radius: 8px;
-            font-size: 0.78rem;
-            cursor: pointer;
-            font-weight: bold;
-            border: none;
-        }
-
-        .btn-buy { background: #eab308; color: #000; }
-        .btn-preview { background: #3b82f6; color: #fff; }
-        .btn-select { background: #22c55e; color: #fff; }
-        .btn-owned { background: rgba(255,255,255,0.2); color: #aaa; cursor: default; }
-
-        .loading, .empty-msg {
-            text-align: center; padding: 60px 0; color: var(--text-sub); font-size: 1rem;
-        }
-
-        .game-tab-btn {
-            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(14, 165, 233, 0.4));
-            border: 1px solid rgba(56, 189, 248, 0.6) !important;
-            color: #38bdf8 !important;
-            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-            text-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
-        }
-        .game-tab-btn.active {
-            background: linear-gradient(135deg, #0ea5e9, #0284c7) !important;
-            color: #ffffff !important;
-            border-color: #38bdf8 !important;
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.8);
-        }
-
-        .game-setup-card {
-            background: rgba(10, 35, 18, 0.85);
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            border-radius: 20px;
-            padding: 20px;
-            max-width: 520px;
-            margin: 10px auto;
-            backdrop-filter: blur(20px);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.6), 0 0 20px rgba(56, 189, 248, 0.2);
-            text-align: center;
-        }
-
-        .player-list-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-            margin-bottom: 15px;
-            text-align: right;
-            padding: 5px;
-        }
-
-        .player-mini-card {
-            background: rgba(0,0,0,0.4);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            border-radius: 10px;
-            padding: 8px 10px;
-            font-size: 0.8rem;
-        }
-
-        /* گزینه‌های انتخاب رنگ کیت */
-        .kit-color-grid {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .kit-color-option {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.3s;
-        }
-        .kit-color-option.selected {
-            border-color: #ffffff;
-            transform: scale(1.15);
-            box-shadow: 0 0 10px #ffffff;
-        }
-
-        /* زمین چمن شیشه‌ای و گرافیکی سه‌بعدی متحرک */
-        .match-live-arena {
+        #match-log {
             width: 100%;
-            max-width: 540px;
-            height: 520px;
-            background: radial-gradient(circle at 50% 50%, rgba(14, 101, 52, 0.9) 0%, rgba(7, 45, 22, 0.95) 100%), linear-gradient(180deg, #166534 0%, #14532d 100%);
-            border: 2px solid rgba(56, 189, 248, 0.6);
-            border-radius: 20px;
-            margin: 0 auto 15px auto;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 15px 40px rgba(0,0,0,0.8), inset 0 0 30px rgba(0,255,102,0.2);
-            backdrop-filter: blur(10px);
-        }
-
-        .pitch-line-center {
-            position: absolute;
-            top: 50%; left: 0; width: 100%; height: 2px;
-            background: rgba(255, 255, 255, 0.4);
-        }
-        .pitch-circle-center {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 90px; height: 90px;
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 50%;
-        }
-
-        .smart-player-node {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
-        }
-
-        .player-kit-icon {
-            font-size: 1.8rem;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));
-        }
-
-        .player-name-tag {
-            background: rgba(0, 0, 0, 0.7);
-            border: 1px solid rgba(56, 189, 248, 0.5);
-            color: #ffffff;
-            font-size: 0.68rem;
-            padding: 2px 6px;
-            border-radius: 6px;
-            white-space: nowrap;
-            margin-top: -3px;
-        }
-
-        .smart-ball {
-            position: absolute;
-            transform: translate(-50%, -50%);
-            font-size: 1.6rem;
-            filter: drop-shadow(0 0 10px #00ff66);
-            transition: all 0.5s ease-in-out;
-            z-index: 20;
-        }
-
-        .match-commentary-box {
-            background: rgba(10, 25, 15, 0.85);
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            border-radius: 14px;
-            padding: 12px 16px;
-            max-width: 540px;
-            margin: 0 auto;
+            height: 80px;
+            background: rgba(0, 0, 0, 0.5);
+            margin-top: 10px;
+            border-radius: 10px;
+            padding: 10px;
+            overflow-y: auto;
+            font-size: 13px;
             text-align: right;
-            backdrop-filter: blur(15px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+            border: 1px solid var(--glass-border);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
         }
     </style>
 </head>
 <body>
 
-<div id="topNotificationBanner">📢 اعلان سیستم</div>
-
-<div class="app-container" id="appContainer">
-    <header>
-        <div class="brand">⚽ zeucball</div>
-        <div class="header-left">
-            <div class="coin-badge">
-                🪙 <span id="coinCount">50</span> سکه
-            </div>
-            <div class="cart-icon" onclick="openShopModal()">🛒</div>
+    <!-- ۱. منوی اولیه ساخت تیم (Glassmorphism) -->
+    <div id="create-team-screen" class="glass-card">
+        <h2>ساخت تیم جدید</h2>
+        <div class="form-group">
+            <label>نام تیم:</label>
+            <input type="text" id="team-name-input" value="تیم ستاره‌ها" maxlength="15">
         </div>
-    </header>
-
-    <div class="controls" id="topControlsBar">
-        <input type="date" id="matchDate" class="custom-input" onchange="fetchMatchesByDate()">
-        
-        <div class="custom-dropdown" id="customDropdown">
-            <div class="dropdown-select-btn" onclick="toggleDropdown()">
-                <span id="selectedLeagueLabel">همه لیگ‌ها</span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
-            </div>
-            <div class="dropdown-list" id="dropdownList">
-                <div class="dropdown-item" onclick="selectLeague('ALL', 'همه لیگ‌ها')">همه لیگ‌ها</div>
-            </div>
+        <div class="form-group">
+            <label>رنگ لباس (کیت):</label>
+            <input type="color" id="team-color-input" value="#ff0055">
         </div>
-
-        <button class="btn-action" onclick="fetchMatchesByDate()">بروزرسانی</button>
+        <button class="btn" onclick="createTeam()">ایجاد تیم و ورود</button>
     </div>
 
-    <div class="nav-tabs">
-        <button class="tab-btn" onclick="switchStatusFilter('ALL', this)">همه بازی‌ها</button>
-        <button class="tab-btn active" onclick="switchStatusFilter('LIVE', this)">بازی‌های زنده</button>
-        <button class="tab-btn" onclick="switchStatusFilter('UPCOMING', this)">بازی‌های آینده</button>
-        <button class="tab-btn" onclick="switchStatusFilter('FINISHED', this)">پایان‌یافته</button>
-        <button class="tab-btn" onclick="switchStatusFilter('QUMAR', this)" style="color: #f43f5e;">🎰 قمار</button>
-        <button class="tab-btn game-tab-btn" onclick="switchStatusFilter('GAME', this)">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="filter: drop-shadow(0 0 6px #38bdf8);"><circle cx="12" cy="12" r="10"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/><path d="M2 12h20"/></svg>
-            GAME
+    <!-- ۲. داشبورد و تنظیمات تیم -->
+    <div id="dashboard-screen">
+        <div class="glass-card dashboard-header">
+            <div>
+                <h3 id="dash-team-name" style="margin:0;">-</h3>
+                <small id="dash-team-power" style="color: #ff007f;">قدرت کلی: ۰</small>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <select id="formation-select" onchange="updateTactics()">
+                    <option value="4-4-2">ترکیب: ۴-۴-۲</option>
+                    <option value="4-3-3">ترکیب: ۴-۳-۳</option>
+                    <option value="3-5-2">ترکیب: ۳-۵-۲</option>
+                    <option value="5-3-2">ترکیب: ۵-۳-۲</option>
+                </select>
+                <select id="style-select" onchange="updateTactics()">
+                    <option value="balanced">تاکتیک: متعادل</option>
+                    <option value="attacking">تاکتیک: هجومی</option>
+                    <option value="defensive">تاکتیک: دفاعی</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- پیش‌نمایش زمین چمن -->
+        <div class="pitch-container" id="preview-pitch">
+            <div class="pitch-line-center"></div>
+            <div class="pitch-circle"></div>
+        </div>
+
+        <button class="btn" style="margin-top: 15px; width: 100%; max-width: 400px;" onclick="startMatchmaking()">
+            ⚡ جستجوی حریف آنلاین (Matchmaking)
         </button>
     </div>
 
-    <div class="content-area">
-        <div id="content">
-            <div class="loading">در حال بارگذاری زمین مسابقه zeucball...</div>
-        </div>
-    </div>
-</div>
-
-<div class="modal-overlay" id="customAlertModal">
-    <div class="modal-content">
-        <div class="modal-title" id="alertModalTitle">پیام سیستم</div>
-        <div class="modal-desc" id="alertModalDesc">متن پیام اینجا قرار می‌گیرد.</div>
-        <button class="modal-btn" onclick="closeCustomAlert()">متوجه شدم</button>
-    </div>
-</div>
-
-<!-- فروشگاه و پوشه تم‌ها -->
-<div class="modal-overlay" id="shopModal">
-    <div class="modal-content" style="max-width: 450px;">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; flex-shrink: 0;">
-            <div class="modal-title" id="shopModalTitle" style="margin:0;">🛒 منوی فروشگاه</div>
-            <button onclick="closeShopModal()" style="background:none; border:none; color:#fff; font-size:1.5rem; cursor:pointer;">×</button>
+    <!-- ۳. صفحه بازی آنلاین -->
+    <div id="match-screen">
+        <div class="match-scorebar">
+            <div id="home-team-display" style="color: #ff0055;">تیم من: ۰</div>
+            <div id="match-timer" style="color: #ffcc00;">نیمه اول | 01:00</div>
+            <div id="away-team-display" style="color: #00ccff;">حریف: ۰</div>
         </div>
 
-        <div class="modal-body-scroll">
-            <div id="shopMainHome">
-                <div class="shop-menu-item" onclick="openThemesMenu()">
-                    <div class="theme-info">
-                        <h4>🎨 پوشه تم‌ها</h4>
-                        <p>مشاهده و انتخاب تم‌های ۳D شیشه‌ای و تم روز رایگان</p>
-                    </div>
-                    <span style="color: var(--neon-green); font-size: 1.2rem; font-weight: bold;">←</span>
-                </div>
-            </div>
-
-            <div id="shopThemesView" style="display: none;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                    <button class="btn-action" onclick="backToShopHome()" style="padding: 6px 14px; font-size: 0.8rem;">← بازگشت</button>
-                    <span style="font-size: 0.9rem; color: var(--neon-green); font-weight: bold;">پوشه تم‌های برنامه</span>
-                </div>
-                <div id="themesListContainer"></div>
-            </div>
+        <div class="pitch-container" id="match-pitch">
+            <div class="pitch-line-center"></div>
+            <div class="pitch-circle"></div>
+            <div id="ball" class="ball"></div>
         </div>
+
+        <div id="match-log"></div>
     </div>
-</div>
 
-<script>
-    const API_BASE = 'https://football-live-api-x2m6.onrender.com';
+    <script>
+        // اتصال به Supabase Realtime
+        const SUPABASE_URL = 'https://vxpybengqnalhiriqspz.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_-GdIgi3ei9hEnccdjpFY6g_z88xdCa5';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-    const SUPABASE_URL = 'https://vxpybengqnalhiriqspz.supabase.co';
-    const SUPABASE_KEY = 'sb_publishable_-GdIgi3ei9hEnccdjpFY6g_z88xdCa5';
-    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-    let userCoins = parseInt(localStorage.getItem('zeuc_coins')) || 50;
-    let unlockedThemes = JSON.parse(localStorage.getItem('zeuc_unlocked')) || ['default', 'day'];
-    let activeTheme = localStorage.getItem('zeuc_active_theme') || 'default';
-    let userPredictions = JSON.parse(localStorage.getItem('zeuc_predictions')) || {};
-
-    let qumarSubView = 'home';
-    let enfesharState = {
-        isPlaying: false,
-        multiplier: 1.00,
-        crashPoint: 1.00,
-        timer: null,
-        bet: 10,
-        cashedOut: false
-    };
-
-    const IRANIAN_FIRST_NAMES = [
-        'آرش', 'سهراب', 'کاوه', 'سیروس', 'داریوش', 'سامان', 'پیمان', 'سهیل', 'فرزاد', 'پویا',
-        'کیان', 'مازیار', 'بهرام', 'سیاوش', 'فرید', 'نوید', 'بابک', 'اشکان', 'پژمان', 'رامین',
-        'بهنام', 'مهرداد', 'شهاب', 'پرهام', 'روزبه', 'احسان', 'میلاد', 'دانیال', 'مهدی', 'رضا'
-    ];
-    const IRANIAN_LAST_NAMES = [
-        'راد', 'رادمنش', 'کریمی', 'مهرابی', 'دلاوری', 'پارسا', 'تالشی', 'نادری', 'سلطانی', 'فرهادی',
-        'جهانگیری', 'زمانی', 'شریفی', 'مقدم', 'کرمی', 'مرادی', 'صادقی', 'حسینی', 'رستمی', 'طاهری',
-        'قاسمی', 'رضایی', 'بیات', 'فلاح', 'عسگری', 'نوری', 'ساکی', 'موسوی', 'جباری', 'نیکو'
-    ];
-
-    let userId = localStorage.getItem('zeuc_user_id');
-    if (!userId) {
-        userId = 'user_' + Math.random().toString(36).substring(2, 11);
-        localStorage.setItem('zeuc_user_id', userId);
-    }
-
-    let gameState = JSON.parse(localStorage.getItem('zeuc_game_state')) || {
-        configured: false,
-        teamName: 'تیم من',
-        kitColor: '#38bdf8',
-        players: []
-    };
-
-    let selectedSetupColor = '#38bdf8';
-
-    let matchmakingState = {
-        searching: false,
-        timer: null,
-        secondsLeft: 60,
-        liveMatchActive: false,
-        matchData: null
-    };
-
-    updateCoinUI();
-    applyTheme(activeTheme);
-
-    function updateCoinUI() {
-        document.getElementById('coinCount').textContent = userCoins;
-        localStorage.setItem('zeuc_coins', userCoins);
-    }
-
-    function showCustomAlert(title, desc) {
-        document.getElementById('alertModalTitle').textContent = title;
-        document.getElementById('alertModalDesc').textContent = desc;
-        document.getElementById('customAlertModal').style.display = 'flex';
-    }
-
-    function closeCustomAlert() {
-        document.getElementById('customAlertModal').style.display = 'none';
-    }
-
-    function showTopBanner(msg, type = 'default') {
-        const banner = document.getElementById('topNotificationBanner');
-        banner.textContent = msg;
-        banner.className = '';
-        if (type === 'red') banner.classList.add('red');
-        else if (type === 'green') banner.classList.add('green');
-        banner.classList.add('show');
-        setTimeout(() => { banner.classList.remove('show'); }, 6000);
-    }
-
-    const FA_TRANSLATIONS = {
-        'Premier League': 'لیگ برتر انگلیس', 'LaLiga': 'لالیگا اسپانیا', 'La Liga': 'لالیگا اسپانیا',
-        'Serie A': 'سری آ ایتالیا', 'Bundesliga': 'بوندسلیگا آلمان', 'Ligue 1': 'لوشامپیونه فرانسه',
-        'Champions League': 'لیگ قهرمانان اروپا', 'Europa League': 'لیگ اروپا', 'Persian Gulf Pro League': 'لیگ برتر ایران',
-        'Real Madrid': 'رئال مادرید', 'Barcelona': 'بارسلونا', 'Manchester United': 'منچستر یونایتد',
-        'Manchester City': 'منچستر سیتی', 'Liverpool': 'لیورپول', 'Arsenal': 'آرسنال',
-        'Chelsea': 'چلسی', 'Tottenham Hotspur': 'توتنهام', 'Bayern Munich': 'بایرن مونیخ',
-        'Borussia Dortmund': 'بوروسیا دورتموند', 'Juventus': 'یوونتوس', 'Inter': 'اینتر میان',
-        'AC Milan': 'آث میلان', 'Paris Saint-Germain': 'پاری سن ژرمن', 'PSG': 'پاری سن ژرمن',
-        'Esteghlal': 'استقلال', 'Persepolis': 'پرسپولیس', 'Sepahan': 'سپاهان', 'Tractor': 'تراکتور'
-    };
-
-    function translateFA(text) {
-        if (!text) return text;
-        if (FA_TRANSLATIONS[text]) return FA_TRANSLATIONS[text];
-        let cleaned = text.replace(/FC|FK|SC|CF|United|City|Club|Dubai/gi, '').trim();
-        return FA_TRANSLATIONS[cleaned] || FA_TRANSLATIONS[text] || text;
-    }
-
-    function applyTheme(themeName) {
-        const container = document.getElementById('appContainer');
-        container.className = 'app-container';
-        if (themeName !== 'default') container.classList.add(`theme-${themeName}`);
-    }
-
-    function previewTheme(themeName) {
-        applyTheme(themeName);
-        setTimeout(() => { applyTheme(activeTheme); }, 5000);
-    }
-
-    function buyTheme(themeName) {
-        if (themeName === 'day' || themeName === 'default') {
-            selectTheme(themeName);
-            return;
-        }
-        if (userCoins >= 15) {
-            userCoins -= 15;
-            unlockedThemes.push(themeName);
-            localStorage.setItem('zeuc_unlocked', JSON.stringify(unlockedThemes));
-            updateCoinUI();
-            selectTheme(themeName);
-            renderShopThemes();
-            showCustomAlert('خرید موفق', 'تم با موفقیت خریداری و فعال گردید!');
-        } else {
-            showCustomAlert('کفایت سکه', 'سکه کافی ندارید! با پیش‌بینی صحیح مسابقات سکه به دست آورید.');
-        }
-    }
-
-    function selectTheme(themeName) {
-        activeTheme = themeName;
-        localStorage.setItem('zeuc_active_theme', themeName);
-        applyTheme(themeName);
-        renderShopThemes();
-    }
-
-    const THEMES_DATA = [
-        { id: 'default', name: 'چمن نئونی ۳D پیش‌فرض', desc: 'استایل نئونی و مدرن زمین چمن', free: true },
-        { id: 'day', name: 'تم روز (سفید و شیشه‌ای)', desc: 'طراحی ساده، روشن، گرافیکی و شیشه‌ای', free: true },
-        { id: 'pink', name: 'تم صورتی پاستیلی', desc: 'طراحی ملایم و شیشه‌ای پاستیلی', free: false },
-        { id: 'esteghlal', name: 'تم آبی استقلال ایران', desc: 'رنگ‌آمیزی آبی با جلوه استقلال', free: false },
-        { id: 'persepolis', name: 'تم پرسپولیس ایران', desc: 'طراحی سرخ و طلایی پرسپولیس', free: false },
-        { id: 'zlatan', name: 'تم زلاتان ابراهیموویچ', desc: 'طراحی سلطنتی مشکی طلایی', free: false },
-        { id: 'dark_scary', name: 'تم سیاه دارک و ترسناک', desc: 'تم تاریک نئونی و قرمز آتشین', free: false }
-    ];
-
-    function openShopModal() {
-        backToShopHome();
-        document.getElementById('shopModal').style.display = 'flex';
-    }
-
-    function closeShopModal() {
-        document.getElementById('shopModal').style.display = 'none';
-    }
-
-    function openThemesMenu() {
-        document.getElementById('shopMainHome').style.display = 'none';
-        document.getElementById('shopThemesView').style.display = 'block';
-        document.getElementById('shopModalTitle').textContent = '🎨 پوشه تم‌ها';
-        renderShopThemes();
-    }
-
-    function backToShopHome() {
-        document.getElementById('shopThemesView').style.display = 'none';
-        document.getElementById('shopMainHome').style.display = 'block';
-        document.getElementById('shopModalTitle').textContent = '🛒 منوی فروشگاه';
-    }
-
-    function renderShopThemes() {
-        const container = document.getElementById('themesListContainer');
-        let html = '';
-        THEMES_DATA.forEach(t => {
-            const isUnlocked = t.free || unlockedThemes.includes(t.id);
-            const isActive = activeTheme === t.id;
-            html += `
-                <div class="theme-card">
-                    <div class="theme-info"><h4>${t.name}</h4><p>${t.desc}</p></div>
-                    <div class="theme-actions">
-                        <button class="btn-preview" onclick="previewTheme('${t.id}')">تست ۵ ثانیه‌ای</button>
-                        ${isUnlocked ? (isActive ? `<button class="btn-owned" disabled>فعال</button>` : `<button class="btn-select" onclick="selectTheme('${t.id}')">انتخاب</button>`) : `<button class="btn-buy" onclick="buyTheme('${t.id}')">خرید (۱۵ سکه)</button>`}
-                    </div>
-                </div>
-            `;
-        });
-        container.innerHTML = html;
-    }
-
-    const ALL_WORLD_LEAGUES = [
-        'لیگ برتر انگلیس', 'لالیگا اسپانیا', 'سری آ ایتالیا', 'بوندسلیگا آلمان', 
-        'لوشامپیونه فرانسه', 'لیگ قهرمانان اروپا', 'لیگ اروپا', 'لیگ برتر ایران',
-        'اردیویسه هلند', 'لیگ برتر پرتغال', 'سری آ برزیل', 'ام‌ال‌اس آمریکا',
-        'لیگ حرفه‌ای عربستان', 'چمپیونشیپ انگلیس', 'سری ب ایتالیا', 'لیگ برتر روسیه'
-    ];
-
-    let globalLeaguesData = [];
-    let currentStatusFilter = 'LIVE';
-    let currentLeagueFilter = 'ALL';
-    let autoRefreshTimer = null;
-
-    window.addEventListener('DOMContentLoaded', () => {
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('matchDate').value = today;
-        populateStaticLeaguesDropdown();
-        fetchMatchesByDate();
-        startAutoRefresh();
-
-        window.addEventListener('click', (e) => {
-            if (!document.getElementById('customDropdown').contains(e.target)) {
-                document.getElementById('dropdownList').classList.remove('open');
-            }
-        });
-    });
-
-    function toggleDropdown() {
-        document.getElementById('dropdownList').classList.toggle('open');
-    }
-
-    function selectLeague(value, label) {
-        currentLeagueFilter = value;
-        document.getElementById('selectedLeagueLabel').textContent = label;
-        document.getElementById('dropdownList').classList.remove('open');
-        renderMatches();
-    }
-
-    function populateStaticLeaguesDropdown() {
-        const listDiv = document.getElementById('dropdownList');
-        let html = `<div class="dropdown-item" onclick="selectLeague('ALL', 'همه لیگ‌ها')">همه لیگ‌ها</div>`;
-        ALL_WORLD_LEAGUES.forEach((leagueName) => {
-            html += `<div class="dropdown-item" onclick="selectLeague('${leagueName}', '${leagueName}')">${leagueName}</div>`;
-        });
-        listDiv.innerHTML = html;
-    }
-
-    function startAutoRefresh() {
-        if (autoRefreshTimer) clearInterval(autoRefreshTimer);
-        autoRefreshTimer = setInterval(() => {
-            const today = new Date().toISOString().split('T')[0];
-            const dateVal = document.getElementById('matchDate').value;
-            if (dateVal === today) silentFetchMatches();
-        }, 30000);
-    }
-
-    async function fetchMatchesByDate() {
-        if (currentStatusFilter === 'GAME') return;
-        const dateVal = document.getElementById('matchDate').value;
-        if (!dateVal) return;
-        const formattedDate = dateVal.replace(/-/g, ''); 
-        const contentDiv = document.getElementById('content');
-        
-        if (currentStatusFilter !== 'QUMAR' || qumarSubView !== 'home') {
-            contentDiv.innerHTML = '<div class="loading">در حال دریافت جدیدترین مسابقات زمین چمن...</div>';
-        }
-
-        try {
-            let res = await fetch(`${API_BASE}/api/matches/date/${formattedDate}`);
-            if (!res.ok) res = await fetch(`${API_BASE}/api/matches/date/${dateVal}`);
-            const json = await res.json();
-            globalLeaguesData = json?.data?.leagues || json?.leagues || [];
-            renderMatches();
-        } catch (err) {
-            console.error(err);
-            if (currentStatusFilter !== 'QUMAR' || qumarSubView !== 'home') {
-                contentDiv.innerHTML = '<div class="empty-msg">خطا در ارتباط با سرور zeucball.</div>';
-            }
-        }
-    }
-
-    async function silentFetchMatches() {
-        if (currentStatusFilter === 'GAME') return;
-        const dateVal = document.getElementById('matchDate').value;
-        if (!dateVal) return;
-        const formattedDate = dateVal.replace(/-/g, ''); 
-        try {
-            let res = await fetch(`${API_BASE}/api/matches/date/${formattedDate}`);
-            if (!res.ok) res = await fetch(`${API_BASE}/api/matches/date/${dateVal}`);
-            const json = await res.json();
-            const newLeagues = json?.data?.leagues || json?.leagues || [];
-            if (newLeagues.length > 0) {
-                globalLeaguesData = newLeagues;
-                renderMatches();
-            }
-        } catch (e) { console.error(e); }
-    }
-
-    function switchStatusFilter(status, element) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        element.classList.add('active');
-        currentStatusFilter = status;
-        
-        if (status === 'GAME') {
-            document.getElementById('topControlsBar').style.display = 'none';
-        } else {
-            document.getElementById('topControlsBar').style.display = 'flex';
-            if (status === 'QUMAR') {
-                qumarSubView = 'home';
-                if (globalLeaguesData.length === 0) {
-                    fetchMatchesByDate();
-                }
-            }
-        }
-        renderMatches();
-    }
-
-    function openQumarSub(subName) {
-        qumarSubView = subName;
-        if (subName === 'predict' && globalLeaguesData.length === 0) {
-            fetchMatchesByDate();
-        }
-        renderMatches();
-    }
-
-    function backToQumarHome() {
-        if (enfesharState.isPlaying) {
-            showTopBanner('بازی در جریان است! نمی‌توانید خارج شوید.', 'red');
-            return;
-        }
-        qumarSubView = 'home';
-        renderMatches();
-    }
-
-    function setSetupKitColor(color, element) {
-        selectedSetupColor = color;
-        document.querySelectorAll('.kit-color-option').forEach(el => el.classList.remove('selected'));
-        element.classList.add('selected');
-    }
-
-    async function generateAndSaveUniquePlayers(teamName, kitColor) {
-        let positions = ['دروازه‌بان', 'مدافع', 'مدافع', 'مدافع', 'مدافع', 'هافبک', 'هافبک', 'هافبک', 'مهاجم', 'مهاجم', 'مهاجم'];
-        
-        let { data: existingPlayers } = await supabaseClient.from('players').select('name');
-        let usedNames = new Set(existingPlayers ? existingPlayers.map(p => p.name) : []);
-
-        let newPlayers = [];
-        positions.forEach((pos, idx) => {
-            let fName = IRANIAN_FIRST_NAMES[Math.floor(Math.random() * IRANIAN_FIRST_NAMES.length)];
-            let lName = IRANIAN_LAST_NAMES[Math.floor(Math.random() * IRANIAN_LAST_NAMES.length)];
-            let fullName = `${fName} ${lName}`;
-            while (usedNames.has(fullName)) {
-                fName = IRANIAN_FIRST_NAMES[Math.floor(Math.random() * IRANIAN_FIRST_NAMES.length)];
-                lName = IRANIAN_LAST_NAMES[Math.floor(Math.random() * IRANIAN_LAST_NAMES.length)];
-                fullName = `${fName} ${lName}`;
-            }
-            usedNames.add(fullName);
-
-            let power = Math.floor(Math.random() * 10) + 1;
-            let skillName = 'مهارت';
-            if (pos === 'دروازه‌بان') skillName = 'قدرت سیو';
-            else if (pos === 'مدافع') skillName = 'قدرت دفاع';
-            else if (pos === 'هافبک') skillName = 'قدرت بازی‌سازی';
-            else if (pos === 'مهاجم') skillName = 'دریبل و گل‌زنی';
-
-            newPlayers.push({
-                user_id: userId,
-                name: fullName,
-                position: pos,
-                power: power,
-                skill_desc: skillName
-            });
-        });
-
-        await supabaseClient.from('teams').upsert({ user_id: userId, team_name: teamName, kit_color: kitColor });
-        await supabaseClient.from('players').insert(newPlayers);
-
-        gameState = {
-            configured: true,
-            teamName: teamName,
-            kitColor: kitColor,
-            players: newPlayers
-        };
-        localStorage.setItem('zeuc_game_state', JSON.stringify(gameState));
-    }
-
-    async function saveGameSetup() {
-        const teamNameInput = document.getElementById('setupTeamName').value.trim();
-        if (!teamNameInput) {
-            showTopBanner('لطفاً نام تیم خود را وارد کنید!', 'red');
-            return;
-        }
-
-        showTopBanner('در حال ساخت تیم و ثبت دائم نام و رنگ لباس در دیتابیس...', 'green');
-        await generateAndSaveUniquePlayers(teamNameInput, selectedSetupColor);
-        showTopBanner('تیم شما با موفقیت ثبت شد و غیرقابل تغییر است!', 'green');
-        renderMatches();
-    }
-
-    let matchLoopInterval = null;
-
-    async function startMatchmaking() {
-        if (matchmakingState.searching || matchmakingState.liveMatchActive) return;
-        matchmakingState.searching = true;
-        matchmakingState.secondsLeft = 60;
-        renderMatches();
-
-        let userTotalPower = gameState.players.reduce((sum, p) => sum + p.power, 0);
-
-        await supabaseClient.from('match_queue').upsert({
-            user_id: userId,
-            team_name: gameState.teamName,
-            total_power: userTotalPower
-        });
-
-        matchmakingState.timer = setInterval(async () => {
-            matchmakingState.secondsLeft--;
-            renderMatches();
-
-            let { data: opponents } = await supabaseClient
-                .from('match_queue')
-                .select('*')
-                .neq('user_id', userId)
-                .limit(1);
-
-            if (opponents && opponents.length > 0) {
-                let opp = opponents[0];
-                await supabaseClient.from('match_queue').delete().in('user_id', [userId, opp.user_id]);
-                clearInterval(matchmakingState.timer);
-                matchmakingState.searching = false;
-                initLiveMatch(opp.team_name, opp.total_power, userTotalPower);
-                return;
-            }
-
-            if (matchmakingState.secondsLeft <= 0) {
-                clearInterval(matchmakingState.timer);
-                await supabaseClient.from('match_queue').delete().eq('user_id', userId);
-                matchmakingState.searching = false;
-                initLiveMatch('شاهین رباتیک', Math.floor(userTotalPower * (0.8 + Math.random() * 0.4)), userTotalPower);
-            }
-        }, 1000);
-    }
-
-    async function cancelMatchmaking() {
-        if (matchmakingState.timer) clearInterval(matchmakingState.timer);
-        await supabaseClient.from('match_queue').delete().eq('user_id', userId);
-        matchmakingState.searching = false;
-        renderMatches();
-    }
-
-    function initLiveMatch(oppName, oppPower, userPower) {
-        matchmakingState.liveMatchActive = true;
-
-        let diff = userPower - oppPower;
-        let userGoals = 0, oppGoals = 0;
-        let randVal = Math.random() * 100;
-        if (diff > 15) {
-            userGoals = Math.floor(Math.random() * 3) + 1;
-            oppGoals = Math.floor(Math.random() * 2);
-        } else if (diff < -15) {
-            userGoals = Math.floor(Math.random() * 2);
-            oppGoals = Math.floor(Math.random() * 3) + 1;
-        } else {
-            if (randVal < 40) { userGoals = Math.floor(Math.random() * 2); oppGoals = userGoals; }
-            else if (randVal < 70) { userGoals = Math.floor(Math.random() * 3) + 1; oppGoals = Math.floor(Math.random() * 2); }
-            else { userGoals = Math.floor(Math.random() * 2); oppGoals = Math.floor(Math.random() * 3) + 1; }
-        }
-
-        matchmakingState.matchData = {
-            homeTeam: gameState.teamName,
-            awayTeam: oppName,
-            homeScore: 0,
-            awayScore: 0,
-            targetHomeGoals: userGoals,
-            targetAwayGoals: oppGoals,
-            currentMinute: 0,
-            half: 1,
-            commentary: 'مسابقه آغاز شد! بازیکنان در زمین مستقر شدند.'
+        let myTeam = {
+            name: '',
+            color: '#ff0055',
+            players: [],
+            totalPower: 0,
+            formation: '4-4-2',
+            style: 'balanced'
         };
 
-        renderMatches();
-        startLiveMatchEngine();
-    }
+        let opponentTeam = null;
+        let matchChannel = null;
+        let isHost = false;
+        let half = 1;
+        let timer = 60;
+        let score = { home: 0, away: 0 };
+        let matchInterval = null;
 
-    function startLiveMatchEngine() {
-        if (matchLoopInterval) clearInterval(matchLoopInterval);
+        // ساخت تیم و ۱۱ بازیکن با قدرت رندوم (۲ تا ۴)
+        function createTeam() {
+            const name = document.getElementById('team-name-input').value.trim();
+            if(!name) return alert('لطفاً نام تیم را وارد کنید');
 
-        let tick = 0;
-        matchLoopInterval = setInterval(() => {
-            if (!matchmakingState.liveMatchActive) {
-                clearInterval(matchLoopInterval);
-                return;
-            }
+            myTeam.name = name;
+            myTeam.color = document.getElementById('team-color-input').value;
+            myTeam.players = [];
+            myTeam.totalPower = 0;
 
-            tick++;
-            matchmakingState.matchData.currentMinute = tick;
-
-            if (tick === 45) {
-                matchmakingState.matchData.half = 2;
-                matchmakingState.matchData.commentary = 'سوت پایان نیمه اول! بازیکنان برای استراحت کوتاه آماده می‌شوند.';
-            } else if (tick === 90) {
-                matchmakingState.matchData.commentary = 'سوت پایان مسابقه! نتیجه نهایی ثبت شد.';
-                matchmakingState.liveMatchActive = false;
-                clearInterval(matchLoopInterval);
-            } else {
-                let randomEvent = Math.random();
-                let randomPlayer = gameState.players[Math.floor(Math.random() * gameState.players.length)].name;
-
-                if (randomEvent < 0.15 && matchmakingState.matchData.homeScore < matchmakingState.matchData.targetHomeGoals) {
-                    matchmakingState.matchData.homeScore++;
-                    matchmakingState.matchData.commentary = `⚽ گل فوق‌العاده برای ${gameState.teamName} توسط ${randomPlayer}! (دقیقه ${tick})`;
-                } else if (randomEvent > 0.85 && matchmakingState.matchData.awayScore < matchmakingState.matchData.targetAwayGoals) {
-                    matchmakingState.matchData.awayScore++;
-                    matchmakingState.matchData.commentary = `⚽ گل برای تیم ${matchmakingState.matchData.awayTeam}! (دقیقه ${tick})`;
-                } else if (randomEvent < 0.4) {
-                    matchmakingState.matchData.commentary = `⚡ پاسکاری زیبا در خط هافبک توسط ${randomPlayer}...`;
-                } else if (randomEvent < 0.7) {
-                    matchmakingState.matchData.commentary = `🛡️ دفاع محکم و دفع توپ توسط ${randomPlayer}.`;
-                } else {
-                    matchmakingState.matchData.commentary = `⏱️ جریان بازی در جریان است... (دقیقه ${tick})`;
-                }
-            }
-
-            updatePitchAnimationPositions();
-            renderMatches();
-        }, 1000);
-    }
-
-    function updatePitchAnimationPositions() {
-        const ballEl = document.getElementById('smartBallNode');
-        if (ballEl) {
-            let randX = 20 + Math.random() * 60;
-            let randY = 15 + Math.random() * 70;
-            ballEl.style.top = randY + '%';
-            ballEl.style.left = randX + '%';
-        }
-    }
-
-    function startEnfesharGame() {
-        if (enfesharState.isPlaying) return;
-        const betInput = document.getElementById('enfesharBetInput');
-        const betVal = parseInt(betInput ? betInput.value : enfesharState.bet) || 10;
-
-        if (betVal <= 0) {
-            showTopBanner('لطفاً مقدار سکه معتبری برای شروع بازی وارد کنید!', 'red');
-            return;
-        }
-        if (betVal > userCoins) {
-            showTopBanner('موجودی سکه شما برای این مبلغ کافی نیست!', 'red');
-            return;
-        }
-
-        enfesharState.bet = betVal;
-        userCoins -= betVal;
-        updateCoinUI();
-
-        enfesharState.isPlaying = true;
-        enfesharState.multiplier = 1.00;
-        enfesharState.cashedOut = false;
-
-        let rand = Math.random();
-        if (rand < 0.12) {
-            enfesharState.crashPoint = 1.00;
-        } else {
-            enfesharState.crashPoint = parseFloat((1.01 + Math.pow(Math.random(), 2.3) * 6.00).toFixed(2));
-        }
-
-        renderMatches();
-
-        if (enfesharState.timer) clearInterval(enfesharState.timer);
-
-        enfesharState.timer = setInterval(() => {
-            if (!enfesharState.isPlaying) {
-                clearInterval(enfesharState.timer);
-                return;
-            }
-
-            enfesharState.multiplier += 0.01;
-            let currentPercentage = Math.round((enfesharState.multiplier - 1) * 100);
-            
-            const displayEl = document.getElementById('enfesharMultiplierDisplay');
-            if (displayEl) {
-                displayEl.textContent = currentPercentage + '% (ضریب ' + enfesharState.multiplier.toFixed(2) + 'x)';
-            }
-
-            if (enfesharState.multiplier >= enfesharState.crashPoint) {
-                clearInterval(enfesharState.timer);
-                enfesharState.isPlaying = false;
-                if (!enfesharState.cashedOut) {
-                    showTopBanner(`💥 بازی منفجر شد روی ضریب ${enfesharState.multiplier.toFixed(2)}x! متأسفانه باختید.`, 'red');
-                }
-                renderMatches();
-            }
-        }, 100);
-    }
-
-    function cashoutEnfeshar() {
-        if (!enfesharState.isPlaying || enfesharState.cashedOut) return;
-        enfesharState.cashedOut = true;
-        clearInterval(enfesharState.timer);
-        enfesharState.isPlaying = false;
-
-        let winnings = Math.floor(enfesharState.bet * enfesharState.multiplier);
-        userCoins += winnings;
-        updateCoinUI();
-
-        let wonPercent = Math.round((enfesharState.multiplier - 1) * 100);
-        showTopBanner(`🎉 تبریک! در درصد ${wonPercent}% (ضریب ${enfesharState.multiplier.toFixed(2)}x) برداشت کردید و ${winnings} سکه برنده شدید!`, 'green');
-        renderMatches();
-    }
-
-    function setOutcomePick(matchId, pick) {
-        if (userPredictions[matchId] && userPredictions[matchId].locked) return;
-        if (!userPredictions[matchId]) userPredictions[matchId] = {};
-        userPredictions[matchId].winnerPick = pick;
-        localStorage.setItem('zeuc_predictions', JSON.stringify(userPredictions));
-        renderMatches();
-    }
-
-    function saveFullPrediction(matchId) {
-        if (userPredictions[matchId] && userPredictions[matchId].locked) {
-            showTopBanner('این پیش‌بینی قبلاً ثبت شده و قابل تغییر نیست!', 'red');
-            return;
-        }
-
-        const homeVal = document.getElementById(`h_${matchId}`).value;
-        const awayVal = document.getElementById(`a_${matchId}`).value;
-        const betInputVal = document.getElementById(`bet_${matchId}`).value;
-        const wagerCoins = parseInt(betInputVal) || 0;
-
-        if (wagerCoins > userCoins) {
-            showTopBanner('مبلغ سکه وارد شده برای شرط‌بندی بیشتر از موجودی شماست!', 'red');
-            return;
-        }
-
-        if (wagerCoins > 0) {
-            userCoins -= wagerCoins;
-            updateCoinUI();
-        }
-
-        if (!userPredictions[matchId]) userPredictions[matchId] = {};
-        if (homeVal !== '' && awayVal !== '') {
-            userPredictions[matchId].home = parseInt(homeVal);
-            userPredictions[matchId].away = parseInt(awayVal);
-        }
-
-        userPredictions[matchId].wager = wagerCoins;
-        userPredictions[matchId].locked = true;
-        localStorage.setItem('zeuc_predictions', JSON.stringify(userPredictions));
-        showTopBanner('پیش‌بینی و سرمایه‌گذاری سکه شما با موفقیت ثبت شد.', 'green');
-        renderMatches();
-    }
-
-    function renderMatches() {
-        const contentDiv = document.getElementById('content');
-
-        if (currentStatusFilter === 'GAME') {
-            if (!gameState.configured) {
-                contentDiv.innerHTML = `
-                    <div class="game-setup-card">
-                        <h3 style="color: #38bdf8; margin-bottom: 10px; font-size: 1.3rem;">⚽ ثبت دائم تیم و رنگ کیت</h3>
-                        <p style="font-size: 0.85rem; color: var(--text-sub); margin-bottom: 15px;">پس از ثبت، نام تیم و رنگ لباس قفل شده و قابل تغییر نخواهند بود.</p>
-                        
-                        <div style="margin-bottom: 12px; text-align: right;">
-                            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 6px;">نام تیم:</label>
-                            <input type="text" id="setupTeamName" class="custom-input" placeholder="مثلاً: عقاب‌های سرخ..." style="width: 100%; max-width: 100%;">
-                        </div>
-
-                        <div style="margin-bottom: 15px; text-align: right;">
-                            <label style="font-size: 0.85rem; font-weight: bold; display: block; margin-bottom: 8px;">انتخاب رنگ لباس تیم:</label>
-                            <div class="kit-color-grid">
-                                <div class="kit-color-option selected" style="background: #38bdf8;" onclick="setSetupKitColor('#38bdf8', this)"></div>
-                                <div class="kit-color-option" style="background: #ef4444;" onclick="setSetupKitColor('#ef4444', this)"></div>
-                                <div class="kit-color-option" style="background: #22c55e;" onclick="setSetupKitColor('#22c55e', this)"></div>
-                                <div class="kit-color-option" style="background: #eab308;" onclick="setSetupKitColor('#eab308', this)"></div>
-                                <div class="kit-color-option" style="background: #a855f7;" onclick="setSetupKitColor('#a855f7', this)"></div>
-                            </div>
-                        </div>
-
-                        <button class="btn-action" onclick="saveGameSetup()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #0ea5e9, #0284c7); font-size: 1rem;">ثبت نهایی و دریافت بازیکنان 🌟</button>
-                    </div>
-                `;
-            } else {
-                if (matchmakingState.searching) {
-                    contentDiv.innerHTML = `
-                        <div class="game-setup-card" style="text-align: center; padding: 30px;">
-                            <h3 style="color: #38bdf8; margin-bottom: 15px;">🔍 در حال جستجوی آنلاین حریف (Supabase)...</h3>
-                            <p style="font-size: 1.2rem; font-weight: bold; color: var(--neon-green); margin-bottom: 20px;">زمان باقی‌مانده: ${matchmakingState.secondsLeft} ثانیه</p>
-                            <div class="loading" style="padding: 20px 0;">منتظر اتصال با حریف واقعی در شبکه...</div>
-                            <button class="btn-action" onclick="cancelMatchmaking()" style="background: #ff334b; margin-top: 15px; padding: 10px 20px;">لغو جستجو</button>
-                        </div>
-                    `;
-                    return;
-                }
-
-                if (matchmakingState.liveMatchActive || matchmakingState.matchData) {
-                    let mData = matchmakingState.matchData;
-                    let isFinished = !matchmakingState.liveMatchActive;
-
-                    let positionsGrid = [
-                        { top: '85%', left: '50%' },
-                        { top: '65%', left: '25%' }, { top: '65%', left: '42%' }, { top: '65%', left: '58%' }, { top: '65%', left: '75%' },
-                        { top: '45%', left: '30%' }, { top: '45%', left: '50%' }, { top: '45%', left: '70%' },
-                        { top: '25%', left: '35%' }, { top: '25%', left: '65%' },
-                        { top: '15%', left: '50%' }
-                    ];
-
-                    let playersHTML = '';
-                    gameState.players.forEach((p, idx) => {
-                        let pos = positionsGrid[idx] || { top: '50%', left: '50%' };
-                        playersHTML += `
-                            <div class="smart-player-node" style="top: ${pos.top}; left: ${pos.left};">
-                                <div class="player-kit-icon" style="color: ${gameState.kitColor || '#38bdf8'};">👕</div>
-                                <div class="player-name-tag">${p.name}</div>
-                            </div>
-                        `;
-                    });
-
-                    contentDiv.innerHTML = `
-                        <div style="max-width: 540px; margin: 0 auto;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(10,35,18,0.85); border: 1px solid rgba(56,189,248,0.5); padding: 10px 20px; border-radius: 14px; margin-bottom: 10px; backdrop-filter: blur(15px);">
-                                <span style="font-weight: bold; font-size: 0.95rem; color: #38bdf8;">${mData.homeTeam}</span>
-                                <div style="text-align: center;">
-                                    <div style="font-size: 1.5rem; font-weight: 900; color: var(--neon-green); letter-spacing: 2px;">${mData.homeScore} - ${mData.awayScore}</div>
-                                    <div style="font-size: 0.75rem; color: #ff334b; font-weight: bold;">⏱️ دقیقه ${mData.currentMinute} (${mData.half === 1 ? 'نیمه اول' : 'نیمه دوم'})</div>
-                                </div>
-                                <span style="font-weight: bold; font-size: 0.95rem; color: #ff334b;">${mData.awayTeam}</span>
-                            </div>
-
-                            <div class="match-live-arena">
-                                <div class="pitch-line-center"></div>
-                                <div class="pitch-circle-center"></div>
-                                ${playersHTML}
-                                <div id="smartBallNode" class="smart-ball" style="top: 50%; left: 50%;">⚽</div>
-                            </div>
-
-                            <div class="match-commentary-box">
-                                <div style="font-size: 0.75rem; color: #38bdf8; font-weight: bold; margin-bottom: 4px;">🎙️ گزارشگر زنده مسابقه:</div>
-                                <div style="font-size: 0.88rem; color: var(--text-main);">${mData.commentary}</div>
-                            </div>
-
-                            ${isFinished ? `
-                                <div style="text-align: center; margin-top: 15px;">
-                                    <button class="btn-action" onclick="matchmakingState.matchData = null; renderMatches();" style="background: #0ea5e9; padding: 10px 25px;">بازگشت به منوی تیم</button>
-                                </div>
-                            ` : ''}
-                        </div>
-                    `;
-                    return;
-                }
-
-                let playersHTML = '';
-                gameState.players.forEach(p => {
-                    playersHTML += `
-                        <div class="player-mini-card">
-                            <div style="font-weight: bold; color: #38bdf8; margin-bottom: 2px;">${p.name}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-sub);">${p.position} | ${p.skill_desc || p.skillDesc}: <b>${p.power}/10</b></div>
-                        </div>
-                    `;
+            // ساخت ۱۱ بازیکن
+            for (let i = 1; i <= 11; i++) {
+                // قدرت رندوم اعشاری بین ۲.۰ تا ۴.۰ برای دقت بیشتر
+                let pPower = parseFloat((Math.random() * 2 + 2).toFixed(1));
+                myTeam.players.push({
+                    id: i,
+                    power: pPower,
+                    role: i === 1 ? 'GK' : (i <= 5 ? 'DEF' : (i <= 9 ? 'MID' : 'FWD'))
                 });
-
-                contentDiv.innerHTML = `
-                    <div style="max-width: 520px; margin: 0 auto;">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                            <span style="font-size: 0.95rem; color: #38bdf8; font-weight: bold; display: flex; align-items: center; gap: 8px;">
-                                🏟️ تیم: ${gameState.teamName} 
-                                <span style="display:inline-block; width:14px; height:14px; border-radius:50%; background:${gameState.kitColor || '#38bdf8'};"></span>
-                            </span>
-                        </div>
-
-                        <div class="game-setup-card" style="margin-bottom: 15px; padding: 15px;">
-                            <h4 style="color: var(--neon-green); margin-bottom: 10px; font-size: 1rem;">👥 لیست ۱۱ بازیکن اختصاصی شما (دیتابیس آنلاین)</h4>
-                            <div class="player-list-grid">
-                                ${playersHTML}
-                            </div>
-                            <button class="btn-action" onclick="startMatchmaking()" style="width: 100%; padding: 12px; background: linear-gradient(135deg, #22c55e, #16a34a); font-size: 1rem; font-weight: bold; box-shadow: 0 0 15px rgba(34,197,94,0.4);">⚔️ شروع بازی آنلاین با حریف (هر نیمه ۲ دقیقه)</button>
-                        </div>
-                    </div>
-                `;
+                myTeam.totalPower += pPower;
             }
-            return;
+
+            myTeam.totalPower = parseFloat(myTeam.totalPower.toFixed(1));
+
+            // نمایش داشبورد
+            document.getElementById('create-team-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'flex';
+            document.getElementById('dash-team-name').innerText = myTeam.name;
+            document.getElementById('dash-team-power').innerText = `قدرت کلی تیم: ${myTeam.totalPower}`;
+
+            renderPreviewPitch();
         }
 
-        if (currentStatusFilter === 'QUMAR') {
-            if (qumarSubView === 'home') {
-                contentDiv.innerHTML = `
-                    <div class="matches-grid">
-                        <div class="shop-menu-item" onclick="openQumarSub('enfeshar')" style="background: rgba(244,63,94,0.1); border-color: rgba(244,63,94,0.4);">
-                            <div class="theme-info">
-                                <h4 style="color: #f43f5e;">🚀 بازی انفجار</h4>
-                                <p>بازی ضریب و درصد رندوم با قابلیت کسب سکه</p>
-                            </div>
-                            <span style="color: #f43f5e; font-size: 1.2rem; font-weight: bold;">←</span>
-                        </div>
-                        <div class="shop-menu-item" onclick="openQumarSub('predict')" style="background: rgba(0,255,102,0.1); border-color: var(--border-glass);">
-                            <div class="theme-info">
-                                <h4 style="color: var(--neon-green);">🎯 پیش‌بینی مسابقات</h4>
-                                <p>پیش‌بینی نتیجه و گل‌ها برای دریافت سکه جایزه</p>
-                            </div>
-                            <span style="color: var(--neon-green); font-size: 1.2rem; font-weight: bold;">←</span>
-                        </div>
-                    </div>
-                `;
-            } else if (qumarSubView === 'enfeshar') {
-                let currentPct = Math.round((enfesharState.multiplier - 1) * 100);
-                contentDiv.innerHTML = `
-                    <div class="matches-grid">
-                        <div class="match-card" style="text-align: center; padding: 30px;">
-                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                <button class="btn-action" onclick="backToQumarHome()" style="padding: 6px 14px; font-size: 0.8rem;" ${enfesharState.isPlaying ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''}>← بازگشت به منوی قمار</button>
-                                <span style="font-size: 0.9rem; color: #f43f5e; font-weight: bold;">🚀 بازی انفجار zeucball</span>
-                            </div>
-                            <div style="margin: 25px 0;">
-                                <div id="enfesharMultiplierDisplay" style="font-size: 3rem; font-weight: 900; color: #f43f5e; text-shadow: 0 0 25px rgba(244,63,94,0.6);">${currentPct}% (ضریب ${enfesharState.multiplier.toFixed(2)}x)</div>
-                            </div>
-                            <div style="margin-bottom: 20px; display: flex; justify-content: center; align-items: center; gap: 10px;">
-                                <span style="font-weight: bold; font-size: 0.9rem;">🪙 تعداد سکه برای شرط:</span>
-                                <input type="number" id="enfesharBetInput" class="pred-input" style="width: 80px;" value="${enfesharState.bet}" min="1" ${enfesharState.isPlaying ? 'disabled' : ''}>
-                            </div>
-                            <div style="display: flex; justify-content: center; gap: 10px;">
-                                <button id="enfesharStartBtn" class="btn-action" onclick="startEnfesharGame()" style="background: linear-gradient(135deg, #f43f5e, #be185d); padding: 12px 28px; font-size: 1rem; ${enfesharState.isPlaying ? 'display:none;' : ''}">شروع بازی انفجار</button>
-                                <button id="enfesharCashoutBtn" class="btn-action" onclick="cashoutEnfeshar()" style="background: #22c55e; padding: 12px 28px; font-size: 1rem; ${!enfesharState.isPlaying ? 'display:none;' : ''}">برداشت جایزه (Cashout)</button>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            } else if (qumarSubView === 'predict') {
-                renderPredictionView(contentDiv, true);
-            }
-            return;
+        // تغییر تاکتیک‌ها
+        function updateTactics() {
+            myTeam.formation = document.getElementById('formation-select').value;
+            myTeam.style = document.getElementById('style-select').value;
+            renderPreviewPitch();
         }
 
-        let allMatchesList = [];
-        globalLeaguesData.forEach(league => {
-            const leagueRaw = league.name || league.primaryId || 'مسابقات';
-            const leagueNameFA = translateFA(leagueRaw);
-            const matches = league.matches || league.events || [];
+        // محاسبه مختصات ۱۱ بازیکن روی زمین بر اساس ترکیب و تاکتیک
+        function getCoordinates(formation, style, isOpponent = false) {
+            let coords = [];
+            // دروازه‌بان
+            coords.push({ x: 50, y: isOpponent ? 5 : 95 });
 
-            matches.forEach((m, idx) => {
-                let isLive = false;
-                let isFinished = false;
-                let isUpcoming = false;
+            let formParts = formation.split('-').map(Number); // مثلا [4, 4, 2]
+            let yOffset = style === 'attacking' ? -5 : (style === 'defensive' ? 5 : 0);
+            if(isOpponent) yOffset = -yOffset;
 
-                if (m.status) {
-                    if (typeof m.status === 'string') {
-                        if (m.status.includes('پایان') || m.status.toLowerCase().includes('ft')) isFinished = true;
-                        else if (m.status.toLowerCase().includes('live')) isLive = true;
-                        else isUpcoming = true;
-                    } else {
-                        if (m.status.finished) isFinished = true;
-                        else if (m.status.started) isLive = true;
-                        else isUpcoming = true;
-                    }
-                } else {
-                    isUpcoming = true;
+            let currentY = isOpponent ? 20 : 80;
+            let stepY = isOpponent ? 25 : -25;
+
+            let playerIdx = 2;
+            formParts.forEach(lineCount => {
+                let stepX = 100 / (lineCount + 1);
+                for (let i = 1; i <= lineCount; i++) {
+                    let finalY = currentY + yOffset;
+                    coords.push({ x: stepX * i, y: finalY });
+                    playerIdx++;
                 }
-
-                let timestamp = m.status?.utcTime ? new Date(m.status.utcTime).getTime() : 0;
-                let matchId = m.id || `${leagueNameFA}_${idx}_${timestamp}`;
-
-                allMatchesList.push({
-                    matchId: matchId,
-                    matchData: m,
-                    leagueNameFA: leagueNameFA,
-                    isLive: isLive,
-                    isFinished: isFinished,
-                    isUpcoming: isUpcoming,
-                    timestamp: timestamp
-                });
+                currentY += stepY;
             });
-        });
 
-        let filteredMatches = allMatchesList.filter(item => {
-            if (currentLeagueFilter !== 'ALL' && item.leagueNameFA !== currentLeagueFilter) return false;
-            if (currentStatusFilter === 'LIVE') return item.isLive;
-            if (currentStatusFilter === 'FINISHED') return item.isFinished;
-            if (currentStatusFilter === 'UPCOMING') return item.isUpcoming;
-            return true;
-        });
-
-        filteredMatches.sort((a, b) => {
-            if (currentStatusFilter === 'FINISHED' || currentStatusFilter === 'ALL') return b.timestamp - a.timestamp;
-            return a.timestamp - b.timestamp;
-        });
-
-        if (filteredMatches.length === 0) {
-            contentDiv.innerHTML = '<div class="empty-msg">مسابقه‌ای با این وضعیت برای فیلتر انتخابی یافت نشد.</div>';
-            return;
+            return coords;
         }
 
-        let html = '<div class="matches-grid">';
+        // رسم پیش‌نمایش زمین در داشبورد
+        function renderPreviewPitch() {
+            const pitch = document.getElementById('preview-pitch');
+            // پاکسازی کیت‌های قبلی
+            pitch.querySelectorAll('.player-kit').forEach(el => el.remove());
 
-        filteredMatches.forEach(item => {
-            const m = item.matchData;
-            const homeRaw = m.home?.name || m.homeTeam?.name || m.home || 'میزبان';
-            const awayRaw = m.away?.name || m.awayTeam?.name || m.away || 'میهمان';
-            const homeNameFA = translateFA(homeRaw);
-            const awayNameFA = translateFA(awayRaw);
+            let coords = getCoordinates(myTeam.formation, myTeam.style);
 
-            const homeScore = m.homeScore ?? m.score?.home ?? (typeof m.status?.scoreStr === 'string' ? m.status.scoreStr.split('-')[0] : '-');
-            const awayScore = m.awayScore ?? m.score?.away ?? (typeof m.status?.scoreStr === 'string' ? m.status.scoreStr.split('-')[1] : '-');
+            myTeam.players.forEach((p, idx) => {
+                let kit = document.createElement('div');
+                kit.className = 'player-kit';
+                kit.style.backgroundColor = myTeam.color;
+                kit.style.left = `${coords[idx].x}%`;
+                kit.style.top = `${coords[idx].y}%`;
+                kit.innerHTML = `${p.id} <span class="player-power">${p.power}</span>`;
+                pitch.appendChild(kit);
+            });
+        }
+
+        // شبکه آنلاین و جستجوی حریف (Matchmaking)
+        function startMatchmaking() {
+            alert('در حال جستجوی حریف آنلاین... لطفاً منتظر بمانید.');
             
-            let statusText = 'برنامه‌ریزی شده';
-            let isLive = item.isLive;
-
-            if (m.status) {
-                if (typeof m.status === 'string') {
-                    statusText = m.status;
-                } else {
-                    if (m.status.finished) {
-                        statusText = 'پایان یافته';
-                    } else if (m.status.started) {
-                        let liveTimeStr = '';
-                        if (m.status.liveTime) {
-                            if (typeof m.status.liveTime === 'string') liveTimeStr = m.status.liveTime;
-                            else if (typeof m.status.liveTime === 'object') liveTimeStr = m.status.liveTime.short || m.status.liveTime.value || '';
-                        }
-                        statusText = liveTimeStr ? `در جریان (${liveTimeStr})` : 'در حال برگزاری';
-                    } else if (m.status.utcTime) {
-                        try {
-                            const dateObj = new Date(m.status.utcTime);
-                            statusText = 'ساعت ' + dateObj.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' });
-                        } catch (e) {
-                            statusText = 'به زودی';
-                        }
-                    }
-                }
-            }
-
-            let predHtml = '';
-            const pData = userPredictions[item.matchId];
-            if (pData && pData.locked) {
-                let pickText = '';
-                if (pData.winnerPick === 'HOME') pickText = `برد ${homeNameFA}`;
-                else if (pData.winnerPick === 'AWAY') pickText = `برد ${awayNameFA}`;
-                else if (pData.winnerPick === 'DRAW') pickText = `مساوی`;
-
-                predHtml = `
-                    <div style="margin-top: 10px; padding: 8px 12px; background: rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.4); border-radius: 10px; font-size: 0.82rem; color: #38bdf8; display: flex; justify-content: space-between; align-items: center;">
-                        <span>🎯 پیش‌بینی شما: ${pData.home !== '' && pData.away !== '' ? `نتیجه ${pData.home}-${pData.away}` : ''} ${pickText ? `(${pickText})` : ''}</span>
-                        ${pData.wager > 0 ? `<span>🪙 سرمایه: ${pData.wager} سکه</span>` : ''}
-                    </div>
-                `;
-            }
-
-            html += `
-                <div class="match-card">
-                    <div class="card-top-bar">
-                        <div class="league-name-tag">
-                            ⚽ <span>${item.leagueNameFA}</span>
-                        </div>
-                        <div class="status-badge ${isLive ? 'live' : ''}">
-                            ${isLive ? '<div class="live-dot"></div>' : ''}
-                            <span>${statusText}</span>
-                        </div>
-                    </div>
-                    <div class="match-info">
-                        <div class="team home"><span>${homeNameFA}</span></div>
-                        <div class="score-box">${homeScore} - ${awayScore}</div>
-                        <div class="team away"><span>${awayNameFA}</span></div>
-                    </div>
-                    ${predHtml}
-                </div>
-            `;
-        });
-
-        html += '</div>';
-        contentDiv.innerHTML = html;
-    }
-
-    function renderPredictionView(contentDiv, isSubView = false) {
-        let allMatchesList = [];
-
-        globalLeaguesData.forEach(league => {
-            const leagueRaw = league.name || league.primaryId || 'مسابقات';
-            const leagueNameFA = translateFA(leagueRaw);
-            const matches = league.matches || league.events || [];
-
-            matches.forEach((m, idx) => {
-                let isUpcoming = true;
-                if (m.status) {
-                    if (typeof m.status === 'string') {
-                        if (m.status.includes('پایان') || m.status.toLowerCase().includes('ft') || m.status.toLowerCase().includes('live') || m.status.toLowerCase().includes('started')) {
-                            isUpcoming = false;
-                        }
-                    } else {
-                        if (m.status.finished || m.status.started) {
-                            isUpcoming = false;
-                        }
-                    }
-                }
-
-                let timestamp = m.status?.utcTime ? new Date(m.status.utcTime).getTime() : 0;
-                let matchId = m.id || `${leagueNameFA}_${idx}_${timestamp}`;
-
-                if (isUpcoming) {
-                    allMatchesList.push({
-                        matchId: matchId,
-                        matchData: m,
-                        leagueNameFA: leagueNameFA
-                    });
-                }
+            const matchId = 'lobby_room_global';
+            matchChannel = supabaseClient.channel(matchId, {
+                config: { presence: { key: myTeam.name } }
             });
-        });
 
-        let html = '<div class="matches-grid">';
-        if (isSubView) {
-            html += `
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                    <button class="btn-action" onclick="backToQumarHome()" style="padding: 6px 14px; font-size: 0.8rem;">← بازگشت به منوی قمار</button>
-                    <span style="font-size: 0.9rem; color: var(--neon-green); font-weight: bold;">🎯 بخش پیش‌بینی مسابقات واقعی آینده</span>
-                </div>
-            `;
-        }
-        html += '<p style="color:var(--neon-green); text-align:center; margin-bottom:10px;">🎯 پیش‌بینی رایگان (+۵ یا +۲۵ سکه) + قابلیت گذاشتن سکه دلخواه (دریافت ۳ برابر در صورت برد!):</p>';
+            matchChannel
+                .on('presence', { event: 'sync' }, () => {
+                    const state = matchChannel.presenceState();
+                    const players = Object.keys(state);
 
-        if (allMatchesList.length === 0) {
-            contentDiv.innerHTML = html + '<div class="empty-msg">هیچ مسابقه شروع‌نشده‌ای برای تاریخ انتخابی یافت نشد. تاریخ دیگری را انتخاب کنید.</div></div>';
-            return;
-        }
-
-        allMatchesList.forEach(item => {
-            const m = item.matchData;
-            const homeRaw = m.home?.name || m.homeTeam?.name || m.home || 'میزبان';
-            const awayRaw = m.away?.name || m.awayTeam?.name || m.away || 'میهمان';
-            const homeNameFA = translateFA(homeRaw);
-            const awayNameFA = translateFA(awayRaw);
-            const pKey = item.matchId;
-            const savedPred = userPredictions[pKey] || { home: '', away: '', winnerPick: '', wager: 0, locked: false };
-
-            html += `
-                <div class="match-card">
-                    <div class="card-top-bar">
-                        <div class="league-name-tag">⚽ <span>${item.leagueNameFA}</span></div>
-                    </div>
-                    <div class="prediction-wrapper">
-                        <div class="prediction-row">
-                            <div class="team home"><span>${homeNameFA}</span></div>
-                            <div class="exact-score-box">
-                                <input type="number" id="h_${pKey}" class="pred-input" value="${savedPred.home ?? ''}" placeholder="گل" ${savedPred.locked ? 'disabled' : ''}>
-                                <span>-</span>
-                                <input type="number" id="a_${pKey}" class="pred-input" value="${savedPred.away ?? ''}" placeholder="گل" ${savedPred.locked ? 'disabled' : ''}>
-                            </div>
-                            <div class="team away"><span>${awayNameFA}</span></div>
-                        </div>
-                        <div class="bet-input-container">
-                            <span>🪙 سکه دلخواه برای ۳ برابر کردن:</span>
-                            <input type="number" id="bet_${pKey}" class="bet-input" value="${savedPred.wager || 0}" min="0" placeholder="تعداد" ${savedPred.locked ? 'disabled' : ''}>
-                        </div>
-                        <div class="outcome-btns">
-                            <button class="btn-outcome ${savedPred.winnerPick === 'HOME' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'HOME')">برد ${homeNameFA}</button>
-                            <button class="btn-outcome ${savedPred.winnerPick === 'DRAW' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'DRAW')">مساوی</button>
-                            <button class="btn-outcome ${savedPred.winnerPick === 'AWAY' ? 'selected' : ''}" ${savedPred.locked ? 'disabled' : ''} onclick="setOutcomePick('${pKey}', 'AWAY')">برد ${awayNameFA}</button>
-                        </div>
-                        ${savedPred.locked ? 
-                            `<div class="predicted-badge">✓ پیش‌بینی‌شده و قفل شده</div>` :
-                            `<button class="btn-save-pred" onclick="saveFullPrediction('${pKey}')">ثبت قطعی پیش‌بینی</button>`
+                    if (players.length >= 2) {
+                        // یافتن حریف
+                        let keys = Object.keys(state);
+                        if (keys[0] === myTeam.name) {
+                            isHost = true;
+                            opponentTeam = state[keys[1]][0].team;
+                        } else {
+                            isHost = false;
+                            opponentTeam = state[keys[0]][0].team;
                         }
-                    </div>
-                </div>
-            `;
-        });
-        html += '</div>';
-        contentDiv.innerHTML = html;
-    }
-</script>
 
+                        startMatch();
+                    }
+                })
+                .subscribe(async (status) => {
+                    if (status === 'SUBSCRIBED') {
+                        await matchChannel.track({ team: myTeam });
+                    }
+                });
+        }
+
+        // شروع مسابقه آنلاین
+        function startMatch() {
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('match-screen').style.display = 'flex';
+
+            document.getElementById('home-team-display').innerText = `${myTeam.name}: ۰`;
+            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ۰`;
+
+            logEvent(`مسابقه بین ${myTeam.name} (قدرت: ${myTeam.totalPower}) و ${opponentTeam.name} (قدرت: ${opponentTeam.totalPower}) شروع شد!`);
+
+            renderMatchPitch();
+
+            if (isHost) {
+                matchInterval = setInterval(gameLoopHost, 1000);
+            }
+        }
+
+        // رسم بازیکنان دو تیم روی زمین مسابقه
+        function renderMatchPitch() {
+            const pitch = document.getElementById('match-pitch');
+            pitch.querySelectorAll('.player-kit').forEach(el => el.remove());
+
+            // تیم خودم (پایین)
+            let myCoords = getCoordinates(myTeam.formation, myTeam.style, half === 2);
+            myTeam.players.forEach((p, idx) => {
+                let kit = document.createElement('div');
+                kit.className = 'player-kit';
+                kit.style.backgroundColor = myTeam.color;
+                kit.style.left = `${myCoords[idx].x}%`;
+                kit.style.top = `${myCoords[idx].y}%`;
+                kit.innerHTML = `${p.id}`;
+                pitch.appendChild(kit);
+            });
+
+            // تیم حریف (بالا)
+            let oppCoords = getCoordinates(opponentTeam.formation, opponentTeam.style, half === 1);
+            opponentTeam.players.forEach((p, idx) => {
+                let kit = document.createElement('div');
+                kit.className = 'player-kit';
+                kit.style.backgroundColor = opponentTeam.color;
+                kit.style.left = `${oppCoords[idx].x}%`;
+                kit.style.top = `${oppCoords[idx].y}%`;
+                kit.innerHTML = `${p.id}`;
+                pitch.appendChild(kit);
+            });
+        }
+
+        // موتور شبیه‌سازی مسابقه (در سمت میزبان اجرا می‌شود)
+        function gameLoopHost() {
+            timer--;
+
+            let minutes = Math.floor(timer / 60).toString().padStart(2, '0');
+            let seconds = (timer % 60).toString().padStart(2, '0');
+            document.getElementById('match-timer').innerText = `نیمه ${half === 1 ? 'اول' : 'دوم'} | ${minutes}:${seconds}`;
+
+            // حرکت تصادفی توپ
+            let ball = document.getElementById('ball');
+            ball.style.left = `${Math.floor(Math.random() * 80 + 10)}%`;
+            ball.style.top = `${Math.floor(Math.random() * 80 + 10)}%`;
+
+            // احتمال گلزنی بر اساس قدرت کلی تیم‌ها و تاکتیک‌ها
+            if (timer % 5 === 0) { // هر ۵ ثانیه احتمال حمله
+                let attackPowerHome = myTeam.totalPower * (myTeam.style === 'attacking' ? 1.2 : 1.0);
+                let defensePowerAway = opponentTeam.totalPower * (opponentTeam.style === 'defensive' ? 1.2 : 1.0);
+
+                // شانس گلزنی تیم من
+                if (Math.random() * attackPowerHome > Math.random() * defensePowerAway + 15) {
+                    score.home++;
+                    logEvent(`⚽️ گل برای ${myTeam.name}! یک حمله عالی با موفقیت به گل تبدیل شد.`);
+                    updateScores();
+                }
+
+                // شانس گلزنی تیم حریف
+                let attackPowerAway = opponentTeam.totalPower * (opponentTeam.style === 'attacking' ? 1.2 : 1.0);
+                let defensePowerHome = myTeam.totalPower * (myTeam.style === 'defensive' ? 1.2 : 1.0);
+
+                if (Math.random() * attackPowerAway > Math.random() * defensePowerHome + 15) {
+                    score.away++;
+                    logEvent(`⚽️ گل برای ${opponentTeam.name}! حریف دروازه را باز کرد.`);
+                    updateScores();
+                }
+            }
+
+            // پایان نیمه اول
+            if (timer <= 0 && half === 1) {
+                half = 2;
+                timer = 60;
+                logEvent(`🔔 پایان نیمه اول. تعویض زمین انجام شد!`);
+                renderMatchPitch();
+            } 
+            // پایان بازی
+            else if (timer <= 0 && half === 2) {
+                clearInterval(matchInterval);
+                let resultText = score.home > score.away ? 'پیروز شدید! 🏆' : (score.home < score.away ? 'شکست خوردید! ❌' : 'بازی مساوی شد! 🤝');
+                logEvent(`🏁 پایان بازی! نتیجه نهایی: ${score.home} - ${score.away}. ${resultText}`);
+                alert(`بازی به پایان رسید!\nنتیجه: ${myTeam.name} ${score.home} - ${score.away} ${opponentTeam.name}`);
+            }
+        }
+
+        function updateScores() {
+            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${score.home}`;
+            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${score.away}`;
+        }
+
+        function logEvent(msg) {
+            const log = document.getElementById('match-log');
+            log.innerHTML += `<div>• ${msg}</div>`;
+            log.scrollTop = log.scrollHeight;
+        }
+    </script>
 </body>
 </html>
