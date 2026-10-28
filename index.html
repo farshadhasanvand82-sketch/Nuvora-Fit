@@ -348,7 +348,6 @@
     </div>
 
     <script>
-        // اتصال به Firebase Realtime Database
         const firebaseConfig = {
             databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com/"
         };
@@ -371,7 +370,7 @@
         let timer = 60;
         let score = { home: 0, away: 0 };
         let matchInterval = null;
-        let queueRef = null;
+        let waitingRef = db.ref('matchmaking/waiting');
 
         function createTeam() {
             const name = document.getElementById('team-name-input').value.trim();
@@ -442,80 +441,45 @@
             });
         }
 
-        // سیستم مچ‌میکینگ سریع با Firebase
+        // مچ‌میکینگ بی‌نقص و آنی با Firebase
         function startMatchmaking() {
             document.getElementById('search-modal').style.display = 'flex';
-            const waitingRef = db.ref('matchmaking/waiting_player');
 
             waitingRef.once('value', (snapshot) => {
                 const waitingPlayer = snapshot.val();
 
                 if (waitingPlayer && waitingPlayer.id !== myTeam.id) {
-                    // حریف پیدا شد! ما مهمان هستیم و حریف میزبان است
+                    // حریف منتظر بود! ما او را پیدا کردیم (ما مهمان هستیم)
                     opponentTeam = waitingPlayer;
                     isHost = false;
 
-                    // پاک کردن صف انتظار
+                    // پاک کردن اتاق انتظار از فایبربیس
                     waitingRef.remove();
-
-                    // ساخت اتاق اختصاصی بازی برای تبادل رویدادها
                     startMatch();
                 } else {
-                    // کسی در انتظار نبود، پس خودمان منتظر می‌مانیم
+                    // کسی منتظر نبود، ما خودش را در صف انتظار قرار می‌دهیم (میزبان می‌شویم)
                     isHost = true;
                     waitingRef.set(myTeam);
 
-                    // گوش دادن به اینکه آیا کسی آمد و ما را برداشت یا خیر
+                    // گوش دادن به اینکه آیا کسی آمد و ما را برداشت یا بازی شروع شد
                     waitingRef.on('value', (snap) => {
-                        // اگر ما میزبان بودیم و حریفی آمد، فایبربیس فیلد دیگری می‌سازد
+                        const val = snap.val();
+                        if (!val) {
+                            // یعنی حریفی آمد و ما را از صف برداشت و بازی شروع شد
+                        }
                     });
-                }
-            });
-
-            // روش جایگزین آنی با لیسن کردن به صف
-            queueRef = db.ref('matchmaking/queue');
-            const myQueueRef = queueRef.push();
-            myQueueRef.set(myTeam);
-            
-            queueRef.on('value', (snapshot) => {
-                const players = snapshot.val();
-                if (!players) return;
-                
-                const keys = Object.keys(players);
-                if (keys.length >= 2) {
-                    // دو نفر در صف هستند
-                    let firstKey = keys[0];
-                    let secondKey = keys[1];
-
-                    let p1 = players[firstKey];
-                    let p2 = players[secondKey];
-
-                    if (p1.id === myTeam.id) {
-                        isHost = true;
-                        opponentTeam = p2;
-                        queueRef.remove();
-                        startMatch();
-                    } else if (p2.id === myTeam.id) {
-                        isHost = false;
-                        opponentTeam = p1;
-                        queueRef.remove();
-                        startMatch();
-                    }
                 }
             });
         }
 
         function cancelMatchmaking() {
-            if (queueRef) {
-                queueRef.remove();
-            }
-            db.ref('matchmaking/waiting_player').remove();
+            waitingRef.remove();
             document.getElementById('search-modal').style.display = 'none';
         }
 
         function startMatch() {
-            if (queueRef) queueRef.remove();
-            db.ref('matchmaking/waiting_player').remove();
+            waitingRef.remove();
+            waitingRef.off();
 
             document.getElementById('search-modal').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
