@@ -4,8 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فوتبال آنلاین - مستر لیگ</title>
-    <!-- Supabase SDK -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Firebase SDK (Compat Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
         :root {
             --primary-purple: #7b2cbf;
@@ -347,9 +348,12 @@
     </div>
 
     <script>
-        const SUPABASE_URL = 'https://vxpybengqnalhiriqspz.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_-GdIgi3ei9hEnccdjpFY6g_z88xdCa5';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // اتصال به Firebase Realtime Database
+        const firebaseConfig = {
+            databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com/"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
         let myTeam = {
             id: 'player_' + Math.random().toString(36).substr(2, 9),
@@ -367,7 +371,7 @@
         let timer = 60;
         let score = { home: 0, away: 0 };
         let matchInterval = null;
-        let matchChannel = null;
+        let queueRef = null;
 
         function createTeam() {
             const name = document.getElementById('team-name-input').value.trim();
@@ -438,61 +442,81 @@
             });
         }
 
-        // سیستم مچ‌میکینگ آنی بر پایه Broadcast عمومی Supabase
+        // سیستم مچ‌میکینگ سریع با Firebase
         function startMatchmaking() {
             document.getElementById('search-modal').style.display = 'flex';
+            const waitingRef = db.ref('matchmaking/waiting_player');
 
-            matchChannel = supabaseClient.channel('global_match_room', {
-                config: { broadcast: { self: false } }
+            waitingRef.once('value', (snapshot) => {
+                const waitingPlayer = snapshot.val();
+
+                if (waitingPlayer && waitingPlayer.id !== myTeam.id) {
+                    // حریف پیدا شد! ما مهمان هستیم و حریف میزبان است
+                    opponentTeam = waitingPlayer;
+                    isHost = false;
+
+                    // پاک کردن صف انتظار
+                    waitingRef.remove();
+
+                    // ساخت اتاق اختصاصی بازی برای تبادل رویدادها
+                    startMatch();
+                } else {
+                    // کسی در انتظار نبود، پس خودمان منتظر می‌مانیم
+                    isHost = true;
+                    waitingRef.set(myTeam);
+
+                    // گوش دادن به اینکه آیا کسی آمد و ما را برداشت یا خیر
+                    waitingRef.on('value', (snap) => {
+                        // اگر ما میزبان بودیم و حریفی آمد، فایبربیس فیلد دیگری می‌سازد
+                    });
+                }
             });
 
-            matchChannel
-                .on('broadcast', { event: 'find_match' }, ({ payload }) => {
-                    // اگر بازیکن دیگری در حال جستجو بود و آیدی‌اش با ما فرق داشت
-                    if (payload.id !== myTeam.id) {
-                        opponentTeam = payload;
-                        isHost = false; // دریافت‌کننده سیگنال مهمان است
+            // روش جایگزین آنی با لیسن کردن به صف
+            queueRef = db.ref('matchmaking/queue');
+            const myQueueRef = queueRef.push();
+            myQueueRef.set(myTeam);
+            
+            queueRef.on('value', (snapshot) => {
+                const players = snapshot.val();
+                if (!players) return;
+                
+                const keys = Object.keys(players);
+                if (keys.length >= 2) {
+                    // دو نفر در صف هستند
+                    let firstKey = keys[0];
+                    let secondKey = keys[1];
 
-                        // پاسخ به حریف که ما هم آماده‌ایم
-                        matchChannel.send({
-                            type: 'broadcast',
-                            event: 'accept_match',
-                            payload: myTeam
-                        });
+                    let p1 = players[firstKey];
+                    let p2 = players[secondKey];
 
+                    if (p1.id === myTeam.id) {
+                        isHost = true;
+                        opponentTeam = p2;
+                        queueRef.remove();
+                        startMatch();
+                    } else if (p2.id === myTeam.id) {
+                        isHost = false;
+                        opponentTeam = p1;
+                        queueRef.remove();
                         startMatch();
                     }
-                })
-                .on('broadcast', { event: 'accept_match' }, ({ payload }) => {
-                    if (payload.id !== myTeam.id) {
-                        opponentTeam = payload;
-                        isHost = true; // فرستنده اولیه میزبان است
-                        startMatch();
-                    }
-                })
-                .subscribe(async (status) => {
-                    if (status === 'SUBSCRIBED') {
-                        // ارسال سیگنال جستجو
-                        matchChannel.send({
-                            type: 'broadcast',
-                            event: 'find_match',
-                            payload: myTeam
-                        });
-                    }
-                });
+                }
+            });
         }
 
         function cancelMatchmaking() {
-            if (matchChannel) {
-                supabaseClient.removeChannel(matchChannel);
+            if (queueRef) {
+                queueRef.remove();
             }
+            db.ref('matchmaking/waiting_player').remove();
             document.getElementById('search-modal').style.display = 'none';
         }
 
         function startMatch() {
-            if (matchChannel) {
-                supabaseClient.removeChannel(matchChannel);
-            }
+            if (queueRef) queueRef.remove();
+            db.ref('matchmaking/waiting_player').remove();
+
             document.getElementById('search-modal').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('match-screen').style.display = 'flex';
@@ -503,8 +527,7 @@
             logEvent(`مسابقه بین ${myTeam.name} و ${opponentTeam.name} آغاز شد!`);
             renderMatchPitch();
 
-            // تعیین میزبان بر اساس مقایسه آیدی برای جلوگیری از تداخل
-            if (isHost || myTeam.id > opponentTeam.id) {
+            if (isHost) {
                 matchInterval = setInterval(gameLoopHost, 1000);
             }
         }
