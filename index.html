@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>فوتبال آنلاین - مستر لیگ</title>
-    <!-- Firebase SDK (Compat Version) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
     <style>
@@ -105,7 +105,7 @@
             box-shadow: 0 6px 20px rgba(255, 0, 127, 0.5);
         }
 
-        #dashboard-screen, #match-screen {
+        #dashboard-screen, #lobby-screen, #match-screen {
             display: none;
             width: 100%;
             max-width: 900px;
@@ -187,48 +187,59 @@
             border-radius: 4px;
         }
 
-        #search-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            justify-content: center;
-            align-items: center;
-            z-index: 100;
-        }
-
-        .search-box {
+        /* استایل لیست بازیکنان آنلاین در لابی */
+        .lobby-box {
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
-            padding: 40px;
-            border-radius: 24px;
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 500px;
             text-align: center;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.6);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .players-list {
+            max-height: 250px;
+            overflow-y: auto;
+            margin: 15px 0;
             display: flex;
             flex-direction: column;
+            gap: 10px;
+        }
+
+        .player-item {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 12px 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 20px;
-            max-width: 350px;
-            width: 90%;
+            border: 1px solid rgba(255,255,255,0.1);
         }
 
-        .spinner {
-            width: 60px;
-            height: 60px;
-            border: 5px solid rgba(255, 255, 255, 0.1);
-            border-top: 5px solid var(--accent-pink);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .challenge-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
         }
+        .challenge-btn:hover { background: #218838; }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        /* مودال درخواست بازی دریافتی */
+        #request-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            justify-content: center;
+            align-items: center;
+            z-index: 200;
         }
 
         .match-scorebar {
@@ -278,11 +289,12 @@
 </head>
 <body>
 
+    <!-- صفحه ۱: ساخت تیم -->
     <div id="create-team-screen" class="glass-card">
         <h2>ساخت تیم جدید</h2>
         <div class="form-group">
             <label>نام تیم:</label>
-            <input type="text" id="team-name-input" value="تیم ستاره‌ها" maxlength="15">
+            <input type="text" id="team-name-input" value="تیم من" maxlength="15">
         </div>
         <div class="form-group">
             <label>رنگ لباس (کیت):</label>
@@ -291,6 +303,7 @@
         <button class="btn" onclick="createTeam()">ایجاد تیم و ورود</button>
     </div>
 
+    <!-- صفحه ۲: داشبورد و تنظیمات -->
     <div id="dashboard-screen">
         <div class="glass-card dashboard-header">
             <div>
@@ -317,20 +330,38 @@
             <div class="pitch-circle"></div>
         </div>
 
-        <button class="btn" style="margin-top: 15px; width: 100%; max-width: 400px;" onclick="startMatchmaking()">
-            ⚡ جستجوی حریف آنلاین (Matchmaking)
+        <button class="btn" style="margin-top: 15px; width: 100%; max-width: 400px;" onclick="openLobby()">
+            🌐 ورود به لابی آنلاین (لیست حریفان)
         </button>
     </div>
 
-    <div id="search-modal">
-        <div class="search-box">
-            <div class="spinner"></div>
-            <h3 style="margin:0; font-size: 18px;">در حال جستجوی حریف...</h3>
-            <p style="font-size: 12px; color: #ccc;">لطفاً منتظر بمانید تا بازیکن دیگری متصل شود.</p>
-            <button class="btn" style="background: rgba(255,255,255,0.1); margin-top:0;" onclick="cancelMatchmaking()">لغو جستجو</button>
+    <!-- صفحه ۳: لابی آنلاین (لیست بازیکنان حاضر) -->
+    <div id="lobby-screen">
+        <div class="lobby-box">
+            <h3>لیست حریفان آنلاین در لابی</h3>
+            <p style="font-size: 13px; color: #ccc; margin-bottom: 10px;">روی دکمه‌ی «دعوت به مسابقه» روبروی هر تیم بزنید:</p>
+            
+            <div class="players-list" id="online-players-container">
+                <div style="color: #aaa; padding: 20px;">در حال جستجوی بازیکنان آنلاین...</div>
+            </div>
+
+            <button class="btn" style="background: rgba(255,255,255,0.1);" onclick="backToDashboard()">بازگشت به منو</button>
         </div>
     </div>
 
+    <!-- مودال دریافت درخواست بازی از دیگران -->
+    <div id="request-modal">
+        <div class="glass-card" style="max-width: 350px;">
+            <h3>دعوت به مسابقه!</h3>
+            <p id="request-text" style="margin-bottom: 20px; font-size: 15px; color: #ffcc00;"></p>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn" style="background: #28a745; margin:0;" onclick="acceptGameRequest()">قبول مسابقه</button>
+                <button class="btn" style="background: #dc3545; margin:0;" onclick="rejectGameRequest()">رد کردن</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- صفحه ۴: زمین مسابقه -->
     <div id="match-screen">
         <div class="match-scorebar">
             <div id="home-team-display" style="color: #ff0055;">تیم من: ۰</div>
@@ -370,7 +401,9 @@
         let timer = 60;
         let score = { home: 0, away: 0 };
         let matchInterval = null;
-        let waitingRef = db.ref('matchmaking/waiting');
+        let onlineRef = null;
+        let myRequestRef = null;
+        let pendingChallenger = null;
 
         function createTeam() {
             const name = document.getElementById('team-name-input').value.trim();
@@ -441,48 +474,102 @@
             });
         }
 
-        // مچ‌میکینگ بی‌نقص و آنی با Firebase
-        function startMatchmaking() {
-            document.getElementById('search-modal').style.display = 'flex';
+        // ورود به لابی و نمایش لیست حریفان آنلاین
+        function openLobby() {
+            document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('lobby-screen').style.display = 'flex';
 
-            waitingRef.once('value', (snapshot) => {
-                const waitingPlayer = snapshot.val();
+            onlineRef = db.ref('lobby/online_players/' + myTeam.id);
+            onlineRef.set(myTeam);
+            onlineRef.onDisconnect().remove(); // اگر خارج شد از لیست پاک شود
 
-                if (waitingPlayer && waitingPlayer.id !== myTeam.id) {
-                    // حریف منتظر بود! ما او را پیدا کردیم (ما مهمان هستیم)
-                    opponentTeam = waitingPlayer;
-                    isHost = false;
+            // گوش دادن به درخواست‌های مسابقه که دیگران برای ما می‌فرستند
+            myRequestRef = db.ref('lobby/requests/' + myTeam.id);
+            myRequestRef.on('value', (snapshot) => {
+                const req = snapshot.val();
+                if (req) {
+                    pendingChallenger = req;
+                    document.getElementById('request-text').innerText = `تیم "${req.name}" به شما درخواست مسابقه داده است!`;
+                    document.getElementById('request-modal').style.display = 'flex';
+                }
+            });
 
-                    // پاک کردن اتاق انتظار از فایبربیس
-                    waitingRef.remove();
+            // بارگذاری لیست تمام بازیکنان آنلاین دیگر
+            const allOnlineRef = db.ref('lobby/online_players');
+            allOnlineRef.on('value', (snapshot) => {
+                const players = snapshot.val();
+                const container = document.getElementById('online-players-container');
+                container.innerHTML = '';
+
+                if (!players) {
+                    container.innerHTML = '<div style="color: #aaa; padding: 20px;">هیچ بازیکنی در لابی نیست.</div>';
+                    return;
+                }
+
+                Object.keys(players).forEach(id => {
+                    let player = players[id];
+                    if (player.id !== myTeam.id) {
+                        let div = document.createElement('div');
+                        div.className = 'player-item';
+                        div.innerHTML = `
+                            <span>${player.name} (قدرت: ${player.totalPower})</span>
+                            <button class="challenge-btn" onclick='sendChallenge(${JSON.stringify(player)})'>دعوت به مسابقه</button>
+                        `;
+                        container.appendChild(div);
+                    }
+                });
+            });
+        }
+
+        function backToDashboard() {
+            if (onlineRef) onlineRef.remove();
+            if (myRequestRef) myRequestRef.off();
+            document.getElementById('lobby-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'flex';
+        }
+
+        // ارسال درخواست مسابقه به تیم دیگر
+        function sendChallenge(targetPlayer) {
+            db.ref('lobby/requests/' + targetPlayer.id).set(myTeam);
+            alert(`درخواست مسابقه به تیم "${targetPlayer.name}" ارسال شد. منتظر تایید حریف باشید...`);
+
+            // گوش دادن به جواب حریف (آیا قبول کرد یا رد کرد)
+            db.ref('lobby/responses/' + myTeam.id).on('value', (snap) => {
+                const res = snap.val();
+                if (res === 'accepted') {
+                    db.ref('lobby/responses/' + myTeam.id).remove();
+                    opponentTeam = targetPlayer;
+                    isHost = true; // ما میزبان هستیم چون دعوت کردیم
                     startMatch();
-                } else {
-                    // کسی منتظر نبود، ما خودش را در صف انتظار قرار می‌دهیم (میزبان می‌شویم)
-                    isHost = true;
-                    waitingRef.set(myTeam);
-
-                    // گوش دادن به اینکه آیا کسی آمد و ما را برداشت یا بازی شروع شد
-                    waitingRef.on('value', (snap) => {
-                        const val = snap.val();
-                        if (!val) {
-                            // یعنی حریفی آمد و ما را از صف برداشت و بازی شروع شد
-                        }
-                    });
+                } else if (res === 'rejected') {
+                    db.ref('lobby/responses/' + myTeam.id).remove();
+                    alert('حریف درخواست شما را رد کرد.');
                 }
             });
         }
 
-        function cancelMatchmaking() {
-            waitingRef.remove();
-            document.getElementById('search-modal').style.display = 'none';
+        // قبول کردن درخواست مسابقه دریافتی
+        function acceptGameRequest() {
+            document.getElementById('request-modal').style.display = 'none';
+            db.ref('lobby/responses/' + pendingChallenger.id).set('accepted');
+            opponentTeam = pendingChallenger;
+            isHost = false; // ما مهمان هستیم
+            startMatch();
+        }
+
+        // رد کردن درخواست مسابقه دریافتی
+        function rejectGameRequest() {
+            document.getElementById('request-modal').style.display = 'none';
+            db.ref('lobby/responses/' + pendingChallenger.id).set('rejected');
+            db.ref('lobby/requests/' + myTeam.id).remove();
         }
 
         function startMatch() {
-            waitingRef.remove();
-            waitingRef.off();
-
-            document.getElementById('search-modal').style.display = 'none';
+            if (onlineRef) onlineRef.remove();
+            if (myRequestRef) myRequestRef.off();
+            document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
+            document.getElementById('request-modal').style.display = 'none';
             document.getElementById('match-screen').style.display = 'flex';
 
             document.getElementById('home-team-display').innerText = `${myTeam.name}: ۰`;
