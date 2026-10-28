@@ -164,7 +164,7 @@
             border-radius: 50%;
         }
 
-        /* کیت شیشه‌ای و نئونی بازیکنان */
+        /* کیت شیشه‌ای متحرک */
         .glass-kit {
             position: absolute;
             width: 44px;
@@ -182,7 +182,7 @@
             font-weight: bold;
             color: #fff;
             text-shadow: 0 0 4px #000;
-            transition: all 0.6s ease-in-out;
+            transition: all 0.8s cubic-bezier(0.25, 1, 0.5, 1);
             transform: translate(-50%, -50%);
             box-shadow: 0 4px 12px rgba(0,0,0,0.5);
         }
@@ -243,25 +243,34 @@
         }
         .challenge-btn:hover { background: #218838; }
 
-        #request-modal, #goal-modal, #announcement-modal {
+        /* مودال‌های شیشه‌ای سفارشی */
+        #custom-alert-modal, #request-modal, #goal-modal, #announcement-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.8);
             backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             justify-content: center;
             align-items: center;
             z-index: 300;
         }
 
-        /* انیمیشن جذاب گل */
+        /* انیمیشن گل نئونی زیبا */
         .goal-popup {
-            font-size: 55px;
+            font-size: 38px;
             font-weight: 900;
             color: #ff007f;
             text-transform: uppercase;
-            text-shadow: 0 0 20px #ff007f, 0 0 40px #ff0055, 0 0 60px #fff;
+            text-shadow: 0 0 15px #ff007f, 0 0 30px #ff0055, 0 0 45px #fff;
             animation: bounceIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            background: var(--glass-bg);
+            padding: 20px 40px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 0 30px rgba(255,0,127,0.4);
+            word-break: break-all;
+            text-align: center;
         }
 
         @keyframes bounceIn {
@@ -271,11 +280,15 @@
         }
 
         .announcement-popup {
-            font-size: 28px;
+            font-size: 24px;
             font-weight: bold;
             color: #ffcc00;
             text-shadow: 0 0 15px rgba(255, 204, 0, 0.6);
             text-align: center;
+            background: var(--glass-bg);
+            padding: 20px 30px;
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
         }
 
         .match-scorebar {
@@ -298,10 +311,10 @@
             background: #fff;
             border-radius: 50%;
             border: 2px solid #000;
-            transition: all 0.4s cubic-bezier(0.25, 1, 0.5, 1);
+            transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
             transform: translate(-50%, -50%);
             z-index: 20;
-            box-shadow: 0 0 10px #fff;
+            box-shadow: 0 0 12px #fff;
         }
 
         #match-log {
@@ -317,6 +330,13 @@
             border: 1px solid var(--glass-border);
         }
 
+        #return-home-btn {
+            display: none;
+            margin-top: 15px;
+            width: 100%;
+            max-width: 400px;
+        }
+
         @keyframes fadeIn {
             from { opacity: 0; transform: scale(0.95); }
             to { opacity: 1; transform: scale(1); }
@@ -325,7 +345,7 @@
 </head>
 <body>
 
-    <!-- صفحه ۱: ساخت تیم (فقط یک‌بار نمایش داده می‌شود) -->
+    <!-- صفحه ۱: ساخت تیم -->
     <div id="create-team-screen" class="glass-card">
         <h2>ساخت تیم جدید</h2>
         <div class="form-group">
@@ -339,7 +359,7 @@
         <button class="btn" onclick="createTeam()">ذخیره و ورود به بازی</button>
     </div>
 
-    <!-- صفحه ۲: داشبورد و مدیریت تاکتیک -->
+    <!-- صفحه ۲: داشبورد اصلی -->
     <div id="dashboard-screen">
         <div class="glass-card dashboard-header" style="max-width: 100%;">
             <div>
@@ -347,7 +367,7 @@
                 <small id="dash-team-power" style="color: var(--accent-pink);">قدرت کلی: ۰</small>
             </div>
             <div style="display: flex; align-items: center; gap: 15px;">
-                <div class="coins-badge">💰 سکه: <span id="player-coins">0</span></div>
+                <div class="coins-badge">💰 سکه: <span id="player-coins">50</span></div>
                 <select id="formation-select" onchange="updateTactics()">
                     <option value="4-4-2">ترکیب: ۴-۴-۲</option>
                     <option value="4-3-3">ترکیب: ۴-۳-۳</option>
@@ -384,6 +404,15 @@
         </div>
     </div>
 
+    <!-- مودال هشدار شیشه‌ای سفارشی (جایگزین Alert مرورگر) -->
+    <div id="custom-alert-modal">
+        <div class="glass-card" style="max-width: 350px;">
+            <h3 style="color: var(--accent-pink);">پیام سیستم</h3>
+            <p id="custom-alert-text" style="margin-bottom: 20px; font-size: 15px; color: #eee;"></p>
+            <button class="btn" onclick="closeCustomAlert()">تأیید</button>
+        </div>
+    </div>
+
     <!-- مودال درخواست مسابقه -->
     <div id="request-modal">
         <div class="glass-card" style="max-width: 350px;">
@@ -401,12 +430,12 @@
         <div class="goal-popup">GooooooooooL!</div>
     </div>
 
-    <!-- مودال اطلاعیه میان بازی (مثل شروع نیمه دوم) -->
+    <!-- مودال اطلاعیه میان بازی -->
     <div id="announcement-modal">
         <div class="announcement-popup" id="announcement-text">نیمه دوم آغاز شد</div>
     </div>
 
-    <!-- صفحه ۴: زمین مسابقه هوشمند -->
+    <!-- صفحه ۴: زمین مسابقه -->
     <div id="match-screen">
         <div class="match-scorebar">
             <div id="home-team-display" style="color: #ff0055;">تیم من: ۰</div>
@@ -421,6 +450,11 @@
         </div>
 
         <div id="match-log"></div>
+
+        <!-- دکمه ورود به صفحه اصلی پس از پایان بازی -->
+        <button id="return-home-btn" class="btn" onclick="returnToDashboardFromMatch()">
+            🏠 بازگشت به صفحه اصلی
+        </button>
     </div>
 
     <script>
@@ -430,7 +464,6 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // نام‌های تصادفی برای بازیکنان اختصاصی هر کاربر
         const firstNames = ["آریا", "کوروش", "سروش", "سامان", "پویا", "ارشیا", "دانیال", "سهیل", "مهدی", "رضا", "نیما"];
         const lastNames = ["کریمی", "موسوی", "راد", "بهرامی", "نظری", "طاهری", "سلطانی", "مرادی", "رحیمی", "زندی", "پور"];
 
@@ -442,11 +475,12 @@
             totalPower: 0,
             formation: '4-4-2',
             style: 'balanced',
-            coins: 50 // سکه اولیه
+            coins: 50
         };
 
         let opponentTeam = null;
         let isHost = false;
+        let matchRoomId = null;
         let half = 1;
         let timer = 60;
         let score = { home: 0, away: 0 };
@@ -455,7 +489,15 @@
         let myRequestRef = null;
         let pendingChallenger = null;
 
-        // بررسی اینکه آیا قبلاً تیم ساخته شده است یا خیر
+        function showCustomAlert(msg) {
+            document.getElementById('custom-alert-text').innerText = msg;
+            document.getElementById('custom-alert-modal').style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').style.display = 'none';
+        }
+
         window.onload = function() {
             const savedTeam = localStorage.getItem('master_league_team');
             const savedCoins = localStorage.getItem('master_league_coins');
@@ -483,7 +525,7 @@
             if (lastBonusDate !== today) {
                 myTeam.coins += 5;
                 localStorage.setItem('last_bonus_date', today);
-                alert('🎁 هدیه روزانه: ۵ سکه به حساب شما اضافه شد!');
+                showCustomAlert('🎁 هدیه روزانه: ۵ سکه به حساب شما اضافه شد!');
                 saveCoins();
             }
         }
@@ -495,7 +537,7 @@
 
         function createTeam() {
             const name = document.getElementById('team-name-input').value.trim();
-            if(!name) return alert('لطفاً نام تیم را وارد کنید');
+            if(!name) return showCustomAlert('لطفاً نام تیم را وارد کنید');
 
             myTeam.name = name;
             myTeam.color = document.getElementById('team-color-input').value;
@@ -515,7 +557,6 @@
             }
             myTeam.totalPower = parseFloat(myTeam.totalPower.toFixed(1));
 
-            // ذخیره دائمی مشخصات تیم در مرورگر تا دیگر صفحه ساخت تیم باز نشود
             localStorage.setItem('master_league_team', JSON.stringify(myTeam));
 
             document.getElementById('create-team-screen').style.display = 'none';
@@ -530,16 +571,17 @@
         function updateTactics() {
             myTeam.formation = document.getElementById('formation-select').value;
             myTeam.style = document.getElementById('style-select').value;
+            localStorage.setItem('master_league_team', JSON.stringify(myTeam));
             renderPreviewPitch();
         }
 
-        function getCoordinates(formation, style, isOpponent = false) {
-            let coords = [{ x: 50, y: isOpponent ? 5 : 95 }];
+        function getCoordinates(formation, style, isOpponent = false, attackPhase = 0) {
+            let coords = [{ x: 50, y: isOpponent ? 5 + attackPhase : 95 - attackPhase }];
             let formParts = formation.split('-').map(Number);
             let yOffset = style === 'attacking' ? -6 : (style === 'defensive' ? 6 : 0);
             if(isOpponent) yOffset = -yOffset;
 
-            let currentY = isOpponent ? 22 : 78;
+            let currentY = isOpponent ? 22 + attackPhase : 78 - attackPhase;
             let stepY = isOpponent ? 24 : -24;
 
             formParts.forEach(lineCount => {
@@ -581,7 +623,7 @@
                 const req = snapshot.val();
                 if (req) {
                     pendingChallenger = req;
-                    document.getElementById('request-text').innerText = `تیم "${req.name}" به شما درخواست مسابقه داده است!`;
+                    document.getElementById('request-text').innerText = `تیم "${req.challenger.name}" به شما درخواست مسابقه داده است!`;
                     document.getElementById('request-modal').style.display = 'flex';
                 }
             });
@@ -593,7 +635,7 @@
                 container.innerHTML = '';
 
                 if (!players) {
-                    container.innerHTML = '<div style="color: #aaa; padding: 20px;">هیچ بازیکنی در لابی نیست. لطفاً با یک تب دیگر وارد شوید.</div>';
+                    container.innerHTML = '<div style="color: #aaa; padding: 20px;">هیچ بازیکنی در لابی نیست.</div>';
                     return;
                 }
 
@@ -620,8 +662,9 @@
         }
 
         function sendChallenge(targetPlayer) {
-            db.ref('lobby/requests/' + targetPlayer.id).set(myTeam);
-            alert(`درخواست مسابقه به تیم "${targetPlayer.name}" ارسال شد.`);
+            matchRoomId = 'room_' + Math.min(myTeam.id, targetPlayer.id) + '_' + Math.max(myTeam.id, targetPlayer.id);
+            db.ref('lobby/requests/' + targetPlayer.id).set({ challenger: myTeam, roomId: matchRoomId });
+            showCustomAlert(`درخواست مسابقه به تیم "${targetPlayer.name}" ارسال شد.`);
 
             db.ref('lobby/responses/' + myTeam.id).on('value', (snap) => {
                 const res = snap.val();
@@ -629,52 +672,61 @@
                     db.ref('lobby/responses/' + myTeam.id).remove();
                     opponentTeam = targetPlayer;
                     isHost = true;
-                    startMatch();
+                    initMatchSession();
                 } else if (res === 'rejected') {
                     db.ref('lobby/responses/' + myTeam.id).remove();
-                    alert('حریف درخواست شما را رد کرد.');
+                    showCustomAlert('حریف درخواست شما را رد کرد.');
                 }
             });
         }
 
         function acceptGameRequest() {
             document.getElementById('request-modal').style.display = 'none';
-            db.ref('lobby/responses/' + pendingChallenger.id).set('accepted');
-            opponentTeam = pendingChallenger;
+            matchRoomId = pendingChallenger.roomId;
+            opponentTeam = pendingChallenger.challenger;
+            db.ref('lobby/responses/' + opponentTeam.id).set('accepted');
             isHost = false;
-            startMatch();
+            initMatchSession();
         }
 
         function rejectGameRequest() {
             document.getElementById('request-modal').style.display = 'none';
-            db.ref('lobby/responses/' + pendingChallenger.id).set('rejected');
+            db.ref('lobby/responses/' + pendingChallenger.challenger.id).set('rejected');
             db.ref('lobby/requests/' + myTeam.id).remove();
         }
 
-        function startMatch() {
+        function initMatchSession() {
             if (onlineRef) onlineRef.remove();
             if (myRequestRef) myRequestRef.off();
             document.getElementById('lobby-screen').style.display = 'none';
             document.getElementById('dashboard-screen').style.display = 'none';
             document.getElementById('request-modal').style.display = 'none';
             document.getElementById('match-screen').style.display = 'flex';
+            document.getElementById('return-home-btn').style.display = 'none';
 
             document.getElementById('home-team-display').innerText = `${myTeam.name}: ۰`;
             document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ۰`;
 
             logEvent(`مسابقه هوشمند بین ${myTeam.name} و ${opponentTeam.name} آغاز شد!`);
-            renderMatchPitch();
+            renderMatchPitch(0);
 
             if (isHost) {
-                matchInterval = setInterval(gameLoopHost, 1000);
+                matchInterval = setInterval(gameLoopHost, 1500);
+            } else {
+                db.ref('matches/' + matchRoomId).on('value', (snapshot) => {
+                    const gameState = snapshot.val();
+                    if (gameState) {
+                        updateMatchUI(gameState);
+                    }
+                });
             }
         }
 
-        function renderMatchPitch() {
+        function renderMatchPitch(attackPhase = 0) {
             const pitch = document.getElementById('match-pitch');
             pitch.querySelectorAll('.glass-kit').forEach(el => el.remove());
 
-            let myCoords = getCoordinates(myTeam.formation, myTeam.style, half === 2);
+            let myCoords = getCoordinates(myTeam.formation, myTeam.style, half === 2, attackPhase);
             myTeam.players.forEach((p, idx) => {
                 let kit = document.createElement('div');
                 kit.className = 'glass-kit';
@@ -685,7 +737,7 @@
                 pitch.appendChild(kit);
             });
 
-            let oppCoords = getCoordinates(opponentTeam.formation, opponentTeam.style, half === 1);
+            let oppCoords = getCoordinates(opponentTeam.formation, opponentTeam.style, half === 1, -attackPhase);
             opponentTeam.players.forEach((p, idx) => {
                 let kit = document.createElement('div');
                 kit.className = 'glass-kit';
@@ -697,111 +749,143 @@
             });
         }
 
-        // هوش مصنوعی پیشرفته شبیه‌سازی بازی و رویدادها
         function gameLoopHost() {
             timer--;
-            let minutes = Math.floor(timer / 60).toString().padStart(2, '0');
-            let seconds = (timer % 60).toString().padStart(2, '0');
-            document.getElementById('match-timer').innerText = `نیمه ${half === 1 ? 'اول' : 'دوم'} | ${minutes}:${seconds}`;
+            let attackPhase = Math.floor(Math.random() * 15) - 7;
+            let ballX = Math.floor(Math.random() * 70 + 15);
+            let ballY = Math.floor(Math.random() * 70 + 15);
 
-            let ball = document.getElementById('ball');
-            let randomX = Math.floor(Math.random() * 80 + 10);
-            let randomY = Math.floor(Math.random() * 80 + 10);
-            ball.style.left = `${randomX}%`;
-            ball.style.top = `${randomY}%`;
+            let eventText = null;
+            let goalScored = null;
 
-            if (timer % 4 === 0) {
+            if (timer % 7 === 0) {
                 let eventType = Math.random();
-
-                // شبیه‌سازی خطا و کارت
                 if (eventType < 0.20) {
                     let isYellow = Math.random() > 0.3;
                     let teamName = Math.random() > 0.5 ? myTeam.name : opponentTeam.name;
-                    logEvent(`⚠️ داور در سوت خود دمید! خطا به سود حریف و کارت ${isYellow ? 'زرد 🟟' : 'قرمز 🟥'} برای بازیکن ${teamName}.`);
-                } 
-                // شبیه‌سازی آفساید
-                else if (eventType < 0.35) {
-                    logEvent(`🚩 پرچم کمک داور بالا رفت! اعلام آفساید برای خط حمله.`);
-                } 
-                // شبیه‌سازی تکل و توپ‌گیری مدافعان
-                else if (eventType < 0.55) {
-                    let defPlayer = myTeam.players[Math.floor(Math.random() * 4) + 1];
-                    logEvent(`🛡️ تکل موفق و توپ‌گیری عالی توسط مدافع قدرتمند (${defPlayer.name})!`);
-                }
-                // شبیه‌سازی نفوذ و شوت مهاجمان
-                else if (eventType < 0.70) {
-                    let fwdPlayer = myTeam.players[Math.floor(Math.random() * 2) + 9];
-                    logEvent(`⚡ حرکت تکنیکی و دریبلینگ فوق‌العاده از ${fwdPlayer.name} و شوت سنگین به سمت دروازه!`);
-                }
-                // ثبت گل برای میزبان
-                else if (eventType < 0.82) {
+                    eventText = `⚠️ خطای بازیکن ${teamName} و کارت ${isYellow ? 'زرد 🟟' : 'قرمز 🟥'}.`;
+                } else if (eventType < 0.35) {
+                    eventText = `🚩 پرچم کمک داور بالا رفت! اعلام آفساید.`;
+                } else if (eventType < 0.55) {
+                    eventText = `🛡️ تکل موفق و توپ‌گیری عالی توسط خط دفاعی!`;
+                } else if (eventType < 0.70) {
+                    eventText = `⚡ حرکت تکنیکی و شوت سنگین به سمت دروازه!`;
+                } else if (eventType < 0.82) {
                     score.home++;
-                    updateScores();
-                    triggerGoalAnimation();
-                    logEvent(`⚽️ گل فوق‌العاده برای ${myTeam.name}!`);
-                }
-                // ثبت گل برای مهمان
-                else if (eventType < 0.94) {
+                    goalScored = 'home';
+                    eventText = `⚽️ گل فوق‌العاده برای ${myTeam.name}!`;
+                } else if (eventType < 0.94) {
                     score.away++;
-                    updateScores();
-                    triggerGoalAnimation();
-                    logEvent(`⚽️ گل برای حریف (${opponentTeam.name})!`);
+                    goalScored = 'away';
+                    eventText = `⚽️ گل برای حریف (${opponentTeam.name})!`;
                 }
             }
 
-            // پایان نیمه اول و اعلام تعویض زمین
             if (timer <= 0 && half === 1) {
                 half = 2;
                 timer = 60;
-                showAnnouncement("نیمه دوم آغاز شد");
-                logEvent(`🔔 پایان نیمه اول. تیم‌ها زمین را عوض کردند.`);
-                renderMatchPitch();
-            } 
-            // پایان بازی و اعمال جوایز سکه برد و باخت
-            else if (timer <= 0 && half === 2) {
+                eventText = `🔔 پایان نیمه اول. تعویض زمین!`;
+            } else if (timer <= 0 && half === 2) {
                 clearInterval(matchInterval);
-                let resultText = "";
                 if (score.home > score.away) {
-                    resultText = 'شما برنده شدید! 🏆 (+۱۵ سکه)';
                     myTeam.coins += 15;
+                    eventText = `🏁 پایان مسابقه! شما برنده شدید 🏆 (+۱۵ سکه)`;
                 } else if (score.home < score.away) {
-                    resultText = 'بازی را واگذار کردید! ❌ (-۵ سکه)';
                     myTeam.coins = Math.max(0, myTeam.coins - 5);
+                    eventText = `🏁 پایان مسابقه! شکست خوردید ❌ (-۵ سکه)`;
                 } else {
-                    resultText = 'بازی مساوی به پایان رسید! 🤝';
+                    eventText = `🏁 پایان مسابقه! مساوی 🤝`;
                 }
                 saveCoins();
-                logEvent(`🏁 پایان مسابقه! ${resultText}`);
-                showAnnouncement(`پایان بازی\n${resultText}`);
+            }
+
+            db.ref('matches/' + matchRoomId).set({
+                timer: timer,
+                half: half,
+                scoreHome: score.home,
+                scoreAway: score.away,
+                ballX: ballX,
+                ballY: ballY,
+                attackPhase: attackPhase,
+                event: eventText,
+                goal: goalScored,
+                isFinished: (timer <= 0 && half === 2)
+            });
+
+            updateMatchUI({
+                timer: timer,
+                half: half,
+                scoreHome: score.home,
+                scoreAway: score.away,
+                ballX: ballX,
+                ballY: ballY,
+                attackPhase: attackPhase,
+                event: eventText,
+                goal: goalScored,
+                isFinished: (timer <= 0 && half === 2)
+            });
+        }
+
+        function updateMatchUI(state) {
+            let minutes = Math.floor(state.timer / 60).toString().padStart(2, '0');
+            let seconds = (state.timer % 60).toString().padStart(2, '0');
+            document.getElementById('match-timer').innerText = `نیمه ${state.half === 1 ? 'اول' : 'دوم'} | ${minutes}:${seconds}`;
+
+            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${state.scoreHome}`;
+            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${state.scoreAway}`;
+
+            let ball = document.getElementById('ball');
+            ball.style.left = `${state.ballX}%`;
+            ball.style.top = `${state.ballY}%`;
+
+            renderMatchPitch(state.attackPhase || 0);
+
+            if (state.event) {
+                logEvent(state.event);
+            }
+
+            if (state.goal) {
+                triggerGoalAnimation();
+            }
+
+            if (state.half === 2 && state.timer === 60 && state.event && state.event.includes('نیمه اول')) {
+                showAnnouncement("نیمه دوم آغاز شد");
+            }
+
+            if (state.isFinished) {
+                showAnnouncement("پایان مسابقه!");
+                document.getElementById('return-home-btn').style.display = 'block';
             }
         }
 
         function triggerGoalAnimation() {
             const modal = document.getElementById('goal-modal');
             modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 2000); // نمایش به مدت ۲ ثانیه
+            setTimeout(() => { modal.style.display = 'none'; }, 2000);
         }
 
         function showAnnouncement(text) {
             const modal = document.getElementById('announcement-modal');
             document.getElementById('announcement-text').innerText = text;
             modal.style.display = 'flex';
-            setTimeout(() => {
-                modal.style.display = 'none';
-            }, 2500);
-        }
-
-        function updateScores() {
-            document.getElementById('home-team-display').innerText = `${myTeam.name}: ${score.home}`;
-            document.getElementById('away-team-display').innerText = `${opponentTeam.name}: ${score.away}`;
+            setTimeout(() => { modal.style.display = 'none'; }, 2500);
         }
 
         function logEvent(msg) {
             const log = document.getElementById('match-log');
+            if (log.lastChild && log.lastChild.innerText.includes(msg)) return;
             log.innerHTML += `<div>• ${msg}</div>`;
             log.scrollTop = log.scrollHeight;
+        }
+
+        function returnToDashboardFromMatch() {
+            if (matchRoomId) {
+                db.ref('matches/' + matchRoomId).off();
+                db.ref('matches/' + matchRoomId).remove();
+            }
+            document.getElementById('match-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'flex';
+            document.getElementById('player-coins').innerText = myTeam.coins;
         }
     </script>
 </body>
