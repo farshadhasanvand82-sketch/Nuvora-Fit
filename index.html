@@ -1,1832 +1,1496 @@
-<!DOCTYPE html>
-<html lang="fa" dir="rtl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>استودیو دونفره و اتاق قور | Glass Studio</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+import os
+import shutil
+import threading
+import time
+import json
+import random
+import base64
+import re
+import telebot
+import yt_dlp
+from flask import Flask
+from telebot import types
+
+BOT_TOKEN = "8948057491:AAFPWgwOdHjsNaVGOhW1Dye9ssSBgwTlk9o"
+INITIAL_ADMINS = [8886868325, 8250289921]
+
+ARCHIVE_CHANNEL = "@sheGOgpUlFVmMTRk"
+
+DATA_DIR = "/data" if os.path.exists("/data") else "."
+USERS_FILE = os.path.join(DATA_DIR, "users_data.json")
+SETTINGS_FILE = os.path.join(DATA_DIR, "settings.json")
+BOTS_FILE = os.path.join(DATA_DIR, "child_bots.json")
+PRO_STATE_FILE = os.path.join(DATA_DIR, "pro_state.json")
+POSTS_CACHE_FILE = os.path.join(DATA_DIR, "posts_cache.json")
+USER_LAST_URL_FILE = os.path.join(DATA_DIR, "user_last_url.json")
+MUSIC_CHOICES_FILE = os.path.join(DATA_DIR, "music_choices.json")
+EDIT_MUSIC_STATE_FILE = os.path.join(DATA_DIR, "edit_music_state.json")
+
+bot = telebot.TeleBot(BOT_TOKEN)
+DOWNLOAD_DIR = "downloads"
+
+user_states = {}
+child_bot_instances = {}
+child_bot_threads = {}
+
+app = Flask(__name__)
+
+@app.route('/')
+def home():
+    return "🤖 Professional Multi-Bot Builder & Downloader is running live!"
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
+
+def self_ping_worker():
+    import urllib.request
+    time.sleep(10)
+    while True:
+        try:
+            app_url = os.environ.get("RENDER_EXTERNAL_URL")
+            if app_url:
+                urllib.request.urlopen(app_url, timeout=10)
+        except Exception as e:
+            print(f"Self-ping error: {e}")
+        time.sleep(240)
+
+def clear_downloads():
+    if os.path.exists(DOWNLOAD_DIR):
+        shutil.rmtree(DOWNLOAD_DIR)
+    os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+clear_downloads()
+
+def load_json(file_path, default_val):
+    if os.path.exists(file_path):
+        try:
+            with open(file_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except:
+            return default_val
+    return default_val
+
+def save_json(file_path, data):
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=4)
+
+def load_users():
+    return load_json(USERS_FILE, {})
+
+def save_user(message):
+    users = load_users()
+    user_id = str(message.from_user.id)
+    user_data = {
+        "id": message.from_user.id,
+        "username": message.from_user.username or "ندارد",
+        "first_name": message.from_user.first_name or "بدون نام",
+        "banned": False,
+        "subscription_expire": 0 
+    }
+    users[user_id] = user_data
+    save_json(USERS_FILE, users)
+
+def is_banned(user_id):
+    users = load_users()
+    return users.get(str(user_id), {}).get("banned", False)
+
+def has_active_subscription(user_id):
+    admins = load_settings().get("admins", INITIAL_ADMINS)
+    if user_id in admins:
+        return True
+    users = load_users()
+    user_data = users.get(str(user_id), {})
+    expire_time = user_data.get("subscription_expire", 0)
+    return expire_time > time.time()
+
+def load_settings():
+    default_settings = {
+        "channels": [],
+        "admins": INITIAL_ADMINS,
+        "btn_names": {
+            "insta": "📸 دانلود اینستاگرام",
+            "music": "🎵 دانلود اسپاتیفای/ساندکلود",
+            "trend": "🔥 موزیک ترند",
+            "v2ray": "سرور v2rayرایگان",
+            "builder": "ساخت ربات دانلودر"
+        },
+        "btn_order": ["insta", "music", "trend", "v2ray", "builder"],
+        "pro_sources": [],
+        "pro_dest": "",
+        "pro_name": "VIP Server"
+    }
+    data = load_json(SETTINGS_FILE, default_settings)
+    if "channels" not in data: data["channels"] = []
+    if "admins" not in data: data["admins"] = INITIAL_ADMINS
+    if "btn_names" not in data: data["btn_names"] = default_settings["btn_names"]
+    if "btn_order" not in data: data["btn_order"] = default_settings["btn_order"]
+    if "pro_sources" not in data: data["pro_sources"] = []
+    if "pro_dest" not in data: data["pro_dest"] = ""
+    if "pro_name" not in data: data["pro_name"] = "VIP Server"
+    return data
+
+def save_settings(settings):
+    save_json(SETTINGS_FILE, settings)
+
+def load_child_bots():
+    return load_json(BOTS_FILE, {})
+
+def save_child_bots(bots):
+    save_json(BOTS_FILE, bots)
+
+def check_membership(user_id):
+    settings = load_settings()
+    admins = settings.get("admins", INITIAL_ADMINS)
+    if user_id in admins:
+        return True
+    channels = settings.get("channels", [])
+    if not channels:
+        return True
+    for ch in channels:
+        try:
+            member = bot.get_chat_member(ch, user_id)
+            if member.status in ['member', 'administrator', 'creator']:
+                return True
+        except:
+            pass
+    return False
+
+def get_reply_keyboard(user_id):
+    settings = load_settings()
+    btn_names = settings.get("btn_names", {})
+    btn_order = settings.get("btn_order", ["insta", "music", "trend", "v2ray", "builder"])
+    admins = settings.get("admins", INITIAL_ADMINS)
+
+    markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+    keyboard_buttons = []
+    for key in btn_order:
+        if key in btn_names:
+            if key == "insta":
+                keyboard_buttons.append(types.KeyboardButton(btn_names.get("insta", "📸 دانلود اینستاگرام")))
+            elif key == "music":
+                keyboard_buttons.append(types.KeyboardButton(btn_names.get("music", "🎵 دانلود اسپاتیفای/ساندکلود")))
+            elif key == "trend":
+                keyboard_buttons.append(types.KeyboardButton(btn_names.get("trend", "🔥 موزیک ترند")))
+            elif key == "v2ray":
+                keyboard_buttons.append(types.KeyboardButton(btn_names.get("v2ray", "سرور v2rayرایگان")))
+            elif key == "builder":
+                keyboard_buttons.append(types.KeyboardButton(btn_names.get("builder", "ساخت ربات دانلودر")))
+            
+    if keyboard_buttons:
+        markup.add(*keyboard_buttons)
+    if user_id in admins and not user_states.get(user_id) == "guest_mode":
+        markup.add(types.KeyboardButton("⚙️ پنل مدیریت پیشرفته"))
+    return markup
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    user_id = message.from_user.id
+    if is_banned(user_id): return
+    save_user(message)
+    settings = load_settings()
+    channels = settings.get("channels", [])
+    admins = settings.get("admins", INITIAL_ADMINS)
     
-    <!-- کتابخانه‌های رسمی Firebase Realtime Database -->
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-    <style>
-        :root {
-            /* تم روز: صورتی پاستلی و سفید */
-            --bg-gradient: linear-gradient(135deg, #ffe6f0 0%, #fff5f8 50%, #ffd1e3 100%);
-            --blob-1: #ff9ec7;
-            --blob-2: #ffc2dc;
-            --glass-bg: rgba(255, 255, 255, 0.62);
-            --glass-border: rgba(255, 255, 255, 0.88);
-            --glass-shadow: 0 8px 32px 0 rgba(255, 105, 165, 0.18);
-            --text-main: #4a2535;
-            --text-muted: #8c5a6e;
-            --accent: #ff5c9d;
-            --accent-glow: rgba(255, 92, 157, 0.45);
-            --canvas-bg: rgba(255, 255, 255, 0.9);
-            --input-bg: rgba(255, 255, 255, 0.78);
-            --danger: #ff4757;
-            --success: #2ed573;
-        }
-
-        [data-theme="dark"] {
-            /* تم شب: مشکی و سبز پاستلی */
-            --bg-gradient: linear-gradient(135deg, #070b09 0%, #0d1713 50%, #050807 100%);
-            --blob-1: #1f4d3a;
-            --blob-2: #123326;
-            --glass-bg: rgba(18, 28, 24, 0.68);
-            --glass-border: rgba(136, 247, 198, 0.24);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65);
-            --text-main: #e6fff4;
-            --text-muted: #8ab8a4;
-            --accent: #7ef2be;
-            --accent-glow: rgba(126, 242, 190, 0.35);
-            --canvas-bg: rgba(15, 22, 19, 0.95);
-            --input-bg: rgba(25, 38, 33, 0.85);
-            --danger: #ff6b81;
-            --success: #7ef2be;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-
-        body {
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            height: 100dvh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            transition: background 0.5s ease, color 0.4s ease;
-        }
-
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-
-        .bg-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(75px);
-            z-index: 0;
-            opacity: 0.7;
-            pointer-events: none;
-            transition: background 0.5s ease;
-        }
-        .blob-1 { width: 300px; height: 300px; background: var(--blob-1); top: -80px; right: -80px; }
-        .blob-2 { width: 350px; height: 350px; background: var(--blob-2); bottom: -100px; left: -100px; }
-
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-            transition: all 0.3s ease;
-        }
-
-        /* هدر بالا */
-        header {
-            z-index: 10;
-            margin: 10px 14px 0;
-            padding: 10px 16px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-weight: 800;
-            font-size: 1rem;
-        }
-
-        .brand i {
-            color: var(--accent);
-            font-size: 1.25rem;
-            filter: drop-shadow(0 0 8px var(--accent-glow));
-        }
-
-        .db-status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background: #ffa502;
-            box-shadow: 0 0 8px #ffa502;
-            transition: 0.3s;
-        }
-        .db-status-dot.connected {
-            background: #2ed573;
-            box-shadow: 0 0 8px #2ed573;
-        }
-
-        .theme-toggle {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-size: 0.8rem;
-            font-weight: 700;
-            color: var(--text-main);
-            border: 1px solid var(--glass-border);
-            background: var(--input-bg);
-        }
-
-        main {
-            flex: 1;
-            z-index: 5;
-            display: flex;
-            flex-direction: column;
-            padding: 10px 14px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .app-section {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-        }
-        .app-section.active { display: flex; }
-
-        /* لابی ورود و ساخت اتاق */
-        .lobby-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow-y: auto;
-            padding: 10px 0;
-        }
-
-        .lobby-card {
-            width: 100%;
-            max-width: 420px;
-            padding: 22px;
-            border-radius: 28px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-
-        .tabs {
-            display: flex;
-            background: var(--input-bg);
-            padding: 4px;
-            border-radius: 16px;
-            border: 1px solid var(--glass-border);
-        }
-
-        .tab-btn {
-            flex: 1;
-            padding: 9px;
-            border: none;
-            background: transparent;
-            color: var(--text-muted);
-            font-weight: 700;
-            font-size: 0.85rem;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-        }
-
-        .tab-btn.active {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 4px 15px var(--accent-glow);
-        }
-        [data-theme="dark"] .tab-btn.active { color: #08120e; }
-
-        .input-group { display: flex; flex-direction: column; gap: 5px; }
-        .input-group label { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; }
-
-        .glass-input, .glass-textarea {
-            width: 100%;
-            padding: 11px 14px;
-            border-radius: 15px;
-            border: 1px solid var(--glass-border);
-            background: var(--input-bg);
-            color: var(--text-main);
-            font-size: 0.9rem;
-            outline: none;
-            user-select: text;
-        }
-        .glass-input:focus, .glass-textarea:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
-
-        .primary-btn {
-            width: 100%;
-            padding: 13px;
-            border-radius: 16px;
-            border: none;
-            background: var(--accent);
-            color: #fff;
-            font-size: 0.95rem;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 6px 20px var(--accent-glow);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-        }
-        [data-theme="dark"] .primary-btn { color: #08120e; }
-        .primary-btn:active { transform: scale(0.97); }
-        .primary-btn:disabled { opacity: 0.6; cursor: not-allowed; }
-
-        /* =========================================
-           استودیو نقاشی
-        ========================================= */
-        #paint-studio { display: none; flex: 1; flex-direction: column; gap: 8px; height: 100%; }
-
-        .room-bar {
-            padding: 7px 12px;
-            border-radius: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 6px;
-            overflow-x: auto;
-        }
-
-        .room-info { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
-        .badge {
-            padding: 4px 9px;
-            border-radius: 11px;
-            background: var(--input-bg);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 0.78rem;
-            font-weight: 700;
-            white-space: nowrap;
-        }
-
-        .online-dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: #2ed573; box-shadow: 0 0 8px #2ed573;
-            animation: pulse 1.5s infinite;
-        }
-        @keyframes pulse { 0%, 100% { transform: scale(0.9); } 50% { transform: scale(1.25); } }
-
-        .room-actions { display: flex; gap: 5px; flex-shrink: 0; }
-        .icon-btn {
-            padding: 6px 10px;
-            border-radius: 11px;
-            border: 1px solid var(--glass-border);
-            background: var(--input-bg);
-            color: var(--text-main);
-            cursor: pointer;
-            font-size: 0.78rem;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            white-space: nowrap;
-        }
-        .icon-btn.active-anim {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 0 12px var(--accent-glow);
-        }
-        [data-theme="dark"] .icon-btn.active-anim { color: #07120e; }
-        .icon-btn.danger { color: var(--danger); border-color: rgba(255, 71, 87, 0.35); }
-
-        .canvas-wrapper {
-            flex: 1;
-            border-radius: 22px;
-            overflow: hidden;
-            position: relative;
-            background: var(--canvas-bg);
-            border: 1px solid var(--glass-border);
-            touch-action: none;
-        }
-        canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
-
-        .floating-controls {
-            padding: 9px 12px;
-            border-radius: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .tools-row {
-            display: flex;
-            gap: 6px;
-            overflow-x: auto;
-            padding-bottom: 2px;
-        }
-
-        .tool-item {
-            flex: 1;
-            min-width: 56px;
-            padding: 6px 4px;
-            border-radius: 13px;
-            background: var(--input-bg);
-            color: var(--text-muted);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            font-size: 0.7rem;
-            font-weight: 700;
-            cursor: pointer;
-        }
-        .tool-item.active {
-            background: var(--accent);
-            color: #fff;
-            box-shadow: 0 3px 10px var(--accent-glow);
-        }
-        [data-theme="dark"] .tool-item.active { color: #07120e; }
-
-        .colors-scroll-container {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            overflow-x: auto;
-            padding: 4px 2px;
-        }
-
-        .color-swatch {
-            width: 25px;
-            height: 25px;
-            border-radius: 50%;
-            flex-shrink: 0;
-            border: 2px solid var(--glass-border);
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .color-swatch.active {
-            transform: scale(1.22);
-            border-color: var(--text-main);
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
-        .custom-color-btn {
-            flex-shrink: 0;
-            padding: 4px 10px;
-            border-radius: 20px;
-            background: conic-gradient(from 90deg, #ff5c9d, #facc15, #7ef2be, #38bdf8, #a855f7, #ff5c9d);
-            color: #fff;
-            font-size: 0.72rem;
-            font-weight: 800;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.7);
-            border: 1.5px solid #fff;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .size-row { display: flex; align-items: center; gap: 10px; }
-        .size-preview-box {
-            width: 26px; height: 26px; border-radius: 9px;
-            background: var(--input-bg); border: 1px solid var(--glass-border);
-            display: flex; align-items: center; justify-content: center;
-        }
-        #size-dot { border-radius: 50%; background: var(--accent); }
-        input[type="range"] { flex: 1; accent-color: var(--accent); height: 5px; cursor: pointer; }
-
-        /* مودال سازنده رنگ */
-        .modal-overlay {
-            position: fixed; inset: 0;
-            background: rgba(0,0,0,0.45);
-            backdrop-filter: blur(8px);
-            z-index: 150;
-            display: none;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-        }
-        .modal-overlay.show { display: flex; }
-        .modal-box {
-            width: 100%; max-width: 340px;
-            padding: 20px; border-radius: 26px;
-            display: flex; flex-direction: column; gap: 14px;
-        }
-
-        /* =========================================
-           بخش اتاق قووووور (Qoor & Gratitude Room)
-        ========================================= */
-        #qoor-studio {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            gap: 10px;
-            height: 100%;
-            overflow: hidden;
-        }
-
-        .qoor-actions-bar {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-
-        .mood-choice-btn {
-            padding: 12px 8px;
-            border-radius: 20px;
-            border: 1px solid var(--glass-border);
-            background: var(--glass-bg);
-            color: var(--text-main);
-            font-weight: 800;
-            font-size: 0.85rem;
-            cursor: pointer;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 6px;
-            transition: 0.25s;
-        }
-        .mood-choice-btn.angry:active {
-            background: rgba(255, 71, 87, 0.22);
-            border-color: #ff4757;
-            box-shadow: 0 0 18px rgba(255, 71, 87, 0.35);
-        }
-        .mood-choice-btn.love:active {
-            background: rgba(255, 92, 157, 0.22);
-            border-color: #ff5c9d;
-            box-shadow: 0 0 18px rgba(255, 92, 157, 0.35);
-        }
-
-        .glass-svg-badge {
-            width: 46px;
-            height: 46px;
-            border-radius: 16px;
-            background: rgba(255, 255, 255, 0.25);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.55);
-            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12), inset 0 1px 4px rgba(255, 255, 255, 0.6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-        }
-
-        .notes-feed {
-            flex: 1;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            padding: 4px 2px;
-        }
-
-        .empty-state-box {
-            flex: 1;
-            border-radius: 22px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 24px;
-            gap: 10px;
-            color: var(--text-muted);
-            font-size: 0.85rem;
-        }
-
-        .note-card {
-            padding: 12px 14px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
-        }
-        .note-card.type-qoor { border-right: 4px solid #ff4757; }
-        .note-card.type-thanks { border-right: 4px solid #ff5c9d; }
-        .note-card:active { transform: scale(0.98); }
-
-        .notebook-panel {
-            padding: 14px;
-            border-radius: 22px;
-            display: none;
-            flex-direction: column;
-            gap: 10px;
-            overflow-y: auto;
-        }
-        .mini-canvas-box {
-            height: 115px;
-            border-radius: 15px;
-            background: var(--canvas-bg);
-            border: 1px dashed var(--glass-border);
-            position: relative;
-            touch-action: none;
-        }
-
-        /* لایه نمایش تمام‌صفحه پیام قور یا تشکر */
-        #cinematic-overlay {
-            position: fixed;
-            inset: 0;
-            z-index: 200;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-            transition: background 0.5s ease;
-        }
-        #cinematic-overlay.dark-angry {
-            background: radial-gradient(circle at center, rgba(48, 6, 12, 0.95) 0%, rgba(4, 1, 2, 0.99) 100%);
-        }
-        #cinematic-overlay.bright-love {
-            background: radial-gradient(circle at center, rgba(255, 204, 226, 0.94) 0%, rgba(255, 112, 172, 0.96) 100%);
-        }
-
-        .cinematic-card {
-            width: 100%;
-            max-width: 380px;
-            padding: 24px;
-            border-radius: 30px;
-            z-index: 210;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 14px;
-            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        @keyframes popIn {
-            from { transform: scale(0.7); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-
-        .glass-svg-particle {
-            position: fixed;
-            top: -70px;
-            z-index: 205;
-            width: 54px;
-            height: 54px;
-            border-radius: 18px;
-            background: rgba(255, 255, 255, 0.16);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.45);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25), inset 0 1px 6px rgba(255, 255, 255, 0.5);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            pointer-events: none;
-            animation: fallDown linear forwards;
-        }
-
-        @keyframes fallDown {
-            0% { transform: translateY(0) rotate(-12deg) scale(0.8); opacity: 0; }
-            12% { opacity: 1; }
-            50% { transform: translateY(55vh) rotate(15deg) scale(1.05); }
-            100% { transform: translateY(115vh) rotate(-10deg) scale(0.95); opacity: 0.95; }
-        }
-
-        /* منوی تولبار پایین صفحه */
-        nav.bottom-toolbar {
-            z-index: 10;
-            margin: 0 14px 10px;
-            padding: 7px 14px;
-            border-radius: 22px;
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 3px;
-            color: var(--text-muted);
-            font-size: 0.78rem;
-            font-weight: 800;
-            cursor: pointer;
-            padding: 6px 20px;
-            border-radius: 15px;
-            transition: 0.3s;
-        }
-        .nav-item.active {
-            color: var(--accent);
-            background: var(--input-bg);
-            box-shadow: inset 0 0 0 1px var(--glass-border);
-        }
-        .nav-item i { font-size: 1.15rem; }
-
-        #toast {
-            position: fixed;
-            top: 70px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-20px);
-            padding: 9px 18px;
-            border-radius: 50px;
-            font-size: 0.82rem;
-            font-weight: 700;
-            z-index: 300;
-            opacity: 0;
-            pointer-events: none;
-            transition: 0.3s;
-            text-align: center;
-            max-width: 90%;
-        }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    </style>
-</head>
-<body data-theme="light">
-
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-    <div id="toast" class="glass">پیام سیستم</div>
-
-    <!-- هدر شیشه‌ای -->
-    <header class="glass">
-        <div class="brand">
-            <span class="db-status-dot" id="db-dot" title="وضعیت اتصال به سرور"></span>
-            <i class="fa-solid fa-sparkles"></i>
-            <span>دنیای دونفره ما</span>
-        </div>
-        <button class="theme-toggle" onclick="toggleTheme()">
-            <i class="fa-solid fa-moon" id="theme-icon"></i>
-            <span id="theme-text">حالت شب</span>
-        </button>
-    </header>
-
-    <main>
-        <!-- ==============================================
-             تب اول: نقاشی زنده و متحرک
-        ============================================== -->
-        <section id="section-paint" class="app-section active">
-            <div id="paint-lobby" class="lobby-container">
-                <div class="lobby-card glass">
-                    <div style="text-align: center;">
-                        <h2 style="font-size: 1.2rem; margin-bottom: 4px;">بوم نقاشی زنده</h2>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">نقاشی بکشید و همزمان با همسرتان ببینید</p>
-                    </div>
-                    <div class="tabs">
-                        <button class="tab-btn active" id="p-tab-create" onclick="switchPaintTab('create')">ساخت اتاق</button>
-                        <button class="tab-btn" id="p-tab-join" onclick="switchPaintTab('join')">ورود به اتاق</button>
-                    </div>
-                    <div class="input-group">
-                        <label>نام اختصاصی اتاق</label>
-                        <input type="text" id="p-room-name" class="glass-input" placeholder="مثلاً: کلبه هنر ما">
-                    </div>
-                    <div class="input-group">
-                        <label>پسوورد اتاق</label>
-                        <input type="password" id="p-room-pass" class="glass-input" placeholder="رمز ورود...">
-                    </div>
-                    <button class="primary-btn" id="p-lobby-btn" onclick="enterPaintRoom()">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i>
-                        <span>ساخت اتاق نقاشی</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="paint-studio">
-                <div class="room-bar glass">
-                    <div class="room-info">
-                        <div class="badge">
-                            <i class="fa-solid fa-door-open" style="color: var(--accent);"></i>
-                            <span id="p-display-name">اتاق</span>
-                        </div>
-                        <div class="badge">
-                            <span class="online-dot"></span>
-                            <span id="p-online-count">۱ نفر حاضر</span>
-                        </div>
-                    </div>
-
-                    <div class="room-actions">
-                        <button class="icon-btn" id="animate-toggle-btn" onclick="toggleArtAnimation()" title="پخش و حرکت هوشمند نقاشی">
-                            <i class="fa-solid fa-play" id="anim-icon"></i>
-                            <span id="anim-text">پخش</span>
-                        </button>
-                        <button class="icon-btn" onclick="clearPaintCanvas()" title="پاک کردن بوم">
-                            <i class="fa-solid fa-rotate-left"></i>
-                        </button>
-                        <button class="icon-btn" onclick="downloadArt()" title="ذخیره عکس">
-                            <i class="fa-solid fa-download"></i>
-                        </button>
-                        <button class="icon-btn danger" id="p-exit-btn" onclick="exitPaintRoom()">
-                            <i class="fa-solid fa-trash"></i>
-                        </button>
-                    </div>
-                </div>
-
-                <div class="canvas-wrapper">
-                    <canvas id="paint-canvas"></canvas>
-                </div>
-
-                <div class="floating-controls glass">
-                    <div class="tools-row">
-                        <div class="tool-item active" data-tool="pen" onclick="selectTool('pen', this)">
-                            <i class="fa-solid fa-pen-nib"></i><span>خودکار</span>
-                        </div>
-                        <div class="tool-item" data-tool="pencil" onclick="selectTool('pencil', this)">
-                            <i class="fa-solid fa-pencil"></i><span>مداد</span>
-                        </div>
-                        <div class="tool-item" data-tool="marker" onclick="selectTool('marker', this)">
-                            <i class="fa-solid fa-highlighter"></i><span>ماژیک</span>
-                        </div>
-                        <div class="tool-item" data-tool="brush" onclick="selectTool('brush', this)">
-                            <i class="fa-solid fa-paintbrush"></i><span>قلم‌مو</span>
-                        </div>
-                        <div class="tool-item" data-tool="eraser" onclick="selectTool('eraser', this)">
-                            <i class="fa-solid fa-eraser"></i><span>پاک‌کن</span>
-                        </div>
-                    </div>
-
-                    <div class="colors-scroll-container" id="colors-list">
-                        <button class="custom-color-btn" onclick="openColorMaker()">
-                            <i class="fa-solid fa-eye-dropper"></i> ساخت رنگ
-                        </button>
-                    </div>
-
-                    <div class="size-row">
-                        <div class="size-preview-box">
-                            <div id="size-dot" style="width: 6px; height: 6px;"></div>
-                        </div>
-                        <input type="range" id="brush-size" min="1" max="55" value="6" oninput="updateBrushSize(this.value)">
-                        <span id="size-label" style="font-size: 0.75rem; font-weight: 800; min-width: 30px;">6px</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ==============================================
-             تب دوم: اتاق قووووور (متصل به Firebase)
-        ============================================== -->
-        <section id="section-qoor" class="app-section">
-            <div id="qoor-lobby" class="lobby-container">
-                <div class="lobby-card glass">
-                    <div style="text-align: center;">
-                        <h2 style="font-size: 1.25rem; margin-bottom: 4px;">اتاق قووووور و قدردانی</h2>
-                        <p style="font-size: 0.8rem; color: var(--text-muted);">ثبت واقعی لحظات عصبانیت یا تشکرهای عاشقانه</p>
-                    </div>
-                    <div class="tabs">
-                        <button class="tab-btn active" id="q-tab-create" onclick="switchQoorTab('create')">ساخت اتاق</button>
-                        <button class="tab-btn" id="q-tab-join" onclick="switchQoorTab('join')">ورود به اتاق</button>
-                    </div>
-                    <div class="input-group">
-                        <label>نام اتاق مشترک</label>
-                        <input type="text" id="q-room-name" class="glass-input" placeholder="مثلاً: اتاق آشتی کنون">
-                    </div>
-                    <div class="input-group">
-                        <label>پسوورد اتاق</label>
-                        <input type="password" id="q-room-pass" class="glass-input" placeholder="رمز اتاق...">
-                    </div>
-                    <button class="primary-btn" id="q-lobby-btn" onclick="enterQoorRoom()">
-                        <i class="fa-solid fa-bolt"></i>
-                        <span>ساخت اتاق قووووور</span>
-                    </button>
-                </div>
-            </div>
-
-            <div id="qoor-studio">
-                <div class="room-bar glass">
-                    <div class="room-info">
-                        <div class="badge">
-                            <i class="fa-solid fa-fire" style="color: var(--accent);"></i>
-                            <span id="q-display-name">اتاق قور</span>
-                        </div>
-                        <div class="badge">
-                            <span class="online-dot"></span>
-                            <span id="q-online-count">۱ نفر حاضر</span>
-                        </div>
-                    </div>
-                    <button class="icon-btn danger" id="q-exit-btn" onclick="exitQoorRoom()">
-                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                        <span>خروج</span>
-                    </button>
-                </div>
-
-                <div class="qoor-actions-bar">
-                    <button class="mood-choice-btn angry" onclick="openNotebook('qoor')">
-                        <div class="glass-svg-badge" id="btn-icon-qoor"></div>
-                        <span>می‌خوام قور بزنم!</span>
-                    </button>
-                    <button class="mood-choice-btn love" onclick="openNotebook('thanks')">
-                        <div class="glass-svg-badge" id="btn-icon-thanks"></div>
-                        <span>تشکر و قدردانی</span>
-                    </button>
-                </div>
-
-                <div id="qoor-notebook" class="notebook-panel glass">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong id="notebook-title" style="font-size: 0.92rem;">دفترچه ثبت قور</strong>
-                        <button class="icon-btn" onclick="closeNotebook()"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <textarea id="qoor-note-text" class="glass-textarea" rows="3" placeholder="حرف دلت رو کامل و واضح بنویس (حداقل ۴ حرف)..."></textarea>
+    is_guest = (user_states.get(user_id) == "guest_mode")
+
+    if channels and user_id not in admins and not check_membership(user_id):
+        markup = types.InlineKeyboardMarkup()
+        for ch in channels:
+            markup.add(types.InlineKeyboardButton(f"📢 عضویت در {ch}", url=f"https://t.me/{ch.replace('@','')}"))
+        markup.add(types.InlineKeyboardButton("🔄 عضو شدم، بررسی مجدد", callback_data="check_sub"))
+        bot.reply_to(message, "⚠️ برای استفاده از ربات ابتدا باید در کانال‌های زیر عضو شوید:", reply_markup=markup)
+        return
+
+    mode_text = " (حالت تست مهمان 🕵️‍♂️)" if is_guest else ""
+    bot.reply_to(
+        message,
+        f"سلام! 🤖{mode_text}\nبه ربات پیشرفته دانلود رسانه خوش آمدید.\n\n📌 **گزینه مورد نظر خود را از کیبورد پایین انتخاب کنید یا موزیک خود را بفرستید:**",
+        reply_markup=get_reply_keyboard(user_id)
+    )
+
+def fetch_channel_web_updates():
+    import urllib.request
+    import urllib.parse
+    import html as html_parser
+
+    processed_posts = load_json(PRO_STATE_FILE, {})
+    
+    while True:
+        try:
+            settings = load_settings()
+            sources = settings.get("pro_sources", [])
+            dest_ch = settings.get("pro_dest")
+            new_name = settings.get("pro_name", "VIP Server")
+
+            if sources and dest_ch:
+                for src in sources:
+                    clean_src = src.replace("@", "").strip()
+                    if not clean_src: continue
                     
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--text-muted);">
-                        <span>طراحی یا امضای اختصاصی (اختیاری):</span>
-                        <button class="icon-btn" onclick="clearMiniCanvas()" style="padding: 3px 8px; font-size: 0.7rem;">پاک کردن طرح</button>
-                    </div>
-                    <div class="mini-canvas-box">
-                        <canvas id="mini-canvas"></canvas>
-                    </div>
+                    url = f"https://t.me/s/{clean_src}"
+                    req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+                    try:
+                        html = urllib.request.urlopen(req, timeout=10).read().decode('utf-8')
+                    except Exception as e:
+                        continue
+                    
+                    posts = re.findall(r'<div class="tgme_widget_message_text[^>]*>(.*?)</div>', html, re.DOTALL)
+                    for post_html in posts:
+                        clean_text = re.sub(r'<[^>]+>', '\n', post_html)
+                        clean_text = html_parser.unescape(clean_text)
+                        
+                        post_id = str(hash(clean_text))
+                        
+                        if clean_src not in processed_posts:
+                            processed_posts[clean_src] = []
+                            
+                        if post_id not in processed_posts[clean_src]:
+                            configs = re.findall(r'(?:vmess|vless|trojan|ss|ssr)://[^\s<>]+', clean_text)
+                            if configs:
+                                for idx, cfg in enumerate(configs):
+                                    cfg = cfg.rstrip('`"\'.,;:)]}>')
+                                    if "#" in cfg:
+                                        base_cfg = cfg.rsplit("#", 1)[0]
+                                        encoded_name = urllib.parse.quote(f"{new_name} {idx+1}")
+                                        final_cfg = f"{base_cfg}#{encoded_name}"
+                                    else:
+                                        encoded_name = urllib.parse.quote(f"{new_name} {idx+1}")
+                                        final_cfg = f"{cfg}#{encoded_name}"
+                                    
+                                    msg_to_send = f"`{final_cfg}`\n\n{dest_ch}"
+                                    try:
+                                        bot.send_message(dest_ch, msg_to_send, parse_mode="Markdown")
+                                    except Exception as err:
+                                        print(f"Error sending to dest: {err}")
+                            
+                            processed_posts[clean_src].append(post_id)
+                            if len(processed_posts[clean_src]) > 100:
+                                processed_posts[clean_src].pop(0)
+                                
+                    save_json(PRO_STATE_FILE, processed_posts)
+        except Exception as e:
+            print(f"Background fetch error: {e}")
+        
+        time.sleep(30)
 
-                    <button class="primary-btn" onclick="submitQoorNote()">
-                        <i class="fa-solid fa-paper-plane"></i>
-                        <span>ثبت یادداشت واقعی در اتاق</span>
-                    </button>
-                </div>
+def generate_users_page(page=0, search_query=""):
+    users = load_users()
+    user_items = list(users.items())
+    
+    if search_query:
+        sq = search_query.lower()
+        user_items = [
+            (uid, udata) for uid, udata in user_items 
+            if sq in uid.lower() or sq in udata.get("username", "").lower() or sq in udata.get("first_name", "").lower()
+        ]
 
-                <div style="font-size: 0.8rem; font-weight: 700; color: var(--text-muted); padding-right: 4px;">
-                    یادداشت‌های ثبت شده در اتاق:
-                </div>
-                <div class="notes-feed" id="qoor-notes-list"></div>
-            </div>
-        </section>
-    </main>
+    per_page = 6
+    total_users = len(user_items)
+    max_pages = (total_users + per_page - 1) // per_page
+    if page >= max_pages and max_pages > 0:
+        page = max_pages - 1
+    if page < 0:
+        page = 0
 
-    <!-- مودال ساخت رنگ اختصاصی -->
-    <div id="color-maker-modal" class="modal-overlay">
-        <div class="modal-box glass">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong>ساخت رنگ اختصاصی</strong>
-                <button class="icon-btn" onclick="closeColorMaker()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div id="custom-color-preview" style="height: 55px; border-radius: 16px; background: #ff5c9d; border: 2px solid #fff;"></div>
-            <div class="input-group">
-                <label>طیف رنگ (Hue)</label>
-                <input type="range" id="hue-slider" min="0" max="360" value="335" oninput="updateCustomColorMaker()">
-            </div>
-            <div class="input-group">
-                <label>غلظت رنگ (Saturation)</label>
-                <input type="range" id="sat-slider" min="0" max="100" value="100" oninput="updateCustomColorMaker()">
-            </div>
-            <div class="input-group">
-                <label>روشنایی (Lightness)</label>
-                <input type="range" id="light-slider" min="10" max="95" value="65" oninput="updateCustomColorMaker()">
-            </div>
-            <button class="primary-btn" onclick="applyCustomMadeColor()">
-                <i class="fa-solid fa-check"></i>
-                <span>افزودن به پالت و انتخاب</span>
-            </button>
-        </div>
-    </div>
+    start_idx = page * per_page
+    end_idx = start_idx + per_page
+    current_slice = user_items[start_idx:end_idx]
 
-    <!-- لایه نمایش تمام صفحه پیام قور یا تشکر -->
-    <div id="cinematic-overlay" onclick="closeCinematicView(event)">
-        <div class="cinematic-card glass" onclick="event.stopPropagation()">
-            <div id="cinematic-badge" class="glass-svg-badge" style="width: 68px; height: 68px; border-radius: 22px;"></div>
-            <h3 id="cinematic-title" style="font-size: 1.15rem;">پیام قووووور!</h3>
-            <p id="cinematic-text" style="font-size: 0.95rem; line-height: 1.65; user-select: text;"></p>
-            <img id="cinematic-sketch" style="width: 100%; max-height: 145px; object-fit: contain; border-radius: 14px; background: rgba(255,255,255,0.12); display: none;">
-            <button class="primary-btn" onclick="forceCloseCinematic()">بستن پیام</button>
-        </div>
-    </div>
+    markup = types.InlineKeyboardMarkup(row_width=1)
+    now = time.time()
 
-    <!-- منوی تولبار پایین صفحه -->
-    <nav class="bottom-toolbar glass">
-        <div class="nav-item active" id="nav-paint" onclick="switchMainTab('paint')">
-            <i class="fa-solid fa-palette"></i>
-            <span>نقاشی</span>
-        </div>
-        <div class="nav-item" id="nav-qoor" onclick="switchMainTab('qoor')">
-            <i class="fa-solid fa-bolt"></i>
-            <span>اتاق قووووور</span>
-        </div>
-    </nav>
+    for uid, udata in current_slice:
+        name = udata.get("first_name", "بدون نام")
+        uname = udata.get("username", "ندارد")
+        expire = udata.get("subscription_expire", 0)
+        
+        has_sub = expire > now
+        if has_sub:
+            days_left = int((expire - now) / 86400)
+            sub_status = f"🟢 اشتراک فعال ({days_left} روز)"
+        else:
+            sub_status = "🔴 بدون اشتراک"
 
-    <script>
-        // ==========================================
-        // 0. اتصال واقعی به دیتابیس Firebase شما
-        // ==========================================
-        const firebaseConfig = {
-            databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
+        btn_text = f"{name} (@{uname}) | {sub_status}"
+        markup.add(types.InlineKeyboardButton(btn_text, callback_data=f"adm_usr_opt_{uid}"))
 
-        // شناسه یکتا برای این نشست مرورگر (برای شمارش دقیق افراد حاضر)
-        const mySessionId = 'user_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+    nav_buttons = []
+    if page > 0:
+        nav_buttons.append(types.InlineKeyboardButton("⬅️ صفحه قبل", callback_data=f"adm_users_page_{page-1}_{search_query}"))
+    if page < max_pages - 1:
+        nav_buttons.append(types.InlineKeyboardButton("صفحه بعد ➡️", callback_data=f"adm_users_page_{page+1}_{search_query}"))
+    
+    if nav_buttons:
+        markup.row(*nav_buttons)
 
-        // نمایش وضعیت اتصال زنده به دیتابیس در هدر
-        db.ref('.info/connected').on('value', (snap) => {
-            const dot = document.getElementById('db-dot');
-            if (snap.val() === true) {
-                dot.classList.add('connected');
-                dot.title = 'متصل به سرور آنلاین';
-            } else {
-                dot.classList.remove('connected');
-                dot.title = 'در حال اتصال...';
-            }
-        });
+    markup.add(
+        types.InlineKeyboardButton("🔍 جستجوی کاربر", callback_data="adm_users_search"),
+        types.InlineKeyboardButton("🔙 بازگشت به پنل", callback_data="adm_back")
+    )
+    
+    text = f"👥 **لیست کاربران ربات** (صفحه {page+1} از {max_pages or 1})\n📌 کل کاربران یافت شده: {total_users}\n\nبرای مدیریت اشتراک روی نام هر کاربر کلیک کنید:"
+    return text, markup
 
-        // تبدیل نام اتاق به کلید امن برای دیتابیس
-        function sanitizeRoomKey(name) {
-            return encodeURIComponent(name.trim().toLowerCase()).replace(/\./g, '%2E');
-        }
+@bot.callback_query_handler(func=lambda call: True)
+def callback_router(call):
+    user_id = call.from_user.id
+    data = call.data
+    settings = load_settings()
+    admins = settings.get("admins", INITIAL_ADMINS)
 
-        // ==========================================
-        // آیکون‌های گرافیکی شیشه‌ای اختصاصی (3D Glass SVG Vectors)
-        // ==========================================
-        const GlassGraphics = {
-            angryFace: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <radialGradient id="angryGrad" cx="30%" cy="25%" r="75%">
-                            <stop offset="0%" stop-color="#ff9a9e"/>
-                            <stop offset="45%" stop-color="#ff3b5c"/>
-                            <stop offset="100%" stop-color="#8b001a"/>
-                        </radialGradient>
-                        <linearGradient id="glassShine" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="rgba(255,255,255,0.85)"/>
-                            <stop offset="50%" stop-color="rgba(255,255,255,0.1)"/>
-                            <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
-                        </linearGradient>
-                    </defs>
-                    <circle cx="32" cy="32" r="28" fill="url(#angryGrad)" stroke="rgba(255,255,255,0.6)" stroke-width="2"/>
-                    <ellipse cx="26" cy="18" rx="14" ry="8" transform="rotate(-20 26 18)" fill="url(#glassShine)"/>
-                    <path d="M16 24L27 29" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-                    <path d="M48 24L37 29" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-                    <circle cx="22" cy="33" r="3.2" fill="#fff"/>
-                    <circle cx="42" cy="33" r="3.2" fill="#fff"/>
-                    <path d="M21 47C25 41 39 41 43 47" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>
-                </svg>`,
-            lightning: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <linearGradient id="boltGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#fff099"/>
-                            <stop offset="50%" stop-color="#ff9f1c"/>
-                            <stop offset="100%" stop-color="#ff2a55"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M36 6L12 36H31L27 58L52 28H33L36 6Z" fill="url(#boltGrad)" stroke="rgba(255,255,255,0.8)" stroke-width="2" stroke-linejoin="round"/>
-                </svg>`,
-            fireRage: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <linearGradient id="fireGrad" x1="50%" y1="0%" x2="50%" y2="100%">
-                            <stop offset="0%" stop-color="#ffbe0b"/>
-                            <stop offset="50%" stop-color="#fb5607"/>
-                            <stop offset="100%" stop-color="#d00000"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M33 6C33 6 48 19 48 35C48 47 39 56 32 56C22 56 16 48 16 38C16 30 21 23 21 23C21 23 22 29 26 29C24 20 33 6 33 6Z" fill="url(#fireGrad)" stroke="rgba(255,255,255,0.7)" stroke-width="2"/>
-                    <path d="M32 33C32 33 39 39 39 46C39 51 35 54 32 54C28 54 25 50 25 46C25 41 32 33 32 33Z" fill="rgba(255,255,255,0.55)"/>
-                </svg>`,
-            crystalRose: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <radialGradient id="roseGrad" cx="35%" cy="30%" r="70%">
-                            <stop offset="0%" stop-color="#ffc2dc"/>
-                            <stop offset="50%" stop-color="#ff4d8d"/>
-                            <stop offset="100%" stop-color="#a4133c"/>
-                        </radialGradient>
-                    </defs>
-                    <path d="M32 36V58" stroke="#4ade80" stroke-width="3.5" stroke-linecap="round"/>
-                    <path d="M32 48C32 48 42 42 46 46C42 52 32 48 32 48Z" fill="#4ade80" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
-                    <path d="M32 44C32 44 22 38 18 42C22 48 32 44 32 44Z" fill="#22c55e" stroke="rgba(255,255,255,0.7)" stroke-width="1.2"/>
-                    <path d="M18 22C18 13 24 8 32 8C40 8 46 13 46 22C46 31 39 37 32 37C25 37 18 31 18 22Z" fill="url(#roseGrad)" stroke="rgba(255,255,255,0.8)" stroke-width="2"/>
-                    <path d="M24 20C24 16 28 13 32 13C36 13 40 16 40 20C40 24 36 27 32 27C28 27 24 24 24 20Z" stroke="rgba(255,255,255,0.75)" stroke-width="2" fill="none"/>
-                </svg>`,
-            glassKiss: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <linearGradient id="kissGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stop-color="#ff8fa3"/>
-                            <stop offset="50%" stop-color="#ff1e56"/>
-                            <stop offset="100%" stop-color="#9d0208"/>
-                        </linearGradient>
-                    </defs>
-                    <path d="M10 31C16 22 24 21 32 26C40 21 48 22 54 31C46 34 38 33 32 31C26 33 18 34 10 31Z" fill="url(#kissGrad)" stroke="rgba(255,255,255,0.8)" stroke-width="1.8"/>
-                    <path d="M12 33C19 44 45 44 52 33C42 36 22 36 12 33Z" fill="url(#kissGrad)" stroke="rgba(255,255,255,0.8)" stroke-width="1.8"/>
-                    <ellipse cx="26" cy="37" rx="6" ry="2" fill="rgba(255,255,255,0.6)"/>
-                </svg>`,
-            crystalHeart: `
-                <svg width="32" height="32" viewBox="0 0 64 64" fill="none">
-                    <defs>
-                        <radialGradient id="heartGrad" cx="30%" cy="25%" r="75%">
-                            <stop offset="0%" stop-color="#ffd6e7"/>
-                            <stop offset="45%" stop-color="#ff4d94"/>
-                            <stop offset="100%" stop-color="#b5179e"/>
-                        </radialGradient>
-                    </defs>
-                    <path d="M32 54C32 54 8 39 8 22C8 14 14 9 21 9C26 9 30 12 32 16C34 12 38 9 43 9C50 9 56 14 56 22C56 39 32 54 32 54Z" fill="url(#heartGrad)" stroke="rgba(255,255,255,0.85)" stroke-width="2"/>
-                    <ellipse cx="21" cy="18" rx="6" ry="3.5" transform="rotate(-25 21 18)" fill="rgba(255,255,255,0.75)"/>
-                </svg>`
-        };
+    if data == "check_sub":
+        if check_membership(user_id):
+            bot.answer_callback_query(call.id, "✅ عضویت تایید شد!")
+            try: bot.delete_message(call.message.chat.id, call.message.message_id)
+            except: pass
+            send_welcome(call.message)
+        else:
+            bot.answer_callback_query(call.id, "❌ هنوز در کانال‌ها عضو نشده‌اید!", show_alert=True)
+        return
 
-        document.getElementById('btn-icon-qoor').innerHTML = GlassGraphics.angryFace;
-        document.getElementById('btn-icon-thanks').innerHTML = GlassGraphics.crystalRose;
+    if data.startswith("edit_title_"):
+        session_id = data.replace("edit_title_", "")
+        user_states[user_id] = f"set_edit_title_{session_id}"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "✍️ لطفاً نام جدید آهنگ را بفرستید:")
+        return
 
-        // ==========================================
-        // 1. مدیریت تم و ناوبری اصلی
-        // ==========================================
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            const text = document.getElementById('theme-text');
-            if (body.getAttribute('data-theme') === 'light') {
-                body.setAttribute('data-theme', 'dark');
-                icon.className = 'fa-solid fa-sun';
-                text.innerText = 'حالت روز';
-            } else {
-                body.setAttribute('data-theme', 'light');
-                icon.className = 'fa-solid fa-moon';
-                text.innerText = 'حالت شب';
-            }
-        }
+    if data.startswith("edit_artist_"):
+        session_id = data.replace("edit_artist_", "")
+        user_states[user_id] = f"set_edit_artist_{session_id}"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "✍️ لطفاً نام جدید خواننده را بفرستید:")
+        return
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2800);
-        }
+    if data.startswith("edit_thumb_"):
+        session_id = data.replace("edit_thumb_", "")
+        user_states[user_id] = f"set_edit_thumb_{session_id}"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "🖼 لطفاً عکس جدید (کاور) را به صورت فایل یا تصویر بفرستید:")
+        return
 
-        function switchMainTab(tab) {
-            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('section-' + tab).classList.add('active');
-            document.getElementById('nav-' + tab).classList.add('active');
-            if (tab === 'paint' && paintRoom) resizePaintCanvas();
-        }
+    if data.startswith("finish_edit_"):
+        session_id = data.replace("finish_edit_", "")
+        edit_states = load_json(EDIT_MUSIC_STATE_FILE, {})
+        if session_id not in edit_states:
+            bot.answer_callback_query(call.id, "❌ این جلسه منقضی شده است.", show_alert=True)
+            return
 
-        // ==========================================
-        // 2. پالت رنگ‌های فراوان + سازنده رنگ اختصاصی
-        // ==========================================
-        const presetColors = [
-            '#ff5c9d', '#ff1e56', '#ff4757', '#ff7f50', '#ffa502', '#facc15',
-            '#7ef2be', '#2ed573', '#1dd1a1', '#00d2d3', '#38bdf8', '#1e90ff',
-            '#5352ed', '#a855f7', '#e056fd', '#ff9ff3', '#f8a5c2', '#ffffff',
-            '#cbd5e1', '#64748b', '#1e293b', '#000000', '#833471', '#b33939'
-        ];
+        state_data = edit_states[session_id]
+        m_path = state_data.get("audio_path")
+        new_title = state_data.get("title", "Unknown")
+        new_artist = state_data.get("artist", "Unknown")
+        thumb_path = state_data.get("thumb_path")
 
-        function initColorPalette() {
-            const container = document.getElementById('colors-list');
-            presetColors.forEach((hex, index) => {
-                const swatch = document.createElement('div');
-                swatch.className = 'color-swatch' + (index === 0 ? ' active' : '');
-                swatch.style.background = hex;
-                swatch.onclick = () => selectColor(hex, swatch);
-                container.appendChild(swatch);
-            });
-        }
-        initColorPalette();
+        if not m_path or not os.path.exists(m_path):
+            bot.answer_callback_query(call.id, "❌ فایل صوتی یافت نشد.", show_alert=True)
+            return
 
-        let madeColorHex = '#ff5c9d';
-        function openColorMaker() {
-            document.getElementById('color-maker-modal').classList.add('show');
-            updateCustomColorMaker();
-        }
-        function closeColorMaker() {
-            document.getElementById('color-maker-modal').classList.remove('show');
-        }
-        function updateCustomColorMaker() {
-            const h = document.getElementById('hue-slider').value;
-            const s = document.getElementById('sat-slider').value;
-            const l = document.getElementById('light-slider').value;
-            madeColorHex = `hsl(${h}, ${s}%, ${l}%)`;
-            document.getElementById('custom-color-preview').style.background = madeColorHex;
-        }
-        function applyCustomMadeColor() {
-            const container = document.getElementById('colors-list');
-            const swatch = document.createElement('div');
-            swatch.className = 'color-swatch';
-            swatch.style.background = madeColorHex;
-            swatch.onclick = () => selectColor(madeColorHex, swatch);
-            container.insertBefore(swatch, container.children[1]);
-            selectColor(madeColorHex, swatch);
-            closeColorMaker();
-            showToast('رنگ اختصاصی شما ساخته و انتخاب شد!');
-        }
-
-        // ==========================================
-        // 3. استودیو نقاشی زنده متصل به Firebase
-        // ==========================================
-        let paintLobbyMode = 'create';
-        let paintRoom = null; // { key, name, pass }
-        let isPaintCreator = false;
-        let paintRoomRef = null;
-
-        function switchPaintTab(mode) {
-            paintLobbyMode = mode;
-            document.getElementById('p-tab-create').classList.toggle('active', mode === 'create');
-            document.getElementById('p-tab-join').classList.toggle('active', mode === 'join');
-            document.getElementById('p-lobby-btn').innerHTML = mode === 'create'
-                ? '<i class="fa-solid fa-wand-magic-sparkles"></i><span>ساخت اتاق نقاشی</span>'
-                : '<i class="fa-solid fa-right-to-bracket"></i><span>ورود به اتاق</span>';
-        }
-
-        async function enterPaintRoom() {
-            const name = document.getElementById('p-room-name').value.trim();
-            const pass = document.getElementById('p-room-pass').value.trim();
-            if (name.length < 2 || pass.length < 2) return showToast('نام اتاق و پسوورد معتبر وارد کنید');
-
-            const btn = document.getElementById('p-lobby-btn');
-            btn.disabled = true;
-
-            const roomKey = sanitizeRoomKey(name);
-            const ref = db.ref('paint_rooms/' + roomKey);
-
-            try {
-                const snapshot = await ref.once('value');
-                const existing = snapshot.val();
-
-                if (paintLobbyMode === 'create') {
-                    if (existing && existing.meta) {
-                        btn.disabled = false;
-                        return showToast('این نام اتاق قبلاً ساخته شده! از تب «ورود به اتاق» وارد شوید یا نام دیگری بگذارید.');
-                    }
-                    await ref.set({
-                        meta: {
-                            name: name,
-                            password: pass,
-                            creator: mySessionId,
-                            isAnimating: false,
-                            createdAt: Date.now()
-                        }
-                    });
-                    isPaintCreator = true;
-                } else {
-                    if (!existing || !existing.meta) {
-                        btn.disabled = false;
-                        return showToast('اتاقی با این نام پیدا نشد!');
-                    }
-                    if (existing.meta.password !== pass) {
-                        btn.disabled = false;
-                        return showToast('رمز عبور اتاق اشتباه است!');
-                    }
-                    isPaintCreator = (existing.meta.creator === mySessionId);
-                }
-
-                paintRoom = { key: roomKey, name, pass };
-                paintRoomRef = ref;
-
-                document.getElementById('paint-lobby').style.display = 'none';
-                document.getElementById('paint-studio').style.display = 'flex';
-                document.getElementById('p-display-name').innerText = name;
-
-                const exitBtn = document.getElementById('p-exit-btn');
-                exitBtn.innerHTML = isPaintCreator
-                    ? '<i class="fa-solid fa-trash"></i><span>حذف اتاق</span>'
-                    : '<i class="fa-solid fa-arrow-right-from-bracket"></i><span>خروج</span>';
-
-                resizePaintCanvas();
-                setupPaintRealtimeListeners();
-                showToast(isPaintCreator ? `اتاق «${name}» ساخته شد!` : `وارد اتاق «${name}» شدید!`);
-            } catch (err) {
-                console.error(err);
-                showToast('خطا در ارتباط با دیتابیس! اینترنت را بررسی کنید.');
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function setupPaintRealtimeListeners() {
-            if (!paintRoomRef) return;
-
-            // 1. ثبت حضور آنلاین و حذف خودکار هنگام بسته شدن صفحه
-            const myPresenceRef = paintRoomRef.child('presence/' + mySessionId);
-            myPresenceRef.set(true);
-            myPresenceRef.onDisconnect().remove();
-
-            paintRoomRef.child('presence').on('value', (snap) => {
-                const count = snap.numChildren();
-                document.getElementById('p-online-count').innerText = `${count} نفر حاضر`;
-            });
-
-            // 2. دریافت زنده تمام خطوط نقاشی (هم قبلی‌ها و هم خطوط جدید پارتنر)
-            strokesHistory = [];
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            paintRoomRef.child('strokes').on('child_added', (snap) => {
-                const stroke = snap.val();
-                if (!stroke) return;
-                strokesHistory.push(stroke);
-                if (!isAnimatingArt) {
-                    renderSingleStroke(stroke, 0);
-                }
-            });
-
-            // 3. گوش دادن به دستور پاک شدن کل بوم توسط هر یک از دو نفر
-            paintRoomRef.child('strokes').on('child_removed', () => {
-                if (strokesHistory.length > 0) {
-                    strokesHistory = [];
-                    stopArtAnimation();
-                    ctx.clearRect(0, 0, canvas.width, canvas.height);
-                }
-            });
-
-            // 4. همگام‌سازی دکمه پخش (زنده کردن نقاشی) بین دو نفر
-            paintRoomRef.child('meta/isAnimating').on('value', (snap) => {
-                const shouldPlay = snap.val();
-                if (shouldPlay && !isAnimatingArt && strokesHistory.length > 0) {
-                    startArtAnimation();
-                } else if (!shouldPlay && isAnimatingArt) {
-                    stopArtAnimation();
-                }
-            });
-
-            // 5. تشخیص حذف اتاق توسط سازنده
-            paintRoomRef.child('meta').on('value', (snap) => {
-                if (!snap.exists() && paintRoom) {
-                    cleanupPaintListeners();
-                    resetPaintUIToLobby('این اتاق توسط سازنده حذف شد');
-                }
-            });
-        }
-
-        function cleanupPaintListeners() {
-            if (!paintRoomRef) return;
-            paintRoomRef.child('presence/' + mySessionId).remove();
-            paintRoomRef.child('presence').off();
-            paintRoomRef.child('strokes').off();
-            paintRoomRef.child('meta/isAnimating').off();
-            paintRoomRef.child('meta').off();
-        }
-
-        async function exitPaintRoom() {
-            if (!paintRoomRef) return;
-            if (isPaintCreator) {
-                if (!confirm('آیا مطمئن هستید که می‌خواهید این اتاق نقاشی را برای همیشه حذف کنید؟')) return;
-                const refToDelete = paintRoomRef;
-                cleanupPaintListeners();
-                await refToDelete.remove();
-                resetPaintUIToLobby('اتاق با موفقیت حذف شد');
-            } else {
-                cleanupPaintListeners();
-                resetPaintUIToLobby('از اتاق خارج شدید');
-            }
-        }
-
-        function resetPaintUIToLobby(msg) {
-            stopArtAnimation();
-            strokesHistory = [];
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            paintRoom = null;
-            paintRoomRef = null;
-            document.getElementById('paint-studio').style.display = 'none';
-            document.getElementById('paint-lobby').style.display = 'flex';
-            showToast(msg);
-        }
-
-        // موتور بوم نقاشی
-        const canvas = document.getElementById('paint-canvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false;
-        let lastX = 0, lastY = 0;
-        let strokesHistory = [];
-        let isAnimatingArt = false;
-        let animFrameId = null;
-
-        let brushConfig = { tool: 'pen', color: '#ff5c9d', size: 6 };
-
-        function resizePaintCanvas() {
-            const wrapper = canvas.parentElement;
-            canvas.width = wrapper.clientWidth;
-            canvas.height = wrapper.clientHeight;
-            redrawAllStrokes(0);
-        }
-        window.addEventListener('resize', () => { if (paintRoom) resizePaintCanvas(); });
-
-        function selectTool(tool, el) {
-            brushConfig.tool = tool;
-            document.querySelectorAll('.tool-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-        }
-
-        function updateBrushSize(val) {
-            brushConfig.size = parseInt(val);
-            document.getElementById('size-label').innerText = val + 'px';
-            const dot = document.getElementById('size-dot');
-            const s = Math.min(22, Math.max(3, val / 2.2));
-            dot.style.width = s + 'px';
-            dot.style.height = s + 'px';
-        }
-
-        function selectColor(color, el) {
-            brushConfig.color = color;
-            document.getElementById('size-dot').style.background = color;
-            document.querySelectorAll('.color-swatch').forEach(i => i.classList.remove('active'));
-            if (el) el.classList.add('active');
-            if (brushConfig.tool === 'eraser') {
-                selectTool('pen', document.querySelector('[data-tool="pen"]'));
-            }
-        }
-
-        function getPos(e, targetCanvas) {
-            const rect = targetCanvas.getBoundingClientRect();
-            const cx = e.touches ? e.touches[0].clientX : e.clientX;
-            const cy = e.touches ? e.touches[0].clientY : e.clientY;
-            return { x: cx - rect.left, y: cy - rect.top };
-        }
-
-        canvas.addEventListener('mousedown', startDraw);
-        canvas.addEventListener('mousemove', moveDraw);
-        window.addEventListener('mouseup', () => isDrawing = false);
-        canvas.addEventListener('touchstart', startDraw, { passive: false });
-        canvas.addEventListener('touchmove', moveDraw, { passive: false });
-        window.addEventListener('touchend', () => isDrawing = false);
-
-        function startDraw(e) {
-            if (isAnimatingArt && paintRoomRef) {
-                paintRoomRef.child('meta/isAnimating').set(false);
-            }
-            isDrawing = true;
-            const p = getPos(e, canvas);
-            lastX = p.x; lastY = p.y;
-        }
-
-        function moveDraw(e) {
-            if (!isDrawing) return;
-            e.preventDefault();
-            const p = getPos(e, canvas);
-            const stroke = {
-                x1: Number((lastX / canvas.width).toFixed(4)),
-                y1: Number((lastY / canvas.height).toFixed(4)),
-                x2: Number((p.x / canvas.width).toFixed(4)),
-                y2: Number((p.y / canvas.height).toFixed(4)),
-                tool: brushConfig.tool,
-                color: brushConfig.color,
-                size: brushConfig.size,
-                sender: mySessionId
-            };
+        bot.answer_callback_query(call.id, "📤 در حال اعمال تغییرات و ارسال موزیک...")
+        try:
+            caption_text = f"🎵 {new_artist} - {new_title}\n✨ ویرایش شده توسط ربات\n🤖 t.me/zeucdl_bot"
+            with open(m_path, 'rb') as aud:
+                if thumb_path and os.path.exists(thumb_path):
+                    with open(thumb_path, 'rb') as th:
+                        bot.send_audio(call.message.chat.id, aud, performer=new_artist, title=new_title, thumb=th, caption=caption_text)
+                else:
+                    bot.send_audio(call.message.chat.id, aud, performer=new_artist, title=new_title, caption=caption_text)
             
-            // ارسال مستقیم به فایربیس (شنونده child_added بلافاصله رسمش می‌کند)
-            if (paintRoomRef) {
-                paintRoomRef.child('strokes').push(stroke);
-            }
-            lastX = p.x; lastY = p.y;
-        }
+            bot.delete_message(call.message.chat.id, call.message.message_id)
+        except Exception as e:
+            bot.send_message(call.message.chat.id, f"❌ خطا در ارسال موزیک ویرایش شده: {str(e)}")
+        finally:
+            clear_downloads()
+            edit_states.pop(session_id, None)
+            save_json(EDIT_MUSIC_STATE_FILE, edit_states)
+        return
 
-        function renderSingleStroke(data, timeOffset) {
-            let waveX1 = 0, waveY1 = 0, waveX2 = 0, waveY2 = 0;
-            if (timeOffset > 0 && data.tool !== 'eraser') {
-                waveX1 = Math.sin(timeOffset * 3 + data.y1 * 8) * 6;
-                waveY1 = Math.cos(timeOffset * 2.5 + data.x1 * 8) * 6;
-                waveX2 = Math.sin(timeOffset * 3 + data.y2 * 8) * 6;
-                waveY2 = Math.cos(timeOffset * 2.5 + data.x2 * 8) * 6;
-            }
+    if data.startswith("find_music_"):
+        user_last_urls = load_json(USER_LAST_URL_FILE, {})
+        target_url = user_last_urls.get(str(user_id))
 
-            const x1 = data.x1 * canvas.width + waveX1;
-            const y1 = data.y1 * canvas.height + waveY1;
-            const x2 = data.x2 * canvas.width + waveX2;
-            const y2 = data.y2 * canvas.height + waveY2;
+        if not target_url:
+            bot.answer_callback_query(call.id, "❌ هیچ لینک فعالی از شما ثبت نشده است. لطفاً ابتدا لینک پست را بفرستید.", show_alert=True)
+            return
 
-            ctx.save();
-            ctx.beginPath();
-            ctx.lineCap = 'round';
-            ctx.lineJoin = 'round';
+        bot.answer_callback_query(call.id, "🎵 شروع استخراج موزیک از آخرین لینک...")
+        status_msg = bot.send_message(call.message.chat.id, "🎧 استخراج متادیتا و اتصال به موتور جستجو: 20%")
 
-            if (data.tool === 'eraser') {
-                ctx.globalCompositeOperation = 'destination-out';
-                ctx.lineWidth = data.size * 1.5;
-            } else {
-                ctx.globalCompositeOperation = 'source-over';
-                ctx.strokeStyle = data.color;
-                if (timeOffset > 0) {
-                    ctx.shadowBlur = 10 + Math.sin(timeOffset * 4) * 5;
-                    ctx.shadowColor = data.color;
+        def process_user_last_url_search(chat_id, url, msg_to_del):
+            try:
+                try: bot.edit_message_text("🎧 تحلیل اطلاعات پست: 50%", chat_id, msg_to_del.message_id)
+                except: pass
+
+                meta_opts = {'format': 'best', 'quiet': True}
+                search_query = "ahang jadid persian remix"
+                
+                with yt_dlp.YoutubeDL(meta_opts) as m_ydl:
+                    m_info = m_ydl.extract_info(url, download=False)
+                    t_title = m_info.get('title')
+                    t_desc = m_info.get('description') or ""
+                    
+                    if t_title and len(t_title.strip()) > 3:
+                        search_query = t_title[:50]
+                    else:
+                        lines = [l.strip() for l in t_desc.splitlines() if len(l.strip()) > 4]
+                        if lines:
+                            search_query = lines[0][:50]
+
+                try: bot.edit_message_text("🔍 جستجوی دقیق موزیک کامل: 80%", chat_id, msg_to_del.message_id)
+                except: pass
+
+                entries = []
+                music_search_opts = {'format': 'bestaudio', 'quiet': True, 'noplaylist': True}
+                with yt_dlp.YoutubeDL(music_search_opts) as m_ydl:
+                    res = m_ydl.extract_info(f"scsearch10:{search_query}", download=False)
+                    if res and 'entries' in res:
+                        entries.extend(res['entries'])
+
+                if not entries:
+                    res2 = m_ydl.extract_info(f"scsearch10:ahang jadid persian remix", download=False)
+                    if res2 and 'entries' in res2:
+                        entries.extend(res2['entries'])
+
+                if not entries:
+                    bot.edit_message_text("❌ آهنگی برای این لینک یافت نشد (100%).", chat_id, msg_to_del.message_id)
+                    return
+
+                try: bot.edit_message_text("✅ جستجوی صوتی کامل شد: 100%", chat_id, msg_to_del.message_id)
+                except: pass
+
+                music_choices = load_json(MUSIC_CHOICES_FILE, {})
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                
+                unique_entries = {}
+                for entry in entries:
+                    if entry and 'webpage_url' in entry:
+                        unique_entries[entry['webpage_url']] = entry
+
+                for idx, (m_url, entry) in enumerate(list(unique_entries.items())[:6]):
+                    m_title = entry.get('title', 'آهنگ ناشناخته')
+                    choice_id = f"mc_{random.randint(10000, 99999)}"
+                    music_choices[choice_id] = m_url
+                    markup.add(types.InlineKeyboardButton(f"🎵 {m_title[:50]}", callback_data=choice_id))
+
+                save_json(MUSIC_CHOICES_FILE, music_choices)
+                bot.send_message(chat_id, "📌 لطفاً آهنگ کامل و واقعی مورد نظر خود را از لیست زیر انتخاب کنید (100%):", reply_markup=markup)
+
+            except Exception as e:
+                try: bot.edit_message_text(f"❌ خطا در پردازش: {str(e)}", chat_id, msg_to_del.message_id)
+                except: pass
+            finally:
+                clear_downloads()
+
+        threading.Thread(target=process_user_last_url_search, args=(call.message.chat.id, target_url, status_msg)).start()
+        return
+
+    if data.startswith("mc_"):
+        music_choices = load_json(MUSIC_CHOICES_FILE, {})
+        m_url = music_choices.get(data)
+
+        if not m_url:
+            bot.answer_callback_query(call.id, "❌ این لینک منقضی شده است. مجدداً تلاش کنید.", show_alert=True)
+            return
+
+        bot.answer_callback_query(call.id, "📥 در حال دانلود موزیک...")
+        status_msg = bot.send_message(call.message.chat.id, "📥 دانلود موزیک: 0%")
+
+        last_update_time = [0]
+        def music_progress_hook(d):
+            if d['status'] == 'downloading':
+                pct = d.get('_percent_str', '0%').strip()
+                current_time = time.time()
+                if current_time - last_update_time[0] > 1.5:
+                    last_update_time[0] = current_time
+                    try:
+                        bot.edit_message_text(f"📥 دانلود موزیک: {pct}", chat_id, status_msg.message_id)
+                    except:
+                        pass
+
+        def download_and_send_selected_music(chat_id, music_url, msg_to_del):
+            try:
+                music_dl_opts = {
+                    'format': 'bestaudio',
+                    'outtmpl': f'{DOWNLOAD_DIR}/selected_music_%(id)s.%(ext)s',
+                    'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
+                    'quiet': True, 'noplaylist': True,
+                    'progress_hooks': [music_progress_hook]
                 }
-                switch (data.tool) {
-                    case 'pen': ctx.globalAlpha = 1; ctx.lineWidth = data.size * 0.7; break;
-                    case 'pencil': ctx.globalAlpha = 0.75; ctx.lineWidth = Math.max(1, data.size * 0.5); ctx.setLineDash([1, 1.2]); break;
-                    case 'marker': ctx.globalAlpha = 0.35; ctx.lineWidth = data.size * 1.8; ctx.lineCap = 'square'; break;
-                    case 'brush': ctx.globalAlpha = 0.85; ctx.lineWidth = data.size * 1.3; ctx.shadowBlur = data.size / 2; ctx.shadowColor = data.color; break;
-                }
-            }
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-            ctx.restore();
-        }
+                final_music_path = None
+                with yt_dlp.YoutubeDL(music_dl_opts) as music_ydl:
+                    info_dl = music_ydl.extract_info(music_url, download=True)
+                    final_music_path = music_ydl.prepare_filename(info_dl).rsplit('.', 1)[0] + '.mp3'
 
-        function redrawAllStrokes(timeOffset) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            for (let i = 0; i < strokesHistory.length; i++) {
-                renderSingleStroke(strokesHistory[i], timeOffset);
-            }
-        }
+                if final_music_path and os.path.exists(final_music_path):
+                    bot.edit_message_text("📤 در حال ارسال موزیک: 100%", chat_id, msg_to_del.message_id)
+                    with open(final_music_path, 'rb') as aud:
+                        bot.send_audio(chat_id, aud, caption="🎵 موزیک کامل و واقعی شما (100%)\n🤖 t.me/zeucdl_bot")
+                    bot.delete_message(chat_id, msg_to_del.message_id)
+                else:
+                    bot.edit_message_text("⚠️ خطا در دریافت فایل صوتی موزیک.", chat_id, msg_to_del.message_id)
+            except Exception as ex:
+                try: bot.edit_message_text(f"❌ خطا: {str(ex)}", chat_id, msg_to_del.message_id)
+                except: pass
+            finally:
+                clear_downloads()
 
-        function toggleArtAnimation() {
-            if (strokesHistory.length < 5) {
-                return showToast('اول یک نقاشی بکش تا زنده‌اش کنیم!');
-            }
-            if (paintRoomRef) {
-                paintRoomRef.child('meta/isAnimating').set(!isAnimatingArt);
-            }
-        }
+        threading.Thread(target=download_and_send_selected_music, args=(call.message.chat.id, m_url, status_msg)).start()
+        return
 
-        function startArtAnimation() {
-            isAnimatingArt = true;
-            const btn = document.getElementById('animate-toggle-btn');
-            btn.classList.add('active-anim');
-            document.getElementById('anim-icon').className = 'fa-solid fa-pause';
-            document.getElementById('anim-text').innerText = 'توقف';
+    if user_id in admins:
+        if data.startswith("adm_users_page_"):
+            parts = data.replace("adm_users_page_", "").split("_", 1)
+            p = int(parts[0])
+            sq = parts[1] if len(parts) > 1 else ""
+            txt, mrk = generate_users_page(p, sq)
+            bot.answer_callback_query(call.id)
+            bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=mrk)
+            return
 
-            let startTime = performance.now();
-            function loop(now) {
-                if (!isAnimatingArt) return;
-                const elapsed = (now - startTime) / 1000;
-                redrawAllStrokes(elapsed);
-                animFrameId = requestAnimationFrame(loop);
-            }
-            animFrameId = requestAnimationFrame(loop);
-        }
+        elif data == "adm_users_mgmt":
+            txt, mrk = generate_users_page(0, "")
+            bot.answer_callback_query(call.id)
+            bot.edit_message_text(txt, call.message.chat.id, call.message.message_id, reply_markup=mrk)
+            return
 
-        function stopArtAnimation() {
-            isAnimatingArt = false;
-            if (animFrameId) cancelAnimationFrame(animFrameId);
-            const btn = document.getElementById('animate-toggle-btn');
-            btn.classList.remove('active-anim');
-            document.getElementById('anim-icon').className = 'fa-solid fa-play';
-            document.getElementById('anim-text').innerText = 'پخش';
-            redrawAllStrokes(0);
-        }
+        elif data == "adm_users_search":
+            user_states[user_id] = "waiting_user_search_query"
+            bot.answer_callback_query(call.id)
+            bot.send_message(call.message.chat.id, "🔍 لطفاً آیدی (Username) یا آیدی عددی (ID) کاربر مورد نظر را برای جستجو ارسال کنید:")
+            return
 
-        function clearPaintCanvas() {
-            if (!paintRoomRef) return;
-            paintRoomRef.child('meta/isAnimating').set(false);
-            paintRoomRef.child('strokes').remove();
-            showToast('بوم برای هر دو نفر پاک شد');
-        }
+        elif data.startswith("adm_usr_opt_"):
+            target_uid = data.replace("adm_usr_opt_", "")
+            users = load_users()
+            udata = users.get(target_uid, {})
+            name = udata.get("first_name", "بدون نام")
+            uname = udata.get("username", "ندارد")
+            expire = udata.get("subscription_expire", 0)
+            now = time.time()
 
-        function downloadArt() {
-            const link = document.createElement('a');
-            link.download = `art-${paintRoom.name}.png`;
-            link.href = canvas.toDataURL();
-            link.click();
-        }
+            sub_info = f"🔴 بدون اشتراک"
+            if expire > now:
+                days_left = int((expire - now) / 86400)
+                sub_info = f"🟢 فعال ({days_left} روز باقی‌مانده)"
 
-        // ==========================================
-        // 4. اتاق قووووور متصل به Firebase (واقعی + ضد اسپم)
-        // ==========================================
-        let qoorLobbyMode = 'create';
-        let qoorRoom = null;
-        let isQoorCreator = false;
-        let qoorRoomRef = null;
-        let currentNoteType = 'qoor';
-        let qoorNotesList = [];
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ماهه (۳۰ روز)", callback_data=f"sub_grant_{target_uid}_30"),
+                types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۲ ماهه (۶۰ روز)", callback_data=f"sub_grant_{target_uid}_60"),
+                types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ساله (۳۶۵ روز)", callback_data=f"sub_grant_{target_uid}_365"),
+                types.InlineKeyboardButton("🔴 سلب اشتراک (حذف اشتراک)", callback_data=f"sub_revoke_{target_uid}"),
+                types.InlineKeyboardButton("🔙 بازگشت به لیست کاربران", callback_data="adm_users_mgmt")
+            )
+            bot.answer_callback_query(call.id)
+            bot.edit_message_text(
+                f"👤 **مدیریت اشتراک کاربر:**\n\n"
+                f"▪️ نام: {name}\n"
+                f"▪️ یوزرنیم: @{uname}\n"
+                f"▪️ آیدی عددی: `{target_uid}`\n"
+                f"▪️ وضعیت اشتراک: {sub_info}",
+                call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown"
+            )
+            return
 
-        function switchQoorTab(mode) {
-            qoorLobbyMode = mode;
-            document.getElementById('q-tab-create').classList.toggle('active', mode === 'create');
-            document.getElementById('q-tab-join').classList.toggle('active', mode === 'join');
-            document.getElementById('q-lobby-btn').innerHTML = mode === 'create'
-                ? '<i class="fa-solid fa-bolt"></i><span>ساخت اتاق قووووور</span>'
-                : '<i class="fa-solid fa-right-to-bracket"></i><span>ورود به اتاق قووووور</span>';
-        }
-
-        async function enterQoorRoom() {
-            const name = document.getElementById('q-room-name').value.trim();
-            const pass = document.getElementById('q-room-pass').value.trim();
-            if (name.length < 2 || pass.length < 2) return showToast('نام اتاق و پسوورد معتبر وارد کنید');
-
-            const btn = document.getElementById('q-lobby-btn');
-            btn.disabled = true;
-
-            const roomKey = sanitizeRoomKey(name);
-            const ref = db.ref('qoor_rooms/' + roomKey);
-
-            try {
-                const snapshot = await ref.once('value');
-                const existing = snapshot.val();
-
-                if (qoorLobbyMode === 'create') {
-                    if (existing && existing.meta) {
-                        btn.disabled = false;
-                        return showToast('این اتاق قبلاً ساخته شده! از بخش «ورود به اتاق» وارد شوید.');
-                    }
-                    await ref.set({
-                        meta: {
-                            name: name,
-                            password: pass,
-                            creator: mySessionId,
-                            createdAt: Date.now()
-                        }
-                    });
-                    isQoorCreator = true;
-                } else {
-                    if (!existing || !existing.meta) {
-                        btn.disabled = false;
-                        return showToast('اتاقی با این نام پیدا نشد!');
-                    }
-                    if (existing.meta.password !== pass) {
-                        btn.disabled = false;
-                        return showToast('رمز عبور اتاق اشتباه است!');
-                    }
-                    isQoorCreator = (existing.meta.creator === mySessionId);
-                }
-
-                qoorRoom = { key: roomKey, name, pass };
-                qoorRoomRef = ref;
-
-                document.getElementById('qoor-lobby').style.display = 'none';
-                document.getElementById('qoor-studio').style.display = 'flex';
-                document.getElementById('q-display-name').innerText = name;
-
-                const exitBtn = document.getElementById('q-exit-btn');
-                exitBtn.innerHTML = isQoorCreator
-                    ? '<i class="fa-solid fa-trash"></i><span>حذف اتاق</span>'
-                    : '<i class="fa-solid fa-arrow-right-from-bracket"></i><span>خروج</span>';
-
-                setupQoorRealtimeListeners();
-                showToast(isQoorCreator ? `اتاق «${name}» ساخته شد!` : `وارد اتاق «${name}» شدید!`);
-            } catch (err) {
-                console.error(err);
-                showToast('خطا در اتصال به دیتابیس!');
-            } finally {
-                btn.disabled = false;
-            }
-        }
-
-        function setupQoorRealtimeListeners() {
-            if (!qoorRoomRef) return;
-
-            // 1. حضور آنلاین
-            const myPresenceRef = qoorRoomRef.child('presence/' + mySessionId);
-            myPresenceRef.set(true);
-            myPresenceRef.onDisconnect().remove();
-
-            qoorRoomRef.child('presence').on('value', (snap) => {
-                const count = snap.numChildren();
-                document.getElementById('q-online-count').innerText = `${count} نفر حاضر`;
-            });
-
-            // 2. دریافت لحظه‌ای یادداشت‌های قور و تشکر
-            qoorRoomRef.child('notes').on('value', (snap) => {
-                const data = snap.val();
-                qoorNotesList = [];
-                if (data) {
-                    Object.keys(data).forEach(key => {
-                        qoorNotesList.push({ dbKey: key, ...data[key] });
-                    });
-                    // مرتب‌سازی از جدیدترین به قدیمی‌ترین
-                    qoorNotesList.sort((a, b) => b.timestamp - a.timestamp);
-                }
-                renderQoorNotes();
-            });
-
-            // 3. بررسی حذف شدن اتاق توسط سازنده
-            qoorRoomRef.child('meta').on('value', (snap) => {
-                if (!snap.exists() && qoorRoom) {
-                    cleanupQoorListeners();
-                    resetQoorUIToLobby('این اتاق توسط سازنده حذف شد');
-                }
-            });
-        }
-
-        function cleanupQoorListeners() {
-            if (!qoorRoomRef) return;
-            qoorRoomRef.child('presence/' + mySessionId).remove();
-            qoorRoomRef.child('presence').off();
-            qoorRoomRef.child('notes').off();
-            qoorRoomRef.child('meta').off();
-        }
-
-        async function exitQoorRoom() {
-            if (!qoorRoomRef) return;
-            if (isQoorCreator) {
-                if (!confirm('آیا مطمئن هستید که می‌خواهید این اتاق و تمام یادداشت‌هایش را حذف کنید؟')) return;
-                const refToDelete = qoorRoomRef;
-                cleanupQoorListeners();
-                await refToDelete.remove();
-                resetQoorUIToLobby('اتاق حذف شد');
-            } else {
-                cleanupQoorListeners();
-                resetQoorUIToLobby('از اتاق خارج شدید');
-            }
-        }
-
-        function resetQoorUIToLobby(msg) {
-            qoorRoom = null;
-            qoorRoomRef = null;
-            qoorNotesList = [];
-            closeNotebook();
-            document.getElementById('qoor-studio').style.display = 'none';
-            document.getElementById('qoor-lobby').style.display = 'flex';
-            showToast(msg);
-        }
-
-        // مینی بوم نقاشی داخل دفترچه قور
-        const miniCanvas = document.getElementById('mini-canvas');
-        const miniCtx = miniCanvas.getContext('2d');
-        let isMiniDrawing = false, mLastX = 0, mLastY = 0;
-        let miniStrokePointsCount = 0;
-
-        function openNotebook(type) {
-            currentNoteType = type;
-            const panel = document.getElementById('qoor-notebook');
-            panel.style.display = 'flex';
-            document.getElementById('notebook-title').innerText = type === 'qoor'
-                ? 'ثبت قور و عصبانیت واقعی'
-                : 'ثبت تشکر و قدردانی عاشقانه';
-            document.getElementById('qoor-note-text').value = '';
+        elif data.startswith("sub_grant_"):
+            parts = data.replace("sub_grant_", "").split("_")
+            target_uid = parts[0]
+            days = int(parts[1])
             
-            setTimeout(() => {
-                miniCanvas.width = miniCanvas.parentElement.clientWidth;
-                miniCanvas.height = miniCanvas.parentElement.clientHeight;
-                clearMiniCanvas();
-            }, 50);
-        }
+            users = load_users()
+            if target_uid in users:
+                now = time.time()
+                current_expire = users[target_uid].get("subscription_expire", 0)
+                base_time = max(now, current_expire) if current_expire > now else now
+                new_expire = base_time + (days * 86400)
+                
+                users[target_uid]["subscription_expire"] = new_expire
+                save_json(USERS_FILE, users)
+                
+                bot.answer_callback_query(call.id, f"✅ اشتراک {days} روزه با موفقیت فعال شد!", show_alert=True)
+                
+                udata = users[target_uid]
+                name = udata.get("first_name", "بدون نام")
+                uname = udata.get("username", "ندارد")
+                days_left = int((new_expire - now) / 86400)
+                
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                markup.add(
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ماهه (۳۰ روز)", callback_data=f"sub_grant_{target_uid}_30"),
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۲ ماهه (۶۰ روز)", callback_data=f"sub_grant_{target_uid}_60"),
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ساله (۳۶۵ روز)", callback_data=f"sub_grant_{target_uid}_365"),
+                    types.InlineKeyboardButton("🔴 سلب اشتراک (حذف اشتراک)", callback_data=f"sub_revoke_{target_uid}"),
+                    types.InlineKeyboardButton("🔙 بازگشت به لیست کاربران", callback_data="adm_users_mgmt")
+                )
+                bot.edit_message_text(
+                    f"👤 **مدیریت اشتراک کاربر:**\n\n"
+                    f"▪️ نام: {name}\n"
+                    f"▪️ یوزرنیم: @{uname}\n"
+                    f"▪️ آیدی عددی: `{target_uid}`\n"
+                    f"▪️ وضعیت اشتراک: 🟢 فعال ({days_left} روز باقی‌مانده)",
+                    call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown"
+                )
+            return
 
-        function closeNotebook() {
-            document.getElementById('qoor-notebook').style.display = 'none';
-        }
+        elif data.startswith("sub_revoke_"):
+            target_uid = data.replace("sub_revoke_", "")
+            users = load_users()
+            if target_uid in users:
+                users[target_uid]["subscription_expire"] = 0
+                save_json(USERS_FILE, users)
+                
+                bot.answer_callback_query(call.id, "❌ اشتراک کاربر با موفقیت سلب (حذف) شد!", show_alert=True)
+                
+                udata = users[target_uid]
+                name = udata.get("first_name", "بدون نام")
+                uname = udata.get("username", "ندارد")
+                
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                markup.add(
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ماهه (۳۰ روز)", callback_data=f"sub_grant_{target_uid}_30"),
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۲ ماهه (۶۰ روز)", callback_data=f"sub_grant_{target_uid}_60"),
+                    types.InlineKeyboardButton("🟢 فعال‌سازی اشتراک ۱ ساله (۳۶۵ روز)", callback_data=f"sub_grant_{target_uid}_365"),
+                    types.InlineKeyboardButton("🔴 سلب اشتراک (حذف اشتراک)", callback_data=f"sub_revoke_{target_uid}"),
+                    types.InlineKeyboardButton("🔙 بازگشت به لیست کاربران", callback_data="adm_users_mgmt")
+                )
+                bot.edit_message_text(
+                    f"👤 **مدیریت اشتراک کاربر:**\n\n"
+                    f"▪️ نام: {name}\n"
+                    f"▪️ یوزرنیم: @{uname}\n"
+                    f"▪️ آیدی عددی: `{target_uid}`\n"
+                    f"▪️ وضعیت اشتراک: 🔴 بدون اشتراک",
+                    call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown"
+                )
+            return
 
-        function clearMiniCanvas() {
-            miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
-            miniStrokePointsCount = 0;
-        }
+    if user_id not in admins:
+        bot.answer_callback_query(call.id, "❌ دسترسی غیرمجاز!", show_alert=True)
+        return
 
-        miniCanvas.addEventListener('mousedown', (e) => { isMiniDrawing = true; const p = getPos(e, miniCanvas); mLastX = p.x; mLastY = p.y; });
-        miniCanvas.addEventListener('mousemove', drawMini);
-        window.addEventListener('mouseup', () => isMiniDrawing = false);
-        miniCanvas.addEventListener('touchstart', (e) => { isMiniDrawing = true; const p = getPos(e, miniCanvas); mLastX = p.x; mLastY = p.y; }, { passive: false });
-        miniCanvas.addEventListener('touchmove', drawMini, { passive: false });
+    if data == "adm_stats":
+        users = load_users()
+        child_bots = load_child_bots()
+        total = len(users)
+        banned = sum(1 for u in users.values() if u.get("banned"))
+        ch_list = ", ".join(settings.get("channels", [])) or "ندارد"
+        total_bots = len(child_bots)
+        text = f"📊 **آمار ربات:**\n\n👥 کل کاربران: {total}\n🚫 مسدود شده‌ها: {banned}\n🤖 ربات‌های ساخته شده: {total_bots}\n📢 کانال‌های قفل: {ch_list}"
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text(text, call.message.chat.id, call.message.message_id)
 
-        function drawMini(e) {
-            if (!isMiniDrawing) return;
-            e.preventDefault();
-            miniStrokePointsCount++;
-            const p = getPos(e, miniCanvas);
-            miniCtx.beginPath();
-            miniCtx.lineCap = 'round';
-            miniCtx.lineWidth = 3.5;
-            miniCtx.strokeStyle = currentNoteType === 'qoor' ? '#ff4757' : '#ff5c9d';
-            miniCtx.moveTo(mLastX, mLastY);
-            miniCtx.lineTo(p.x, p.y);
-            miniCtx.stroke();
-            mLastX = p.x; mLastY = p.y;
-        }
+    elif data == "adm_broadcast":
+        user_states[user_id] = "waiting_main_broadcast"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "💬 متن پیام همگانی برای کاربران ربات اصلی را بفرستید:")
 
-        function validateRealNote(rawText, sketchPoints) {
-            const cleanText = rawText.replace(/\s+/g, ' ').trim();
-            const hasValidSketch = sketchPoints >= 15;
-            const uniqueChars = new Set(cleanText.replace(/\s/g, '')).size;
-            const isSpamText = cleanText.length > 0 && (cleanText.length < 4 || uniqueChars < 2);
+    elif data == "bc_main":
+        user_states[user_id] = "waiting_main_broadcast"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "💬 متن پیام همگانی برای کاربران ربات اصلی را بفرستید:")
 
-            if (isSpamText && !hasValidSketch) {
-                return { valid: false, reason: 'لطفاً یک پیام واقعی بنویسید (حداقل ۴ حرف غیرتکراری) یا یک طرح کامل بکشید!' };
+    elif data == "adm_channels_mgmt":
+        channels = settings.get("channels", [])
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(types.InlineKeyboardButton("➕ افزودن کانال جدید", callback_data="adm_add_ch"))
+        for ch in channels:
+            markup.add(types.InlineKeyboardButton(f"❌ حذف کانال: {ch}", callback_data=f"del_ch_{ch}"))
+        markup.add(types.InlineKeyboardButton("🔙 بازگشت به پنل", callback_data="adm_back"))
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text("📢 **مدیریت کانال‌های قفل (ربات اصلی):**", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data.startswith("del_ch_"):
+        ch_to_del = data.replace("del_ch_", "")
+        if ch_to_del in settings["channels"]:
+            settings["channels"].remove(ch_to_del)
+            save_settings(settings)
+            bot.answer_callback_query(call.id, f"✅ کانال {ch_to_del} حذف شد!", show_alert=True)
+            channels = settings.get("channels", [])
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(types.InlineKeyboardButton("➕ افزودن کانال جدید", callback_data="adm_add_ch"))
+            for ch in channels:
+                markup.add(types.InlineKeyboardButton(f"❌ حذف کانال: {ch}", callback_data=f"del_ch_{ch}"))
+            markup.add(types.InlineKeyboardButton("🔙 بازگشت به پنل", callback_data="adm_back"))
+            bot.edit_message_text("📢 **مدیریت کانال‌های قفل (ربات اصلی):**", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data == "adm_add_ch":
+        user_states[user_id] = "waiting_add_channel"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "📢 آیدی کانال را بفرستید مثل `@channel`:")
+
+    elif data == "adm_pro_mgmt":
+        sources = ", ".join(settings.get("pro_sources", [])) or "تنظیم نشده"
+        dest = settings.get("pro_dest") or "تنظیم نشده"
+        pname = settings.get("pro_name", "VIP Server")
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("➕ افزودن کانال منبع پرو", callback_data="pro_add_src"),
+            types.InlineKeyboardButton("➖ پاک کردن کانال‌های منبع", callback_data="pro_clear_src"),
+            types.InlineKeyboardButton("🎯 تنظیم کانال مقصد", callback_data="pro_set_dest"),
+            types.InlineKeyboardButton("✏️ تغییر نام پیشوند سرور", callback_data="pro_set_name"),
+            types.InlineKeyboardButton("🔙 بازگشت به پنل", callback_data="adm_back")
+        )
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text(
+            f"⚙️ **مدیریت بخش پرو و انتقال سرورها:**\n\n"
+            f"📥 کانال‌های منبع: `{sources}`\n"
+            f"📤 کانال مقصد: `{dest}`\n"
+            f"🏷 پیشوند نام سرورها: `{pname}`",
+            call.message.chat.id, call.message.message_id, reply_markup=markup, parse_mode="Markdown"
+        )
+
+    elif data == "pro_add_src":
+        user_states[user_id] = "waiting_pro_src"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "📥 آیدی کانال منبع پرو را بفرستید (مثل `@ConfigShub`):")
+
+    elif data == "pro_clear_src":
+        settings["pro_sources"] = []
+        save_settings(settings)
+        bot.answer_callback_query(call.id, "✅ کانال‌های منبع پاک شدند!", show_alert=True)
+        call.data = "adm_pro_mgmt"
+        callback_router(call)
+        return
+
+    elif data == "pro_set_dest":
+        user_states[user_id] = "waiting_pro_dest"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "🎯 آیدی کانال مقصد را بفرستید (مثل `@dest_channel`):")
+
+    elif data == "pro_set_name":
+        user_states[user_id] = "waiting_pro_name"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "✏️ نام یا پیشوند جدید سرورها را بفرستید (مثل `VIP Server`):")
+
+    elif data == "adm_child_bots_mgmt":
+        child_bots = load_child_bots()
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        if not child_bots:
+            markup.add(types.InlineKeyboardButton("🔙 بازگشت", callback_data="adm_back"))
+            bot.answer_callback_query(call.id)
+            bot.edit_message_text("🤖 هیچ رباتی تا کنون ساخته نشده است.", call.message.chat.id, call.message.message_id, reply_markup=markup)
+            return
+        
+        for b_token, b_info in child_bots.items():
+            ch_status = b_info.get('channel') or 'ندارد'
+            markup.add(types.InlineKeyboardButton(f"🤖 @{b_info['username']} | قفل: {ch_status}", callback_data=f"manage_child_{b_token}"))
+        markup.add(types.InlineKeyboardButton("🔙 بازگشت", callback_data="adm_back"))
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text(f"🤖 **مدیریت ربات‌های ساخته شده:**", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data.startswith("manage_child_"):
+        b_token = data.replace("manage_child_", "")
+        child_bots = load_child_bots()
+        if b_token in child_bots:
+            b_info = child_bots[b_token]
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                types.InlineKeyboardButton("📢 تنظیم/تغییر کانال قفل این ربات", callback_data=f"child_set_ch_{b_token}"),
+                types.InlineKeyboardButton("❌ حذف و خاموش کردن این ربات", callback_data=f"del_bot_{b_token}"),
+                types.InlineKeyboardButton("🔙 بازگشت به لیست ربات‌ها", callback_data="adm_child_bots_mgmt")
+            )
+            bot.answer_callback_query(call.id)
+            bot.edit_message_text(f"🤖 **مدیریت ربات:** `@{b_info['username']}`\n📌 کانال قفل فعلی: `{b_info.get('channel') or 'تنظیم نشده'}`", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data.startswith("child_set_ch_"):
+        b_token = data.replace("child_set_ch_", "")
+        user_states[user_id] = f"waiting_child_ch_{b_token}"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "📢 آیدی کانال قفل را برای این ربات بفرستید (برای حذف کلمه `off` را بفرستید):")
+
+    elif data.startswith("del_bot_"):
+        b_token = data.replace("del_bot_", "")
+        child_bots = load_child_bots()
+        if b_token in child_bots:
+            if b_token in child_bot_instances:
+                try: child_bot_instances[b_token].stop_polling()
+                except: pass
+                child_bot_instances.pop(b_token, None)
+            del child_bots[b_token]
+            save_child_bots(child_bots)
+            bot.answer_callback_query(call.id, "✅ ربات حذف شد!", show_alert=True)
+            bot.edit_message_text("🤖 **مدیریت ربات‌های ساخته شده:**", call.message.chat.id, call.message.message_id)
+
+    elif data == "adm_buttons_mgmt":
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("✏️ تغییر نام دکمه‌ها", callback_data="adm_rename_btn"),
+            types.InlineKeyboardButton("🔙 بازگشت", callback_data="adm_back")
+        )
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text("🎛 **مدیریت دکمه‌های منو:**", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data == "adm_rename_btn":
+        markup = types.InlineKeyboardMarkup(row_width=1)
+        markup.add(
+            types.InlineKeyboardButton("تغییر نام اینستاگرام", callback_data="rename_insta"),
+            types.InlineKeyboardButton("تغییر نام موزیک", callback_data="rename_music"),
+            types.InlineKeyboardButton("تغییر نام موزیک ترند", callback_data="rename_trend"),
+            types.InlineKeyboardButton("تغییر نام سرور v2ray", callback_data="rename_v2ray"),
+            types.InlineKeyboardButton("تغییر نام ساخت ربات", callback_data="rename_builder"),
+            types.InlineKeyboardButton("🔙 بازگشت", callback_data="adm_buttons_mgmt")
+        )
+        bot.answer_callback_query(call.id)
+        bot.edit_message_text("🎛 کدام دکمه ویرایش شود؟", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+    elif data.startswith("rename_"):
+        btn_key = data.replace("rename_", "")
+        user_states[user_id] = f"set_name_{btn_key}"
+        bot.answer_callback_query(call.id)
+        bot.send_message(call.message.chat.id, "✍️ نام جدید دکمه را بفرستید:")
+
+    elif data == "adm_back":
+        if user_id not in admins: return
+        bot.answer_callback_query(call.id)
+        markup = types.InlineKeyboardMarkup(row_width=2)
+        markup.add(
+            types.InlineKeyboardButton("📊 آمار کاربران", callback_data="adm_stats"),
+            types.InlineKeyboardButton("📢 ارسال همگانی", callback_data="adm_broadcast"),
+            types.InlineKeyboardButton("📢 مدیریت کانال‌های قفل", callback_data="adm_channels_mgmt"),
+            types.InlineKeyboardButton("👥 مدیریت کاربران", callback_data="adm_users_mgmt"),
+            types.InlineKeyboardButton("⚙️ مدیریت پرو و سرورها", callback_data="adm_pro_mgmt"),
+            types.InlineKeyboardButton("🤖 مدیریت ربات‌ها", callback_data="adm_child_bots_mgmt"),
+            types.InlineKeyboardButton("🎛 مدیریت دکمه‌ها", callback_data="adm_buttons_mgmt")
+        )
+        bot.edit_message_text("🛠 **پنل مدیریت پیشرفته ربات:**", call.message.chat.id, call.message.message_id, reply_markup=markup)
+
+@bot.message_handler(content_types=['text', 'audio', 'document', 'photo'])
+def handle_all_requests(message):
+    user_id = message.from_user.id
+    settings = load_settings()
+    admins = settings.get("admins", INITIAL_ADMINS)
+
+    if is_banned(user_id): return
+    save_user(message)
+    channels = settings.get("channels", [])
+
+    is_guest = (user_states.get(user_id) == "guest_mode")
+
+    if channels and user_id not in admins and not check_membership(user_id):
+        bot.reply_to(message, "⚠️ لطفا ابتدا در کانال‌های ربات عضو شوید.")
+        return
+
+    current_state = user_states.get(user_id)
+
+    # مدیریت تغییرات متادیتای موزیک ارسالی توسط کاربر
+    if current_state and current_state.startswith("set_edit_"):
+        edit_states = load_json(EDIT_MUSIC_STATE_FILE, {})
+        # پیدا کردن نشست فعال کاربر
+        active_session = None
+        for s_id, s_data in edit_states.items():
+            if s_data.get("user_id") == user_id:
+                active_session = s_id
+                break
+
+        if current_state.startswith("set_edit_title_") and message.text:
+            s_id = current_state.replace("set_edit_title_", "")
+            if s_id in edit_states:
+                edit_states[s_id]["title"] = message.text.strip()
+                save_json(EDIT_MUSIC_STATE_FILE, edit_states)
+            user_states.pop(user_id, None)
+            bot.reply_to(message, "✅ نام آهنگ ثبت شد. حالا روی دکمه‌های زیر برای تغییرات دیگر یا اتمام کار کلیک کنید:")
+            return
+
+        elif current_state.startswith("set_edit_artist_") and message.text:
+            s_id = current_state.replace("set_edit_artist_", "")
+            if s_id in edit_states:
+                edit_states[s_id]["artist"] = message.text.strip()
+                save_json(EDIT_MUSIC_STATE_FILE, edit_states)
+            user_states.pop(user_id, None)
+            bot.reply_to(message, "✅ نام خواننده ثبت شد. روی دکمه‌های زیر کلیک کنید:")
+            return
+
+        elif current_state.startswith("set_edit_thumb_"):
+            s_id = current_state.replace("set_edit_thumb_", "")
+            photo_file_id = None
+            if message.photo:
+                photo_file_id = message.photo[-1].file_id
+            elif message.document:
+                photo_file_id = message.document.file_id
+
+            if photo_file_id and s_id in edit_states:
+                try:
+                    f_info = bot.get_file(photo_file_id)
+                    downloaded_thumb = bot.download_file(f_info.file_path)
+                    t_path = os.path.join(DOWNLOAD_DIR, f"custom_thumb_{user_id}.jpg")
+                    with open(t_path, "wb") as th_f:
+                        th_f.write(downloaded_thumb)
+                    edit_states[s_id]["thumb_path"] = t_path
+                    save_json(EDIT_MUSIC_STATE_FILE, edit_states)
+                    bot.reply_to(message, "✅ کاور جدید با موفقیت اعمال شد!")
+                except Exception as e:
+                    bot.reply_to(message, f"❌ خطا در ذخیره کاور: {str(e)}")
+            user_states.pop(user_id, None)
+            return
+
+    text = ""
+    if message.document and not (message.audio or message.voice):
+        try:
+            file_info = bot.get_file(message.document.file_id)
+            downloaded_file = bot.download_file(file_info.file_path)
+            text = downloaded_file.decode('utf-8')
+        except:
+            text = message.text.strip() if message.text else ""
+    else:
+        text = message.text.strip() if message.text else ""
+
+    btn_names = settings.get("btn_names", {})
+
+    # بررسی اینکه آیا کاربر یک فایل صوتی (موزیک یا صدا) ارسال کرده است تا ویرایشش کند
+    if message.audio or message.voice or (message.document and message.document.mime_type and "audio" in message.document.mime_type):
+        audio_obj = message.audio or message.document
+        file_id = audio_obj.file_id
+        orig_title = getattr(audio_obj, 'title', None) or "Unknown Title"
+        orig_artist = getattr(audio_obj, 'performer', None) or "Unknown Artist"
+
+        status_msg = bot.reply_to(message, "📥 در حال دریافت موزیک ارسالی شما...")
+        try:
+            f_info = bot.get_file(file_id)
+            dl_file = bot.download_file(f_info.file_path)
+            local_audio_path = os.path.join(DOWNLOAD_DIR, f"uploaded_music_{user_id}_{int(time.time())}.mp3")
+            with open(local_audio_path, "wb") as af:
+                af.write(dl_file)
+
+            session_id = f"{user_id}_{int(time.time())}"
+            edit_states = load_json(EDIT_MUSIC_STATE_FILE, {})
+            edit_states[session_id] = {
+                "user_id": user_id,
+                "audio_path": local_audio_path,
+                "title": orig_title,
+                "artist": orig_artist,
+                "thumb_path": None
             }
-            if (cleanText.length === 0 && !hasValidSketch) {
-                return { valid: false, reason: 'یادداشت خالی ثبت نمی‌شود! متن بنویسید یا نقاشی بکشید.' };
+            save_json(EDIT_MUSIC_STATE_FILE, edit_states)
+
+            markup = types.InlineKeyboardMarkup(row_width=1)
+            markup.add(
+                types.InlineKeyboardButton("✏️ تغییر نام آهنگ", callback_data=f"edit_title_{session_id}"),
+                types.InlineKeyboardButton("🎤 تغییر نام خواننده", callback_data=f"edit_artist_{session_id}"),
+                types.InlineKeyboardButton("🖼 تغییر کاور موزیک", callback_data=f"edit_thumb_{session_id}"),
+                types.InlineKeyboardButton("✅ اتمام و ارسال موزیک با اطلاعات جدید", callback_data=f"finish_edit_{session_id}")
+            )
+
+            bot.edit_message_text(
+                f"🎵 **موزیک دریافت شد!**\n\n"
+                f"▪️ نام فعلی آهنگ: `{orig_title}`\n"
+                f"▪️ خواننده فعلی: `{orig_artist}`\n\n"
+                f"لطفاً گزینه‌ای که می‌خواهید تغییر دهید را انتخاب کنید:",
+                message.chat.id, status_msg.message_id, reply_markup=markup, parse_mode="Markdown"
+            )
+        except Exception as e:
+            bot.edit_message_text(f"❌ خطا در پردازش موزیک: {str(e)}", message.chat.id, status_msg.message_id)
+        return
+
+    if user_id in admins and not is_guest:
+        if text == "⚙️ پنل مدیریت پیشرفته":
+            markup = types.InlineKeyboardMarkup(row_width=2)
+            markup.add(
+                types.InlineKeyboardButton("📊 آمار کاربران", callback_data="adm_stats"),
+                types.InlineKeyboardButton("📢 ارسال همگانی", callback_data="adm_broadcast"),
+                types.InlineKeyboardButton("📢 مدیریت کانال‌های قفل", callback_data="adm_channels_mgmt"),
+                types.InlineKeyboardButton("👥 مدیریت کاربران", callback_data="adm_users_mgmt"),
+                types.InlineKeyboardButton("⚙️ مدیریت پرو و سرورها", callback_data="adm_pro_mgmt"),
+                types.InlineKeyboardButton("🤖 مدیریت ربات‌ها", callback_data="adm_child_bots_mgmt"),
+                types.InlineKeyboardButton("🎛 مدیریت دکمه‌ها", callback_data="adm_buttons_mgmt")
+            )
+            bot.reply_to(message, "🛠 **پنل مدیریت پیشرفته ربات:**", reply_markup=markup)
+            return
+
+        elif current_state == "waiting_user_search_query":
+            user_states.pop(user_id, None)
+            sq = text.strip()
+            txt, mrk = generate_users_page(0, sq)
+            bot.reply_to(message, f"🔍 **نتیجه جستجو برای:** `{sq}`", reply_markup=mrk, parse_mode="Markdown")
+            return
+
+        elif current_state == "waiting_main_broadcast":
+            user_states.pop(user_id, None)
+            users = load_users()
+            sent_count = 0
+            fail_count = 0
+            
+            status_msg = bot.reply_to(message, "⏳ در حال ارسال پیام همگانی به کاربران...")
+            for uid_str in users.keys():
+                try:
+                    bot.send_message(int(uid_str), text)
+                    sent_count += 1
+                except:
+                    fail_count += 1
+            
+            bot.edit_message_text(
+                f"✅ **پیام همگانی با موفقیت ارسال شد!**\n\n"
+                f"📤 ارسال شده به: {sent_count} کاربر\n"
+                f"❌ ناموفق (مسدودکرده ربات): {fail_count}",
+                message.chat.id, status_msg.message_id
+            )
+            return
+
+        elif current_state == "waiting_add_channel":
+            user_states.pop(user_id, None)
+            ch = text.strip()
+            if ch not in settings["channels"]:
+                settings["channels"].append(ch)
+                save_settings(settings)
+            bot.reply_to(message, f"✅ کانال قفل `{ch}` با موفقیت اضافه شد!", reply_markup=get_reply_keyboard(user_id))
+            return
+
+        elif current_state == "waiting_pro_src":
+            user_states.pop(user_id, None)
+            src_ch = text.strip()
+            if src_ch not in settings["pro_sources"]:
+                settings["pro_sources"].append(src_ch)
+                save_settings(settings)
+            bot.reply_to(message, f"✅ کانال منبع پرو `{src_ch}` با موفقیت ثبت شد!", reply_markup=get_reply_keyboard(user_id))
+            return
+
+        elif current_state == "waiting_pro_dest":
+            user_states.pop(user_id, None)
+            dest_ch = text.strip()
+            settings["pro_dest"] = dest_ch
+            save_settings(settings)
+            bot.reply_to(message, f"✅ کانال مقصد پرو روی `{dest_ch}` تنظیم شد!", reply_markup=get_reply_keyboard(user_id))
+            return
+
+        elif current_state == "waiting_pro_name":
+            user_states.pop(user_id, None)
+            pname = text.strip()
+            settings["pro_name"] = pname
+            save_settings(settings)
+            bot.reply_to(message, f"✅ نام پیشوند سرورها روی `{pname}` تنظیم شد!", reply_markup=get_reply_keyboard(user_id))
+            return
+
+        elif current_state and current_state.startswith("set_name_"):
+            btn_key = current_state.replace("set_name_", "")
+            settings["btn_names"][btn_key] = text
+            save_settings(settings)
+            bot.reply_to(message, f"✅ نام دکمه تغییر کرد!", reply_markup=get_reply_keyboard(user_id))
+            user_states.pop(user_id, None)
+            return
+
+    if text == "👨‍💻 سازنده" or text == "سازنده":
+        bot.reply_to(message, "🤖 **این ربات با سیستم پیشرفته ساخت ربات ساخته شده است.**\n\n📌 سازنده و پشتیبان اصلی:\n@izeucs", reply_markup=get_reply_keyboard(user_id))
+        return
+
+    if text == btn_names.get("builder", "ساخت ربات دانلودر"):
+        if has_active_subscription(user_id):
+            user_states[user_id] = "waiting_bot_token"
+            bot.reply_to(message, "🤖 **ساخت ربات دانلودر اختصاصی:**\n\nاشتراک شما فعال است! لطفاً توکن ربات خود را از `@BotFather` بفرستید:", reply_markup=get_reply_keyboard(user_id))
+        else:
+            bot.reply_to(
+                message,
+                "برای استفاده از این دکمه و ساخت ربات اختصاصی خودتون به ایدی زیر پیام بدید:\n\n"
+                "هزینه یک ماه اشتراک این دکمه 100 هزارتومان\n\n"
+                "ایدی جهت خرید:\n@izeucs",
+                reply_markup=get_reply_keyboard(user_id)
+            )
+        return
+
+    if current_state == "waiting_bot_token":
+        new_token = text.strip()
+        try:
+            test_bot = telebot.TeleBot(new_token)
+            bot_info = test_bot.get_me()
+            bot_username = bot_info.username
+
+            child_bots = load_child_bots()
+            if new_token in child_bots:
+                bot.reply_to(message, f"⚠️ این ربات (`@{bot_username}`) قبلاً ثبت شده است.", reply_markup=get_reply_keyboard(user_id))
+            else:
+                child_bots[new_token] = {"owner": user_id, "username": bot_username, "channel": ""}
+                save_child_bots(child_bots)
+                start_child_bot(new_token)
+                bot.reply_to(message, f"✅ **تبریک! ربات شما ساخته شد.**\n\n🤖 آیدی ربات: @{bot_username}", reply_markup=get_reply_keyboard(user_id))
+        except Exception as e:
+            bot.reply_to(message, f"❌ توکن نامعتبر است:\n{str(e)}", reply_markup=get_reply_keyboard(user_id))
+        user_states.pop(user_id, None)
+        return
+
+    if text == btn_names.get("v2ray", "سرور v2rayرایگان"):
+        status_msg = bot.reply_to(message, "⏳ در حال دریافت سرور رندوم V2Ray (0%)...")
+        try:
+            target_sub_url = "https://raw.githubusercontent.com/yebekhe/TelegramV2rayCollector/main/sub/mix"
+            req = urllib.request.Request(target_sub_url, headers={'User-Agent': 'Mozilla/5.0'})
+            response = urllib.request.urlopen(req)
+            content = response.read().decode('utf-8')
+            try:
+                decoded_bytes = base64.b64decode(content.strip())
+                content_decoded = decoded_bytes.decode('utf-8')
+                lines = [line.strip() for line in content_decoded.splitlines() if line.strip()]
+            except:
+                lines = [line.strip() for line in content.splitlines() if line.strip()]
+            if lines:
+                selected_config = random.choice(lines)
+                bot.delete_message(message.chat.id, status_msg.message_id)
+                bot.reply_to(message, f"🌐 **سرور رایگان V2Ray (100%):**\n\n`{selected_config}`", parse_mode="Markdown", reply_markup=get_reply_keyboard(user_id))
+            else:
+                bot.edit_message_text("❌ سروری یافت نشد (100%).", message.chat.id, status_msg.message_id)
+        except Exception as e:
+            try: bot.edit_message_text(f"❌ خطا: {str(e)}", message.chat.id, status_msg.message_id)
+            except: pass
+        return
+
+    if text == btn_names.get("insta", "📸 دانلود اینستاگرام"):
+        user_states[user_id] = "waiting_insta"
+        bot.reply_to(message, "📸 **بخش اینستاگرام فعال شد.**\n\nلینک پست یا ریلز را بفرستید:", reply_markup=get_reply_keyboard(user_id))
+        return
+
+    elif text == btn_names.get("music", "🎵 دانلود اسپاتیفای/ساندکلود"):
+        user_states[user_id] = "waiting_music"
+        bot.reply_to(message, "🎵 **بخش موزیک فعال شد.**\n\nلینک آهنگ را بفرستید:", reply_markup=get_reply_keyboard(user_id))
+        return
+
+    elif text == btn_names.get("trend", "🔥 موزیک ترند"):
+        status_msg = bot.reply_to(message, "🔥 در حال جستجوی ۳ موزیک برتر ترند هفته...")
+        
+        def process_trend_music(chat_id, msg_to_del):
+            try:
+                trend_queries = [
+                    "top persian hits 2026",
+                    "اهنگ های پرطرفدار جدید فارسی",
+                    "best persian remix mix"
+                ]
+                entries = []
+                trend_opts = {'format': 'bestaudio', 'quiet': True, 'noplaylist': True}
+                
+                with yt_dlp.YoutubeDL(trend_opts) as ydl:
+                    for q in trend_queries:
+                        try:
+                            res = ydl.extract_info(f"scsearch5:{q}", download=False)
+                            if res and 'entries' in res:
+                                entries.extend([e for e in res['entries'] if e])
+                        except:
+                            pass
+                        
+                        if len(entries) < 3:
+                            try:
+                                res2 = ydl.extract_info(f"ytsearch5:{q}", download=False)
+                                if res2 and 'entries' in res2:
+                                    entries.extend([e for e in res2['entries'] if e])
+                            except:
+                                pass
+                
+                if not entries:
+                    bot.edit_message_text("❌ در حال حاضر موزیک ترندی یافت نشد.", chat_id, msg_to_del.message_id)
+                    return
+
+                unique_entries = {}
+                for entry in entries:
+                    w_url = entry.get('webpage_url') or entry.get('url')
+                    if w_url and w_url not in unique_entries:
+                        unique_entries[w_url] = entry
+
+                selected_entries = list(unique_entries.values())[:3]
+                bot.edit_message_text(f"✅ ۳ موزیک برتر پیدا شد. شروع دانلود و ارسال آنی آهنگ‌ها...", chat_id, msg_to_del.message_id)
+                
+                for idx, entry in enumerate(selected_entries, 1):
+                    m_url = entry.get('webpage_url') or entry.get('url')
+                    real_title = entry.get('title', f'موزیک ترند شماره {idx}')
+                    if not m_url: continue
+
+                    sub_status = bot.send_message(chat_id, f"🎧 [آهنگ {idx}/3] نام: {real_title}\n📥 دانلود: 0%")
+                    
+                    last_update_time = [0]
+                    def trend_progress_hook(d):
+                        if d['status'] == 'downloading':
+                            pct = d.get('_percent_str', '0%').strip()
+                            current_time = time.time()
+                            if current_time - last_update_time[0] > 1.2:
+                                last_update_time[0] = current_time
+                                try:
+                                    bot.edit_message_text(f"🎧 [آهنگ {idx}/3] نام: {real_title}\n📥 دانلود: {pct}", chat_id, sub_status.message_id)
+                                except:
+                                    pass
+
+                    song_dl_opts = {
+                        'format': 'bestaudio',
+                        'outtmpl': f'{DOWNLOAD_DIR}/trend_%(id)s.%(ext)s',
+                        'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
+                        'writethumbnail': True,
+                        'quiet': True, 'noplaylist': True,
+                        'progress_hooks': [trend_progress_hook]
+                    }
+                    
+                    dl_path = None
+                    thumb_path = None
+                    try:
+                        with yt_dlp.YoutubeDL(song_dl_opts) as song_ydl:
+                            info_dl = song_ydl.extract_info(m_url, download=True)
+                            base_fn = song_ydl.prepare_filename(info_dl).rsplit('.', 1)[0]
+                            dl_path = base_fn + '.mp3'
+                            for ext in ['.jpg', '.png', '.webp', '.jpeg']:
+                                if os.path.exists(base_fn + ext):
+                                    thumb_path = base_fn + ext
+                                    break
+                    except:
+                        try: bot.delete_message(chat_id, sub_status.message_id)
+                        except: pass
+                        continue
+
+                    if dl_path and os.path.exists(dl_path):
+                        bot.edit_message_text(f"📤 [آهنگ {idx}/3] در حال ارسال...", chat_id, sub_status.message_id)
+                        with open(dl_path, 'rb') as aud:
+                            if thumb_path and os.path.exists(thumb_path):
+                                with open(thumb_path, 'rb') as th:
+                                    bot.send_audio(chat_id, aud, thumb=th, caption=f"🔥 {real_title}\n📌 موزیک ترند برتر هفته ({idx}/3)\n🤖 t.me/zeucdl_bot")
+                            else:
+                                bot.send_audio(chat_id, aud, caption=f"🔥 {real_title}\n📌 موزیک ترند برتر هفته ({idx}/3)\n🤖 t.me/zeucdl_bot")
+                        bot.delete_message(chat_id, sub_status.message_id)
+                    
+                    clear_downloads()
+                
+                try: bot.delete_message(chat_id, msg_to_del.message_id)
+                except: pass
+            except Exception as e:
+                try: bot.edit_message_text(f"❌ خطا در دریافت موزیک‌های ترند: {str(e)}", chat_id, msg_to_del.message_id)
+                except: pass
+            finally:
+                clear_downloads()
+
+        threading.Thread(target=process_trend_music, args=(message.chat.id, status_msg)).start()
+        return
+
+    if not (text.startswith("http://") or text.startswith("https://")):
+        return
+
+    user_last_urls = load_json(USER_LAST_URL_FILE, {})
+    user_last_urls[str(user_id)] = text
+    save_json(USER_LAST_URL_FILE, user_last_urls)
+
+    def process_instagram_link(chat_id, url, user_st_key):
+        status_msg = bot.send_message(chat_id, "📥 دانلود ویدیو: 0%")
+        
+        last_update_time = [0]
+        def download_progress_hook(d):
+            if d['status'] == 'downloading':
+                pct = d.get('_percent_str', '0%').strip()
+                current_time = time.time()
+                if current_time - last_update_time[0] > 1.5:
+                    last_update_time[0] = current_time
+                    try:
+                        bot.edit_message_text(f"📥 دانلود ویدیو: {pct}", chat_id, status_msg.message_id)
+                    except:
+                        pass
+
+        try:
+            ydl_opts = {
+                'format': 'best',
+                'outtmpl': f'{DOWNLOAD_DIR}/t.me_zeucdl_bot_%(id)s.%(ext)s',
+                'quiet': True,
+                'progress_hooks': [download_progress_hook]
             }
-            return { valid: true, text: cleanText, hasSketch: hasValidSketch };
+            
+            video_file_path = None
+
+            with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                info = ydl.extract_info(url, download=True)
+                base_path = ydl.prepare_filename(info).rsplit('.', 1)[0]
+                video_file_path = base_path + '.mp4'
+                if not os.path.exists(video_file_path):
+                    video_file_path = base_path + '.mkv'
+
+            if video_file_path and os.path.exists(video_file_path):
+                post_key = str(abs(hash(url + str(time.time()))))
+                posts_cache = load_json(POSTS_CACHE_FILE, {})
+                posts_cache[post_key] = url
+                if len(posts_cache) > 200:
+                    posts_cache.pop(list(posts_cache.keys())[0])
+                save_json(POSTS_CACHE_FILE, posts_cache)
+
+                markup = types.InlineKeyboardMarkup(row_width=1)
+                markup.add(
+                    types.InlineKeyboardButton("🎵 شناسایی موسیقی از روی صدا", callback_data=f"find_music_{post_key}"),
+                    types.InlineKeyboardButton("🔗 اشتراک‌گذاری پست", url=url)
+                )
+
+                bot.edit_message_text("📤 در حال ارسال به آرشیو کانال (50%)...", chat_id, status_msg.message_id)
+
+                try:
+                    with open(video_file_path, 'rb') as vid:
+                        bot.send_video(ARCHIVE_CHANNEL, vid, caption=f"✅ ویدیو آرشیو شده (100%).\n\n🤖 t.me/zeucdl_bot", reply_markup=markup)
+                except Exception as ch_err:
+                    print(f"Archive channel error: {ch_err}")
+
+                with open(video_file_path, 'rb') as vid:
+                    bot.send_video(chat_id, vid, caption=f"✅ ویدیو دانلود شد (100%).\n\n🤖 t.me/zeucdl_bot", reply_markup=markup)
+
+                bot.delete_message(chat_id, status_msg.message_id)
+        except Exception as e:
+            try: bot.edit_message_text(f"❌ خطا: {str(e)}", chat_id, status_msg.message_id)
+            except: pass
+        finally:
+            user_states.pop(user_st_key, None)
+            clear_downloads()
+
+    if current_state == "waiting_insta" or "instagram.com" in text:
+        threading.Thread(target=process_instagram_link, args=(message.chat.id, text, user_id)).start()
+        return
+
+    elif current_state == "waiting_music" or "spotify.com" in text or "soundcloud.com" in text:
+        status_msg = bot.send_message(message.chat.id, "🎵 دانلود موزیک: 0%")
+        target_url = text
+        if "spotify.com" in text:
+            try:
+                req = urllib.request.Request(text, headers={'User-Agent': 'Mozilla/5.0'})
+                html = urllib.request.urlopen(req).read().decode('utf-8')
+                m = re.search(r'<meta property="og:title" content="([^"]+)"', html)
+                if m: target_url = f"scsearch:{m.group(1)}"
+            except: pass
+
+        last_update_time = [0]
+        def music_dl_hook(d):
+            if d['status'] == 'downloading':
+                pct = d.get('_percent_str', '0%').strip()
+                current_time = time.time()
+                if current_time - last_update_time[0] > 1.5:
+                    last_update_time[0] = current_time
+                    try:
+                        bot.edit_message_text(f"🎵 دانلود موزیک: {pct}", message.chat.id, status_msg.message_id)
+                    except:
+                        pass
+
+        ydl_opts = {
+            'format': 'bestaudio',
+            'outtmpl': f'{DOWNLOAD_DIR}/t.me_zeucdl_bot_%(id)s.%(ext)s',
+            'postprocessors': [{'key': 'FFmpegExtractAudio', 'preferredcodec': 'mp3', 'preferredquality': '192'}],
+            'quiet': True, 'noplaylist': True,
+            'progress_hooks': [music_dl_hook]
         }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(target_url, download=True)
+            if 'entries' in info: info = info['entries'][0]
+            file_path = ydl.prepare_filename(info).rsplit('.', 1)[0] + '.mp3'
+        if os.path.exists(file_path):
+            bot.edit_message_text("📤 در حال ارسال موزیک (100%)...", message.chat.id, status_msg.message_id)
+            with open(file_path, 'rb') as audio:
+                bot.send_audio(message.chat.id, audio, caption="🎵 موزیک دانلود شده (100%)\n🤖 t.me/zeucdl_bot")
+            bot.delete_message(message.chat.id, status_msg.message_id)
+        user_states.pop(user_id, None)
+        clear_downloads()
+        return
 
-        async function submitQoorNote() {
-            if (!qoorRoomRef) return;
-            const rawText = document.getElementById('qoor-note-text').value;
-            const check = validateRealNote(rawText, miniStrokePointsCount);
+def run_child_bot(token):
+    try:
+        c_bot = telebot.TeleBot(token)
+        child_bot_instances[token] = c_bot
+        
+        def check_child_membership(uid, tok):
+            cbots = load_child_bots()
+            ch = cbots.get(tok, {}).get("channel")
+            if not ch: return True
+            try:
+                member = c_bot.get_chat_member(ch, uid)
+                if member.status in ['member', 'administrator', 'creator']: return True
+            except: pass
+            return False
 
-            if (!check.valid) {
-                return showToast(check.reason);
-            }
+        @c_bot.message_handler(commands=['start'])
+        def child_start(msg):
+            uid = msg.from_user.id
+            cbots = load_child_bots()
+            if token not in cbots: return
+            ch = cbots.get(token, {}).get("channel")
+            if ch and not check_child_membership(uid, token):
+                markup = types.InlineKeyboardMarkup()
+                markup.add(types.InlineKeyboardButton(f"📢 عضویت در {ch}", url=f"https://t.me/{ch.replace('@','')}"))
+                markup.add(types.InlineKeyboardButton("🔄 بررسی عضویت", callback_data="child_check"))
+                c_bot.reply_to(msg, f"⚠️ برای استفاده از این ربات ابتدا باید در کانال زیر عضو شوید:\n{ch}", reply_markup=markup)
+                return
 
-            const noteObj = {
-                type: currentNoteType,
-                text: check.text || (currentNoteType === 'qoor' ? 'یک طرح قور اختصاصی ثبت شد' : 'یک طرح قدردانی اختصاصی ثبت شد'),
-                sketch: check.hasSketch ? miniCanvas.toDataURL('image/png', 0.8) : null,
-                time: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-                timestamp: Date.now(),
-                sender: mySessionId
-            };
+            markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
+            markup.add(types.KeyboardButton("📸 دانلود اینستاگرام"), types.KeyboardButton("🎵 دانلود موزیک"), types.KeyboardButton("👨‍💻 سازنده"))
+            c_bot.reply_to(msg, "سلام! 🤖\nبه ربات اختصاصی دانلود رسانه خوش آمدید.\n\nگزینه مورد نظر را انتخاب کنید:", reply_markup=markup)
 
-            try {
-                await qoorRoomRef.child('notes').push(noteObj);
-                closeNotebook();
-                showToast(currentNoteType === 'qoor' ? 'قور شما در سرور ثبت شد!' : 'تشکر شما در سرور ثبت شد!');
-            } catch (err) {
-                showToast('خطا در ارسال یادداشت!');
-            }
-        }
+        @c_bot.callback_query_handler(func=lambda call: call.data == "child_check")
+        def child_check_sub(call):
+            if check_child_membership(call.from_user.id, token):
+                c_bot.answer_callback_query(call.id, "✅ تایید شد!")
+                try: c_bot.delete_message(call.message.chat.id, call.message.message_id)
+                except: pass
+                child_start(call.message)
+            else:
+                c_bot.answer_callback_query(call.id, "❌ هنوز عضو نشده‌اید!", show_alert=True)
 
-        function renderQoorNotes() {
-            const feed = document.getElementById('qoor-notes-list');
-            feed.innerHTML = '';
+        @c_bot.message_handler(content_types=['text'])
+        def child_handle(msg):
+            uid = msg.from_user.id
+            cbots = load_child_bots()
+            if token not in cbots: return
+            ch = cbots.get(token, {}).get("channel")
+            if ch and not check_child_membership(uid, token):
+                c_bot.reply_to(msg, "⚠️ لطفا ابتدا در کانال ربات عضو شوید.")
+                return
 
-            if (qoorNotesList.length === 0) {
-                feed.innerHTML = `
-                    <div class="empty-state-box glass">
-                        <div class="glass-svg-badge" style="width: 56px; height: 56px;">${GlassGraphics.crystalHeart}</div>
-                        <strong>هنوز هیچ یادداشتی در این اتاق ثبت نشده</strong>
-                        <span>برای شروع، از دکمه‌های بالا «قور» یا «تشکر» را انتخاب کنید</span>
-                    </div>
-                `;
-                return;
-            }
+            txt = msg.text.strip()
+            if txt == "👨‍💻 سازنده":
+                c_bot.reply_to(msg, "🤖 **این ربات با سیستم پیشرفته ما ساخته شده است.**\n\n📌 ربات سازنده اصلی:\n@izeucs")
+            elif txt == "📸 دانلود اینستاگرام":
+                c_bot.reply_to(msg, "لینک پست اینستاگرام خود را بفرستید:")
+            elif txt == "🎵 دانلود موزیک":
+                c_bot.reply_to(msg, "لینک آهنگ را بفرستید:")
+            elif txt.startswith("http://") or txt.startswith("https://"):
+                status = c_bot.reply_to(msg, "📥 دانلود ویدیو: 0%")
+                try:
+                    def child_dl_hook(d):
+                        if d['status'] == 'downloading':
+                            pct = d.get('_percent_str', '0%').strip()
+                            try: c_bot.edit_message_text(f"📥 دانلود ویدیو: {pct}", msg.chat.id, status.message_id)
+                            except: pass
 
-            qoorNotesList.forEach(note => {
-                const card = document.createElement('div');
-                card.className = `note-card glass ${note.type === 'qoor' ? 'type-qoor' : 'type-thanks'}`;
-                card.onclick = () => openCinematicNote(note);
+                    ydl_opts = {'format': 'best', 'outtmpl': f'{DOWNLOAD_DIR}/child_%(id)s.%(ext)s', 'quiet': True, 'progress_hooks': [child_dl_hook]}
+                    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                        info = ydl.extract_info(txt, download=True)
+                        f_path = ydl.prepare_filename(info)
+                        if not os.path.exists(f_path): f_path = ydl.prepare_filename(info).rsplit('.', 1)[0] + '.mp4'
+                    if os.path.exists(f_path):
+                        c_bot.edit_message_text("📤 در حال ارسال (100%)...", msg.chat.id, status.message_id)
+                        with open(f_path, 'rb') as f_vid:
+                            c_bot.send_video(msg.chat.id, f_vid, caption="✅ دانلود انجام شد (100%).")
+                        c_bot.delete_message(msg.chat.id, status.message_id)
+                except Exception as e:
+                    c_bot.edit_message_text(f"❌ خطا: {str(e)}", msg.chat.id, status.message_id)
+            else:
+                c_bot.reply_to(msg, "لطفاً یک لینک معتبر ارسال کنید.")
 
-                const svgIcon = note.type === 'qoor' ? GlassGraphics.angryFace : GlassGraphics.crystalRose;
-                const label = note.type === 'qoor' ? 'پیام قووووور (برای دیدن ضربه بزن)' : 'پیام تشکر و عشق (برای دیدن ضربه بزن)';
+        c_bot.remove_webhook()
+        c_bot.infinity_polling(none_stop=True, interval=0, timeout=20)
+    except Exception as e:
+        print(f"Child bot error for token {token[:8]}...: {e}")
 
-                card.innerHTML = `
-                    <div style="display: flex; align-items: center; gap: 12px;">
-                        <div class="glass-svg-badge">${svgIcon}</div>
-                        <div>
-                            <div style="font-weight: 800; font-size: 0.88rem;">${label}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-muted);">${note.time}</div>
-                        </div>
-                    </div>
-                    <i class="fa-solid fa-eye" style="color: var(--accent);"></i>
-                `;
-                feed.appendChild(card);
-            });
-        }
+def start_child_bot(token):
+    t = threading.Thread(target=run_child_bot, args=(token,))
+    t.daemon = True
+    child_bot_threads[token] = t
+    t.start()
 
-        // ==========================================
-        // 5. نمایش سینمایی + بارش ایموجی‌های گرافیکی شیشه‌ای
-        // ==========================================
-        let emojiRainInterval = null;
+def init_saved_child_bots():
+    child_bots = load_child_bots()
+    for token in child_bots.keys():
+        start_child_bot(token)
 
-        function openCinematicNote(note) {
-            const overlay = document.getElementById('cinematic-overlay');
-            const badge = document.getElementById('cinematic-badge');
-            const title = document.getElementById('cinematic-title');
-            const textEl = document.getElementById('cinematic-text');
-            const sketchEl = document.getElementById('cinematic-sketch');
+if __name__ == "__main__":
+    init_saved_child_bots()
+    
+    fetch_thread = threading.Thread(target=fetch_channel_web_updates)
+    fetch_thread.daemon = True
+    fetch_thread.start()
 
-            overlay.className = note.type === 'qoor' ? 'dark-angry' : 'bright-love';
-            overlay.style.display = 'flex';
+    web_thread = threading.Thread(target=run_web)
+    web_thread.daemon = True
+    web_thread.start()
 
-            if (note.type === 'qoor') {
-                badge.innerHTML = GlassGraphics.angryFace;
-                title.innerText = 'اخطار قووووور شدید!';
-                title.style.color = '#ff6b81';
-                textEl.style.color = '#ffffff';
-                startGlassSvgRain([
-                    GlassGraphics.angryFace,
-                    GlassGraphics.lightning,
-                    GlassGraphics.fireRage
-                ]);
-            } else {
-                badge.innerHTML = GlassGraphics.crystalRose;
-                title.innerText = 'یک دنیا عشق و قدردانی!';
-                title.style.color = '#b5179e';
-                textEl.style.color = '#4a2535';
-                startGlassSvgRain([
-                    GlassGraphics.crystalRose,
-                    GlassGraphics.glassKiss,
-                    GlassGraphics.crystalHeart
-                ]);
-            }
-
-            textEl.innerText = note.text;
-
-            if (note.sketch) {
-                sketchEl.src = note.sketch;
-                sketchEl.style.display = 'block';
-            } else {
-                sketchEl.style.display = 'none';
-            }
-        }
-
-        function startGlassSvgRain(svgList) {
-            stopGlassEmojiRain();
-            emojiRainInterval = setInterval(() => {
-                const p = document.createElement('div');
-                p.className = 'glass-svg-particle';
-                p.innerHTML = svgList[Math.floor(Math.random() * svgList.length)];
-                p.style.left = (Math.random() * 88 + 2) + 'vw';
-                const duration = 2.6 + Math.random() * 1.8;
-                p.style.animationDuration = duration + 's';
-                document.body.appendChild(p);
-
-                setTimeout(() => p.remove(), duration * 1000);
-            }, 200);
-        }
-
-        function stopGlassEmojiRain() {
-            if (emojiRainInterval) clearInterval(emojiRainInterval);
-            document.querySelectorAll('.glass-svg-particle').forEach(el => el.remove());
-        }
-
-        function forceCloseCinematic() {
-            stopGlassEmojiRain();
-            document.getElementById('cinematic-overlay').style.display = 'none';
-        }
-
-        function closeCinematicView(e) {
-            if (e.target.id === 'cinematic-overlay') forceCloseCinematic();
-        }
-    </script>
-</body>
-</html>
+    ping_thread = threading.Thread(target=self_ping_worker)
+    ping_thread.daemon = True
+    ping_thread.start()
+    
+    print("Bot & Web server are running with Self-Ping enabled...")
+    try:
+        bot.remove_webhook()
+    except Exception as e:
+        print(f"Remove webhook error: {e}")
+        
+    while True:
+        try:
+            bot.infinity_polling(skip_pending=True, timeout=60, long_polling_timeout=60)
+        except Exception as e:
+            print(f"Polling crashed: {e}, restarting in 5 seconds...")
+            time.sleep(5)
