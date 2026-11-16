@@ -277,6 +277,7 @@
         let currentRoomKey = null;
         let myUserId = 'user_' + Math.random().toString(36).substring(2, 9);
         let isSyncing = false;
+        let currentLoadedUrl = "";
 
         const authSection = document.getElementById('auth-section');
         const roomSection = document.getElementById('room-section');
@@ -418,6 +419,9 @@
         }
 
         function loadVideoIntoPlayer(url) {
+            if (currentLoadedUrl === url) return;
+            currentLoadedUrl = url;
+
             const parsed = parseVideoUrl(url);
             playerError.classList.add('hidden');
 
@@ -428,12 +432,10 @@
             } else if (parsed.type === 'html5') {
                 iframeBox.classList.add('hidden');
                 html5Box.classList.remove('hidden');
-                if (player.source !== parsed.src) {
-                    player.source = {
-                        type: 'video',
-                        sources: [{ src: parsed.src, provider: 'html5' }]
-                    };
-                }
+                player.source = {
+                    type: 'video',
+                    sources: [{ src: parsed.src, provider: 'html5' }]
+                };
             } else {
                 playerError.classList.remove('hidden');
             }
@@ -451,7 +453,7 @@
             });
         }
 
-        // ارسال دقیق رویدادهای پلیر با محاسبه زمان واقعی
+        // ارسال تغییرات پلیر به دیتابیس با دقت بالا
         player.on('play', () => {
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
@@ -485,25 +487,24 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                if (data.videoUrl) {
-                    if (videoInput.value !== data.videoUrl) {
-                        videoInput.value = data.videoUrl;
-                        loadVideoIntoPlayer(data.videoUrl);
-                    }
+                // آپدیت آنی لینک ویدیو به محض تغییر توسط هر کاربری
+                if (data.videoUrl && data.videoUrl !== currentLoadedUrl) {
+                    videoInput.value = data.videoUrl;
+                    loadVideoIntoPlayer(data.videoUrl);
                 }
 
                 isSyncing = true;
                 
-                // همگام‌سازی وضعیت Play/Pause
+                // سینک کردن پلی و پاز
                 if (data.paused && player.playing) {
                     player.pause();
                 } else if (!data.paused && player.paused) {
                     player.play().catch(e => console.log(e));
                 }
 
-                // محاسبه دقیق و رفع اختلاف زمان (اگر تفاوت بیشتر از ۰.۵ ثانیه شد)
+                // سینک دقیق زمان ویدیو (جلوگیری از اختلاف حتی کمتر از ۰.۳ ثانیه)
                 let timeDiff = Math.abs(player.currentTime - data.currentTime);
-                if (timeDiff > 0.5) {
+                if (timeDiff > 0.3) {
                     player.currentTime = data.currentTime;
                 }
 
