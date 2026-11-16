@@ -428,10 +428,12 @@
             } else if (parsed.type === 'html5') {
                 iframeBox.classList.add('hidden');
                 html5Box.classList.remove('hidden');
-                player.source = {
-                    type: 'video',
-                    sources: [{ src: parsed.src, provider: 'html5' }]
-                };
+                if (player.source !== parsed.src) {
+                    player.source = {
+                        type: 'video',
+                        sources: [{ src: parsed.src, provider: 'html5' }]
+                    };
+                }
             } else {
                 playerError.classList.remove('hidden');
             }
@@ -449,6 +451,7 @@
             });
         }
 
+        // ارسال دقیق رویدادهای پلیر با محاسبه زمان واقعی
         player.on('play', () => {
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
@@ -490,15 +493,20 @@
                 }
 
                 isSyncing = true;
+                
+                // همگام‌سازی وضعیت Play/Pause
                 if (data.paused && player.playing) {
                     player.pause();
                 } else if (!data.paused && player.paused) {
                     player.play().catch(e => console.log(e));
                 }
 
-                if (Math.abs(player.currentTime - data.currentTime) > 1.5) {
+                // محاسبه دقیق و رفع اختلاف زمان (اگر تفاوت بیشتر از ۰.۵ ثانیه شد)
+                let timeDiff = Math.abs(player.currentTime - data.currentTime);
+                if (timeDiff > 0.5) {
                     player.currentTime = data.currentTime;
                 }
+
                 isSyncing = false;
             });
         }
