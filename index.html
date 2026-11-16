@@ -418,9 +418,7 @@
         .emoji-option { font-size: 1.25rem; text-align: center; cursor: pointer; padding: 4px; border-radius: 8px; transition: 0.2s; }
         .emoji-option:hover { background: var(--input-bg); transform: scale(1.15); }
 
-        /* =========================================
-           بخش جدید: TV LOVE (تماشای همزمان فیلم)
-        ========================================= */
+        /* بخش TV LOVE (سینمای مشترک) */
         #section-tvlove { display: none; flex: 1; flex-direction: column; height: 100%; overflow: hidden; }
         .tv-container { display: flex; flex: 1; flex-direction: column; height: 100%; overflow: hidden; gap: 10px; }
         
@@ -431,16 +429,14 @@
         .tv-video-wrapper {
             flex: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden;
         }
-        .tv-video-wrapper iframe, .tv-video-wrapper video {
+        .tv-video-wrapper video {
             width: 100%; height: 100%; border: none; object-fit: contain;
         }
-        /* پلیر شیشه‌ای کنترلرها روی ویدیو */
         .glass-player-controls {
             position: absolute; bottom: 12px; left: 12px; right: 12px;
             background: rgba(18, 28, 24, 0.65); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
             border: 1px solid rgba(255, 255, 255, 0.25); border-radius: 18px; padding: 10px 14px;
             display: flex; flex-direction: column; gap: 6px; box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-            transition: opacity 0.3s ease;
         }
         .tv-controls-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .tv-scrubber { flex: 1; accent-color: var(--accent); height: 5px; cursor: pointer; }
@@ -773,9 +769,9 @@
         </section>
 
         <!-- ==============================================
-             تب چهارم: TV LOVE (تماشای همزمان فیلم با پارتنر)
+             تب چهارم: TV LOVE (سینمای مشترک همزمان)
         ============================================== -->
-        <section id="section-tvlove" class="app-section">
+        <section id="section-tvlove" class="app-section active">
             <!-- لابی ساخت یا ورود به اتاق TV LOVE -->
             <div id="tv-lobby" class="lobby-container">
                 <div class="lobby-card glass">
@@ -792,7 +788,7 @@
                         <input type="text" id="tv-room-name" class="glass-input" placeholder="مثلاً: شب فیلم ما">
                     </div>
                     <div class="input-group" id="tv-url-group">
-                        <label>لینک مستقیم ویدیو (MP4 / WebM یا لینک مستقیم)</label>
+                        <label>لینک مستقیم ویدیو (لینک مستقیم MP4 / WebM)</label>
                         <input type="text" id="tv-video-url" class="glass-input" placeholder="https://example.com/movie.mp4">
                     </div>
                     <div class="input-group">
@@ -829,8 +825,8 @@
 
                 <div class="tv-player-card">
                     <div class="tv-video-wrapper" id="tv-video-container">
-                        <!-- پلیر ویدیوی HTML5 با قابلیت کنترل همزمان برای سازنده و دوستان -->
-                        <video id="shared-video-player" crossorigin="anonymous" playsinline style="width:100%; height:100%;"></video>
+                        <!-- پلیر ویدیوی HTML5 با قابلیت کنترل همزمان -->
+                        <video id="shared-video-player" crossorigin="anonymous" playsinline></video>
 
                         <!-- پلیر شیشه‌ای کنترلرها روی صفحه -->
                         <div class="glass-player-controls">
@@ -885,7 +881,7 @@
         </div>
     </div>
 
-    <!-- منوی تولبار پایین صفحه (شامل گزینه جدید TV LOVE) -->
+    <!-- منوی تولبار پایین صفحه (شامل TV LOVE) -->
     <nav class="bottom-toolbar glass">
         <div class="nav-item" id="nav-paint" onclick="switchMainTab('paint')">
             <i class="fa-solid fa-palette"></i>
@@ -1333,12 +1329,11 @@
         }
 
         // ==========================================
-        // قابلیت جدید: TV LOVE (سینمای مشترک همزمان)
+        // قابلیت TV LOVE (سینمای مشترک)
         // ==========================================
         let tvLobbyMode = 'create';
         let tvRoom = null;
         let tvRoomRef = null;
-        let isTvCreator = false;
         let isSyncingFromRemote = false;
 
         function switchTvTab(mode) {
@@ -1361,7 +1356,7 @@
             const videoUrl = document.getElementById('tv-video-url').value.trim();
 
             if (name.length < 2 || pass.length < 2) return showToast('نام اتاق و پسوورد معتبر وارد کنید');
-            if (tvLobbyMode === 'create' && !videoUrl) return showToast('لینک ویدیوی فیلم را وارد کنید');
+            if (tvLobbyMode === 'create' && !videoUrl) return showToast('لینک مستقیم ویدیوی فیلم را وارد کنید');
 
             const roomKey = sanitizeRoomKey(name);
             const ref = db.ref('tv_rooms/' + roomKey);
@@ -1374,10 +1369,8 @@
                     meta: { name, password: pass, creator: myUserId, videoUrl },
                     state: { playing: false, time: 0, updatedAt: Date.now() }
                 });
-                isTvCreator = true;
             } else {
                 if (!existing || !existing.meta || existing.meta.password !== pass) return showToast('اتاق پیدا نشد یا رمز عبور اشتباه است!');
-                isTvCreator = (existing.meta.creator === myUserId);
             }
 
             tvRoom = { key: roomKey, name };
@@ -1405,7 +1398,6 @@
                 document.getElementById('tv-online-count').innerText = `${snap.numChildren()} نفر حاضر`;
             });
 
-            // دریافت دستورات پخش، توقف و عقب جلو بردن فیلم از سمت سازنده یا دوستان
             tvRoomRef.child('state').on('value', snap => {
                 const state = snap.val();
                 if (!state) return;
@@ -1439,7 +1431,7 @@
             videoEl.addEventListener('timeupdate', () => {
                 updateTvTimeLabel();
                 if (isSyncingFromRemote) return;
-                if (!videoEl.paused && Math.random() < 0.2) { // بروزرسانی بهینه زمان
+                if (!videoEl.paused && Math.random() < 0.2) {
                     tvRoomRef.child('state').update({ time: videoEl.currentTime, updatedAt: Date.now() });
                 }
             });
@@ -1507,7 +1499,7 @@
             document.getElementById('tv-lobby').style.display = 'flex';
         }
 
-        // سایر توابع کمکی
+        // توابع اتاق قور
         function switchQoorTab(mode) {}
         function enterQoorRoom() {}
         function exitQoorRoom() {}
