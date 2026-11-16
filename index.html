@@ -2,838 +2,322 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>استودیو دونفره و اتاق قور | Glass Studio</title>
-    <link href="https://cdn.jsdelivr.net/gh/rastikerdar/vazirmatn@v33.003/Vazirmatn-font-face.css" rel="stylesheet" type="text/css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- کتابخانه‌های رسمی Firebase Realtime Database -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تماشای مشترک فیلم - Watch Together</title>
+    <!-- بارگذاری کتابخانه‌های فایربیس (نسخه سازگار با Realtime Database) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
     <style>
         :root {
-            --bg-gradient: linear-gradient(135deg, #ffe6f0 0%, #fff5f8 50%, #ffd1e3 100%);
-            --blob-1: #ff9ec7;
-            --blob-2: #ffc2dc;
-            --glass-bg: rgba(255, 255, 255, 0.65);
-            --glass-border: rgba(255, 255, 255, 0.88);
-            --glass-shadow: 0 8px 32px 0 rgba(255, 105, 165, 0.18);
-            --text-main: #4a2535;
-            --text-muted: #8c5a6e;
-            --accent: #ff5c9d;
-            --accent-glow: rgba(255, 92, 157, 0.45);
-            --canvas-bg: rgba(255, 255, 255, 0.9);
-            --input-bg: rgba(255, 255, 255, 0.8);
-            --danger: #ff4757;
-            --success: #2ed573;
-        }
-
-        [data-theme="dark"] {
-            --bg-gradient: linear-gradient(135deg, #070b09 0%, #0d1713 50%, #050807 100%);
-            --blob-1: #1f4d3a;
-            --blob-2: #123326;
-            --glass-bg: rgba(18, 28, 24, 0.72);
-            --glass-border: rgba(136, 247, 198, 0.24);
-            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.65);
-            --text-main: #e6fff4;
-            --text-muted: #8ab8a4;
-            --accent: #7ef2be;
-            --accent-glow: rgba(126, 242, 190, 0.35);
-            --canvas-bg: rgba(15, 22, 19, 0.95);
-            --input-bg: rgba(25, 38, 33, 0.85);
-            --danger: #ff6b81;
-            --success: #7ef2be;
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Vazirmatn', sans-serif;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
+            --bg-color: #0f0c1b;
+            --glass-bg: rgba(255, 255, 255, 0.07);
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --primary: #ff6584;
+            --text-color: #ffffff;
         }
 
         body {
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            height: 100dvh;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            transition: background 0.5s ease, color 0.4s ease;
-        }
-
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 10px; }
-
-        .bg-blob {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(75px);
-            z-index: 0;
-            opacity: 0.7;
-            pointer-events: none;
-        }
-        .blob-1 { width: 300px; height: 300px; background: var(--blob-1); top: -80px; right: -80px; }
-        .blob-2 { width: 350px; height: 350px; background: var(--blob-2); bottom: -100px; left: -100px; }
-
-        .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(18px);
-            -webkit-backdrop-filter: blur(18px);
-            border: 1px solid var(--glass-border);
-            box-shadow: var(--glass-shadow);
-        }
-
-        header {
-            z-index: 10;
-            margin: 8px 12px 0;
-            padding: 8px 14px;
-            border-radius: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-weight: 800;
-            font-size: 0.88rem;
-        }
-
-        .db-status-dot {
-            width: 7px; height: 7px; border-radius: 50%;
-            background: #ffa502; box-shadow: 0 0 6px #ffa502;
-        }
-        .db-status-dot.connected {
-            background: #2ed573; box-shadow: 0 0 6px #2ed573;
-        }
-
-        .header-actions { display: flex; align-items: center; gap: 6px; }
-
-        .header-btn {
-            padding: 6px 12px;
-            border-radius: 12px;
-            border: 1px solid var(--glass-border);
-            background: var(--input-bg);
-            color: var(--text-main);
-            font-size: 0.78rem;
-            font-weight: 700;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .header-btn.accent-bg {
-            background: var(--accent);
-            color: #fff;
-            border-color: transparent;
-        }
-        [data-theme="dark"] .header-btn.accent-bg { color: #07120e; }
-
-        main {
-            flex: 1;
-            z-index: 5;
-            display: flex;
-            flex-direction: column;
-            padding: 8px 12px;
-            overflow: hidden;
-            position: relative;
-        }
-
-        .app-section {
-            display: none;
-            flex: 1;
-            flex-direction: column;
-            height: 100%;
-            overflow: hidden;
-        }
-        .app-section.active { display: flex; }
-
-        .input-group { display: flex; flex-direction: column; gap: 4px; }
-        .input-group label { font-size: 0.78rem; color: var(--text-muted); font-weight: 600; }
-
-        .glass-input, .glass-textarea {
-            width: 100%;
-            padding: 10px 12px;
-            border-radius: 14px;
-            border: 1px solid var(--glass-border);
-            background: var(--input-bg);
-            color: var(--text-main);
-            font-size: 0.88rem;
-            outline: none;
-            user-select: text;
-        }
-        .glass-input:focus { border-color: var(--accent); box-shadow: 0 0 10px var(--accent-glow); }
-
-        .primary-btn {
-            width: 100%;
-            padding: 12px;
-            border-radius: 14px;
-            border: none;
-            background: var(--accent);
-            color: #fff;
-            font-size: 0.9rem;
-            font-weight: 800;
-            cursor: pointer;
-            box-shadow: 0 5px 15px var(--accent-glow);
+            margin: 0;
+            padding: 0;
+            font-family: Tahoma, sans-serif;
+            background: linear-gradient(135deg, #1f1c2c, #928dab);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            gap: 6px;
         }
-        [data-theme="dark"] .primary-btn { color: #08120e; }
 
-        /* نقاشی */
-        #paint-studio { display: flex; flex: 1; flex-direction: column; gap: 8px; height: 100%; }
-        .room-bar {
-            padding: 6px 12px; border-radius: 15px; display: flex; justify-content: space-between; align-items: center; gap: 6px;
+        .container {
+            width: 90%;
+            max-width: 800px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
-        .badge {
-            padding: 3px 8px; border-radius: 10px; background: var(--input-bg); border: 1px solid var(--glass-border);
-            display: flex; align-items: center; gap: 5px; font-size: 0.75rem; font-weight: 700;
+
+        h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #ff8fab;
         }
-        .online-dot { width: 6px; height: 6px; border-radius: 50%; background: #2ed573; box-shadow: 0 0 6px #2ed573; }
 
-        .canvas-wrapper {
-            flex: 1; border-radius: 20px; overflow: hidden; position: relative; background: var(--canvas-bg); border: 1px solid var(--glass-border); touch-action: none;
+        .form-group {
+            margin-bottom: 15px;
         }
-        canvas { width: 100%; height: 100%; display: block; cursor: crosshair; }
 
-        .floating-controls { padding: 8px 10px; border-radius: 18px; display: flex; flex-direction: column; gap: 6px; }
-        .tools-row { display: flex; gap: 5px; overflow-x: auto; }
-        .tool-item {
-            flex: 1; min-width: 50px; padding: 5px; border-radius: 12px; background: var(--input-bg);
-            color: var(--text-muted); display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.68rem; font-weight: 700; cursor: pointer;
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 14px;
         }
-        .tool-item.active { background: var(--accent); color: #fff; box-shadow: 0 3px 10px var(--accent-glow); }
-        [data-theme="dark"] .tool-item.active { color: #07120e; }
 
-        .colors-scroll-container { display: flex; align-items: center; gap: 6px; overflow-x: auto; padding: 2px; }
-        .color-swatch { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; border: 2px solid var(--glass-border); cursor: pointer; }
-        .color-swatch.active { transform: scale(1.2); border-color: var(--text-main); }
-
-        .size-row { display: flex; align-items: center; gap: 8px; }
-        .size-preview-box { width: 24px; height: 24px; border-radius: 8px; background: var(--input-bg); border: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: center; }
-        #size-dot { border-radius: 50%; background: var(--accent); }
-        input[type="range"] { flex: 1; accent-color: var(--accent); height: 4px; cursor: pointer; }
-
-        /* اتاق قور */
-        #qoor-studio { display: flex; flex: 1; flex-direction: column; gap: 8px; height: 100%; overflow: hidden; }
-        .qoor-actions-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .mood-choice-btn {
-            padding: 10px; border-radius: 16px; border: 1px solid var(--glass-border); background: var(--glass-bg); color: var(--text-main); font-weight: 800; font-size: 0.8rem; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px;
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--glass-border);
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
         }
-        .glass-svg-badge {
-            width: 40px; height: 40px; border-radius: 14px; background: rgba(255,255,255,0.25); backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.5); display: flex; align-items: center; justify-content: center;
-        }
-        .notes-feed { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
-        .note-card { padding: 10px 12px; border-radius: 16px; display: flex; justify-content: space-between; align-items: center; background: var(--glass-bg); border: 1px solid var(--glass-border); }
-        .note-card.type-qoor { border-right: 4px solid #ff4757; }
-        .note-card.type-thanks { border-right: 4px solid #ff5c9d; }
 
-        .notebook-panel { padding: 12px; border-radius: 18px; display: none; flex-direction: column; gap: 8px; overflow-y: auto; }
-        .mini-canvas-box { height: 100px; border-radius: 12px; background: var(--canvas-bg); border: 1px dashed var(--glass-border); position: relative; touch-action: none; }
-
-        /* چت */
-        #section-chat { display: flex; flex: 1; flex-direction: column; height: 100%; overflow: hidden; gap: 8px; }
-        .chat-messages-scroll { flex: 1; overflow-y: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--canvas-bg); border-radius: 18px; border: 1px solid var(--glass-border); }
-        .chat-bubble { max-width: 78%; padding: 8px 12px; border-radius: 14px; font-size: 0.85rem; word-break: break-word; }
-        .chat-bubble.me { align-self: flex-end; background: var(--accent); color: #fff; border-bottom-left-radius: 3px; }
-        [data-theme="dark"] .chat-bubble.me { color: #08120e; }
-        .chat-bubble.other { align-self: flex-start; background: var(--input-bg); color: var(--text-main); border-bottom-right-radius: 3px; border: 1px solid var(--glass-border); }
-        .chat-input-bar { padding: 8px; background: var(--glass-bg); border-radius: 16px; display: flex; gap: 6px; align-items: center; border: 1px solid var(--glass-border); }
-
-        /* TV LOVE */
-        #section-tvlove { display: flex; flex: 1; flex-direction: column; height: 100%; overflow: hidden; gap: 8px; }
-        .tv-player-card { flex: 1; background: var(--canvas-bg); border-radius: 20px; border: 1px solid var(--glass-border); display: flex; flex-direction: column; overflow: hidden; position: relative; }
-        .tv-video-wrapper { flex: 1; background: #000; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; }
-        .tv-video-wrapper video { width: 100%; height: 100%; object-fit: contain; }
-        .glass-player-controls {
-            position: absolute; bottom: 10px; left: 10px; right: 10px;
-            background: rgba(18, 28, 24, 0.65); backdrop-filter: blur(14px);
-            border: 1px solid rgba(255,255,255,0.25); border-radius: 16px; padding: 8px 12px;
-            display: flex; flex-direction: column; gap: 4px;
+        input:focus {
+            border-color: var(--primary);
         }
-        .tv-controls-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .tv-scrubber { flex: 1; accent-color: var(--accent); height: 4px; cursor: pointer; }
 
-        /* مودال اتاق */
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(8px); z-index: 200; display: none; justify-content: center; align-items: center; padding: 16px;
+        button {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            background: linear-gradient(135deg, #ff758c, #ff7eb3);
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: 0.3s;
+            margin-top: 10px;
         }
-        .modal-overlay.show { display: flex; }
-        .modal-box { width: 100%; max-width: 330px; padding: 20px; border-radius: 24px; display: flex; flex-direction: column; gap: 12px; }
 
-        nav.bottom-toolbar {
-            z-index: 10; margin: 0 12px 8px; padding: 6px 12px; border-radius: 20px; display: flex; justify-content: space-around; align-items: center;
+        button:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
         }
-        .nav-item {
-            display: flex; flex-direction: column; align-items: center; gap: 2px; color: var(--text-muted); font-size: 0.72rem; font-weight: 800; cursor: pointer; padding: 5px 8px; border-radius: 12px; transition: 0.3s;
-        }
-        .nav-item.active { color: var(--accent); background: var(--input-bg); box-shadow: inset 0 0 0 1px var(--glass-border); }
-        .nav-item i { font-size: 1rem; }
 
-        #toast {
-            position: fixed; top: 60px; left: 50%; transform: translateX(-50%) translateY(-20px); padding: 8px 16px; border-radius: 50px; font-size: 0.8rem; font-weight: 700; z-index: 300; opacity: 0; pointer-events: none; transition: 0.3s; text-align: center; max-width: 90%;
+        .hidden {
+            display: none !important;
         }
-        #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .player-container {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* نسبت 16:9 */
+            background: #000;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 1px solid var(--glass-border);
+            margin-bottom: 20px;
+        }
+
+        video, iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .error-msg {
+            color: #ff4d4d;
+            text-align: center;
+            font-size: 14px;
+            margin-top: 10px;
+        }
     </style>
 </head>
-<body data-theme="light">
+<body>
 
-    <div class="bg-blob blob-1"></div>
-    <div class="bg-blob blob-2"></div>
-    <div id="toast" class="glass">پیام سیستم</div>
-
-    <!-- هدر بالای صفحه -->
-    <header class="glass">
-        <div class="brand">
-            <span class="db-status-dot" id="db-dot"></span>
-            <i class="fa-solid fa-sparkles" style="color: var(--accent);"></i>
-            <span id="header-room-label">اتاق: عمومی</span>
+    <div class="container">
+        <!-- بخش ورود یا ساخت اتاق -->
+        <div id="auth-section">
+            <h3>ساخت یا ورود به اتاق مشترک</h3>
+            <div class="form-group">
+                <label>نام اتاق:</label>
+                <input type="text" id="room-name" placeholder="مثلاً: love-room">
+            </div>
+            <div class="form-group">
+                <label>رمز عبور اتاق:</label>
+                <input type="password" id="room-pass" placeholder="رمز عبور محرمانه">
+            </div>
+            <button onclick="joinOrCreateRoom()">ورود / ساخت اتاق</button>
+            <div id="error-box" class="error-msg"></div>
         </div>
-        <div class="header-actions">
-            <button class="header-btn accent-bg" onclick="openRoomModal()">
-                <i class="fa-solid fa-door-open"></i>
-                <span>ساخت/ورود اتاق</span>
-            </button>
-            <button class="header-btn" onclick="toggleTheme()">
-                <i class="fa-solid fa-moon" id="theme-icon"></i>
-            </button>
-        </div>
-    </header>
 
-    <main>
-        <!-- تب اول: نقاشی زنده -->
-        <section id="section-paint" class="app-section">
-            <div id="paint-studio">
-                <div class="room-bar glass">
-                    <div class="badge">
-                        <i class="fa-solid fa-palette" style="color: var(--accent);"></i>
-                        <span id="p-display-room">بوم نقاشی</span>
-                    </div>
-                    <div class="badge">
-                        <span class="online-dot"></span>
-                        <span id="p-online-count">۱ نفر حاضر</span>
-                    </div>
-                    <div style="display: flex; gap: 4px;">
-                        <button class="header-btn" onclick="clearPaintCanvas()" title="پاک کردن بوم"><i class="fa-solid fa-rotate-left"></i></button>
-                        <button class="header-btn" onclick="downloadArt()" title="ذخیره تصویر"><i class="fa-solid fa-download"></i></button>
-                    </div>
-                </div>
-
-                <div class="canvas-wrapper">
-                    <canvas id="paint-canvas"></canvas>
-                </div>
-
-                <div class="floating-controls glass">
-                    <div class="tools-row">
-                        <div class="tool-item active" data-tool="pen" onclick="selectTool('pen', this)"><i class="fa-solid fa-pen-nib"><span>خودکار</span></i></div>
-                        <div class="tool-item" data-tool="pencil" onclick="selectTool('pencil', this)"><i class="fa-solid fa-pencil"><span>مداد</span></i></div>
-                        <div class="tool-item" data-tool="marker" onclick="selectTool('marker', this)"><i class="fa-solid fa-highlighter"><span>ماژیک</span></i></div>
-                        <div class="tool-item" data-tool="eraser" onclick="selectTool('eraser', this)"><i class="fa-solid fa-eraser"><span>پاک‌کن</span></i></div>
-                    </div>
-                    <div class="colors-scroll-container" id="colors-list"></div>
-                    <div class="size-row">
-                        <div class="size-preview-box"><div id="size-dot" style="width: 6px; height: 6px;"></div></div>
-                        <input type="range" id="brush-size" min="1" max="40" value="6" oninput="updateBrushSize(this.value)">
-                        <span id="size-label" style="font-size: 0.72rem; font-weight: 800;">6px</span>
-                    </div>
-                </div>
+        <!-- بخش اصلی پلیر و تماشای فیلم -->
+        <div id="room-section" class="hidden">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                <h3 id="room-title-display" style="margin: 0;">اتاق: </h3>
+                <button onclick="leaveRoom()" style="width: auto; padding: 5px 15px; background: #e74c3c; margin: 0;">خروج</button>
             </div>
-        </section>
 
-        <!-- تب دوم: اتاق قور -->
-        <section id="section-qoor" class="app-section">
-            <div id="qoor-studio">
-                <div class="room-bar glass">
-                    <div class="badge">
-                        <i class="fa-solid fa-bolt" style="color: var(--accent);"></i>
-                        <span>اتاق قور و قدردانی</span>
-                    </div>
-                    <div class="badge">
-                        <span class="online-dot"></span>
-                        <span id="q-online-count">۱ نفر حاضر</span>
-                    </div>
-                </div>
+            <div class="controls-bar">
+                <input type="text" id="video-url-input" placeholder="لینک مستقیم ویدیو (mp4, mkv...) را وارد کنید">
+                <button onclick="updateVideoUrl()" style="width: 150px; margin-top: 0;">تغییر فیلم</button>
+            </div>
 
-                <div class="qoor-actions-bar">
-                    <button class="mood-choice-btn" onclick="openNotebook('qoor')">
-                        <div class="glass-svg-badge" id="btn-icon-qoor"></div>
-                        <span>می‌خوام قور بزنم!</span>
-                    </button>
-                    <button class="mood-choice-btn" onclick="openNotebook('thanks')">
-                        <div class="glass-svg-badge" id="btn-icon-thanks"></div>
-                        <span>تشکر و قدردانی</span>
-                    </button>
-                </div>
-
-                <div id="qoor-notebook" class="notebook-panel glass">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong id="notebook-title" style="font-size: 0.88rem;">ثبت یادداشت</strong>
-                        <button class="header-btn" onclick="closeNotebook()"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <textarea id="qoor-note-text" class="glass-textarea" rows="2" placeholder="حرف دلت رو بنویس..."></textarea>
-                    <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; color: var(--text-muted);">
-                        <span>طراحی امضا (اختیاری):</span>
-                        <button class="header-btn" onclick="clearMiniCanvas()">پاک کردن طرح</button>
-                    </div>
-                    <div class="mini-canvas-box"><canvas id="mini-canvas"></canvas></div>
-                    <button class="primary-btn" onclick="submitQoorNote()"><i class="fa-solid fa-paper-plane"></i><span>ثبت در اتاق مشترک</span></button>
-                </div>
-
-                <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-muted);">یادداشت‌های اتاق:</div>
-                <div class="notes-feed" id="qoor-notes-list"></div>
+            <div class="player-container">
+                <video id="sync-video" controls playsinline></video>
             </div>
-        </section>
-
-        <!-- تب سوم: چت اتاق -->
-        <section id="section-chat" class="app-section">
-            <div class="chat-messages-scroll" id="chat-messages-list">
-                <div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-top:20px;">هنوز پیامی در اتاق ثبت نشده است</div>
-            </div>
-            <div class="chat-input-bar">
-                <input type="text" id="chat-msg-input" class="glass-input" placeholder="نوشتن پیام در اتاق..." onkeydown="if(event.key==='Enter') sendRoomChatMessage()">
-                <button class="primary-btn" style="width: auto; padding: 10px 16px;" onclick="sendRoomChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
-            </div>
-        </section>
-
-        <!-- تب چهارم: TV LOVE (پیش‌فرض فعال) -->
-        <section id="section-tvlove" class="app-section active">
-            <div id="section-tv-content" style="display:flex; flex-direction:column; height:100%; gap:8px;">
-                <div class="room-bar glass">
-                    <div class="badge"><i class="fa-solid fa-film" style="color: var(--accent);"></i><span id="tv-room-title">سینمای مشترک</span></div>
-                    <div class="badge"><span class="online-dot"></span><span id="tv-online-count">۱ نفر حاضر</span></div>
-                </div>
-                <div class="tv-player-card">
-                    <div class="tv-video-wrapper" id="tv-video-container">
-                        <video id="shared-video-player" crossorigin="anonymous" playsinline></video>
-                        <div class="glass-player-controls">
-                            <div class="tv-controls-row">
-                                <button class="header-btn" id="tv-play-pause-btn" onclick="toggleTvPlayPause()"><i class="fa-solid fa-play" id="tv-pp-icon"></i></button>
-                                <input type="range" class="tv-scrubber" id="tv-video-scrubber" value="0" min="0" max="100" step="0.1" oninput="onTvScrubInput(this.value)" onchange="onTvScrubChange(this.value)">
-                                <span id="tv-time-label" style="font-size: 0.72rem; font-weight: 700; min-width: 60px;">00:00</span>
-                                <button class="header-btn" onclick="toggleTvFullscreen()"><i class="fa-solid fa-expand"></i></button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
-    </main>
-
-    <!-- مودال ساخت و ورود به اتاق (لینک ویدیو اختصاصی TV LOVE) -->
-    <div id="room-modal" class="modal-overlay">
-        <div class="modal-box glass">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-                <strong>تنظیمات اتاق مشترک</strong>
-                <button class="header-btn" onclick="closeRoomModal()"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <div class="input-group">
-                <label>نام اتاق</label>
-                <input type="text" id="modal-room-name" class="glass-input" placeholder="مثلاً: love_room">
-            </div>
-            <div class="input-group">
-                <label>رمز عبور اتاق</label>
-                <input type="password" id="modal-room-pass" class="glass-input" placeholder="رمز عبور...">
-            </div>
-            <div class="input-group">
-                <label>لینک مستقیم ویدیو برای TV LOVE (فقط در این بخش)</label>
-                <input type="text" id="modal-video-url" class="glass-input" placeholder="https://example.com/movie.mp4">
-            </div>
-            <button class="primary-btn" onclick="joinOrCreateRoom()">
-                <i class="fa-solid fa-check"></i>
-                <span>ورود یا ساخت اتاق</span>
-            </button>
         </div>
     </div>
 
-    <!-- تولبار پایین -->
-    <nav class="bottom-toolbar glass">
-        <div class="nav-item" id="nav-paint" onclick="switchMainTab('paint')"><i class="fa-solid fa-palette"></i><span>نقاشی</span></div>
-        <div class="nav-item" id="nav-qoor" onclick="switchMainTab('qoor')"><i class="fa-solid fa-bolt"></i><span>اتاق قور</span></div>
-        <div class="nav-item" id="nav-chat" onclick="switchMainTab('chat')"><i class="fa-solid fa-comments"></i><span>چت اتاق</span></div>
-        <div class="nav-item active" id="nav-tvlove" onclick="switchMainTab('tvlove')"><i class="fa-solid fa-tv"></i><span>TV LOVE</span></div>
-    </nav>
-
     <script>
+        // تنظیمات اتصال به دیتابیس فایربیس شما[span_1](start_span)[span_1](end_span)
         const firebaseConfig = {
             databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let currentRoom = localStorage.getItem('zeuc_current_room') || 'general_room';
-        let currentPass = localStorage.getItem('zeuc_current_pass') || '1234';
-        let myUserId = localStorage.getItem('zeuc_user_id') || ('user_' + Math.random().toString(36).substring(2, 9));
-        localStorage.setItem('zeuc_user_id', myUserId);
+        let currentRoomKey = null;
+        let isSyncing = پرتره; // جلوگیری از لوپ بی‌فایده رویدادها
+        let localChange = false;
 
-        let roomRef = null;
-        let isSyncingFromRemote = false;
+        const authSection = document.getElementById('auth-section');
+        const roomSection = document.getElementById('room-section');
+        const roomInput = document.getElementById('room-name');
+        const passInput = document.getElementById('room-pass');
+        const errorBox = document.getElementById('error-box');
+        const videoInput = document.getElementById('video-url-input');
+        const videoPlayer = document.getElementById('sync-video');
+        const roomTitleDisplay = document.getElementById('room-title-display');
 
-        window.addEventListener('DOMContentLoaded', () => {
-            initGlobalRoom(currentRoom);
-            initPresenceSystem();
-        });
-
-        function sanitizeKey(str) {
-            return encodeURIComponent(str.trim().toLowerCase()).replace(/\./g, '%2E');
+        // تبدیل نام اتاق به کلید امن برای دیتابیس
+        function sanitizeRoomName(name) {
+            return name.trim().replace(/[.#$\/\[\]]/g, "_");
         }
 
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            toast.innerText = msg;
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2800);
-        }
+        function joinOrCreateRoom() {
+            const roomName = roomInput.value.trim();
+            const password = passInput.value.trim();
 
-        function toggleTheme() {
-            const body = document.body;
-            const icon = document.getElementById('theme-icon');
-            if (body.getAttribute('data-theme') === 'light') {
-                body.setAttribute('data-theme', 'dark');
-                icon.className = 'fa-solid fa-sun';
-            } else {
-                body.setAttribute('data-theme', 'light');
-                icon.className = 'fa-solid fa-moon';
-            }
-        }
-
-        function switchMainTab(tab) {
-            document.querySelectorAll('.app-section').forEach(s => s.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-            document.getElementById('section-' + tab).classList.add('active');
-            document.getElementById('nav-' + tab).classList.add('active');
-            if (tab === 'paint') resizePaintCanvas();
-        }
-
-        function openRoomModal() {
-            document.getElementById('room-modal').classList.add('show');
-            document.getElementById('modal-room-name').value = currentRoom;
-            document.getElementById('modal-room-pass').value = currentPass;
-        }
-        function closeRoomModal() { document.getElementById('room-modal').classList.remove('show'); }
-
-        async function joinOrCreateRoom() {
-            const roomName = document.getElementById('modal-room-name').value.trim();
-            const pass = document.getElementById('modal-room-pass').value.trim();
-            const videoUrl = document.getElementById('modal-video-url').value.trim();
-
-            if (roomName.length < 2 || pass.length < 2) return showToast('نام اتاق و رمز عبور معتبر وارد کنید');
-
-            const roomKey = sanitizeKey(roomName);
-            const ref = db.ref('rooms/' + roomKey);
-            const snap = await ref.once('value');
-            const data = snap.val();
-
-            if (data && data.meta && data.meta.password !== pass) {
-                return showToast('رمز عبور اتاق اشتباه است!');
+            if (!roomName || !password) {
+                errorBox.innerText = "لطفاً نام اتاق و رمز عبور را وارد کنید.";
+                return;
             }
 
-            if (!data) {
-                await ref.set({
-                    meta: { name: roomName, password: pass, creator: myUserId, videoUrl: videoUrl || '' },
-                    state: { playing: false, time: 0, updatedAt: Date.now() }
-                });
-            } else if (videoUrl) {
-                await ref.child('meta/videoUrl').set(videoUrl);
-            }
+            const roomKey = sanitizeRoomName(roomName);
+            const roomRef = db.ref('rooms/' + roomKey);
 
-            currentRoom = roomName;
-            currentPass = pass;
-            localStorage.setItem('zeuc_current_room', currentRoom);
-            localStorage.setItem('zeuc_current_pass', currentPass);
+            roomRef.once('value', (snapshot) => {
+                const roomData = snapshot.val();
 
-            closeRoomModal();
-            showToast(`با موفقیت وارد اتاق ${currentRoom} شدید!`);
-            initGlobalRoom(currentRoom);
-        }
-
-        function initPresenceSystem() {
-            db.ref('.info/connected').on('value', (snap) => {
-                const dot = document.getElementById('db-dot');
-                if (snap.val() === true) dot.classList.add('connected');
-                else dot.classList.remove('connected');
-            });
-        }
-
-        function initGlobalRoom(roomName) {
-            if (roomRef) roomRef.off();
-            const roomKey = sanitizeKey(roomName);
-            roomRef = db.ref('rooms/' + roomKey);
-
-            document.getElementById('header-room-label').innerText = `اتاق: ${roomName}`;
-            document.getElementById('p-display-room').innerText = roomName;
-            document.getElementById('tv-room-title').innerText = roomName;
-
-            roomRef.child('presence/' + myUserId).set(true);
-            roomRef.child('presence/' + myUserId).onDisconnect().remove();
-
-            roomRef.child('presence').on('value', snap => {
-                const count = snap.numChildren() || 1;
-                document.getElementById('p-online-count').innerText = `${count} نفر حاضر`;
-                document.getElementById('q-online-count').innerText = `${count} نفر حاضر`;
-                document.getElementById('tv-online-count').innerText = `${count} نفر حاضر`;
-            });
-
-            initPaintSync(roomRef);
-            initQoorSync(roomRef);
-            initChatSync(roomRef);
-            initTvSync(roomRef);
-        }
-
-        // نقاشی زنده
-        const canvas = document.getElementById('paint-canvas');
-        const ctx = canvas.getContext('2d');
-        let isDrawing = false, lastX = 0, lastY = 0;
-        let brushConfig = { tool: 'pen', color: '#ff5c9d', size: 6 };
-
-        function resizePaintCanvas() {
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-        }
-
-        const presetColors = ['#ff5c9d', '#ff1e56', '#ffa502', '#7ef2be', '#38bdf8', '#a855f7', '#ffffff', '#000000'];
-        function initColorPalette() {
-            const container = document.getElementById('colors-list');
-            container.innerHTML = '';
-            presetColors.forEach((hex, index) => {
-                const swatch = document.createElement('div');
-                swatch.className = 'color-swatch' + (index === 0 ? ' active' : '');
-                swatch.style.background = hex;
-                swatch.onclick = () => {
-                    brushConfig.color = hex;
-                    document.querySelectorAll('.color-swatch').forEach(i => i.classList.remove('active'));
-                    swatch.classList.add('active');
-                };
-                container.appendChild(swatch);
-            });
-        }
-        initColorPalette();
-
-        function selectTool(tool, el) {
-            brushConfig.tool = tool;
-            document.querySelectorAll('.tool-item').forEach(i => i.classList.remove('active'));
-            el.classList.add('active');
-        }
-        function updateBrushSize(val) {
-            brushConfig.size = parseInt(val);
-            document.getElementById('size-label').innerText = val + 'px';
-            document.getElementById('size-dot').style.width = val + 'px';
-            document.getElementById('size-dot').style.height = val + 'px';
-        }
-
-        canvas.addEventListener('mousedown', (e) => { isDrawing = true; lastX = e.offsetX; lastY = e.offsetY; });
-        canvas.addEventListener('mousemove', (e) => {
-            if (!isDrawing) return;
-            drawStroke(lastX, lastY, e.offsetX, e.offsetY, brushConfig.color, brushConfig.size);
-            if (roomRef) {
-                roomRef.child('draw_actions').push({ x1: lastX, y1: lastY, x2: e.offsetX, y2: e.offsetY, color: brushConfig.color, size: brushConfig.size });
-            }
-            lastX = e.offsetX; lastY = e.offsetY;
-        });
-        window.addEventListener('mouseup', () => isDrawing = false);
-
-        function drawStroke(x1, y1, x2, y2, color, size) {
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.lineWidth = size;
-            ctx.lineCap = 'round';
-            ctx.moveTo(x1, y1);
-            ctx.lineTo(x2, y2);
-            ctx.stroke();
-        }
-
-        function initPaintSync(ref) {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ref.child('draw_actions').on('child_added', snap => {
-                const d = snap.val();
-                if (d) drawStroke(d.x1, d.y1, d.x2, d.y2, d.color, d.size);
-            });
-        }
-
-        function clearPaintCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            if (roomRef) roomRef.child('draw_actions').remove();
-        }
-        function downloadArt() {
-            const link = document.createElement('a');
-            link.download = 'glass-art.png';
-            link.href = canvas.toDataURL();
-            link.click();
-        }
-
-        // اتاق قور
-        const GlassGraphics = {
-            angryFace: `<svg width="28" height="28" viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="28" fill="#ff3b5c"/><path d="M16 24L27 29" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><path d="M48 24L37 29" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/><circle cx="22" cy="33" r="3.2" fill="#fff"/><circle cx="42" cy="33" r="3.2" fill="#fff"/><path d="M21 47C25 41 39 41 43 47" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/></svg>`,
-            crystalRose: `<svg width="28" height="28" viewBox="0 0 64 64" fill="none"><path d="M32 36V58" stroke="#4ade80" stroke-width="3.5" stroke-linecap="round"/><path d="M18 22C18 13 24 8 32 8C40 8 46 13 46 22C46 31 39 37 32 37C25 37 18 31 18 22Z" fill="#ff4d8d"/></svg>`
-        };
-        document.getElementById('btn-icon-qoor').innerHTML = GlassGraphics.angryFace;
-        document.getElementById('btn-icon-thanks').innerHTML = GlassGraphics.crystalRose;
-
-        let activeNoteType = 'qoor';
-        function openNotebook(type) {
-            activeNoteType = type;
-            document.getElementById('qoor-notebook').style.display = 'flex';
-            document.getElementById('notebook-title').innerText = type === 'qoor' ? 'ثبت قور و عصبانیت' : 'ثبت تشکر و قدردانی';
-        }
-        function closeNotebook() { document.getElementById('qoor-notebook').style.display = 'none'; }
-
-        const miniCanvas = document.getElementById('mini-canvas');
-        const miniCtx = miniCanvas.getContext('2d');
-        let isMiniDrawing = false, mx = 0, my = 0;
-        miniCanvas.addEventListener('mousedown', (e) => { isMiniDrawing = true; mx = e.offsetX; my = e.offsetY; });
-        miniCanvas.addEventListener('mousemove', (e) => {
-            if (!isMiniDrawing) return;
-            miniCtx.beginPath(); miniCtx.strokeStyle = '#ff5c9d'; miniCtx.lineWidth = 3; miniCtx.lineCap = 'round';
-            miniCtx.moveTo(mx, my); miniCtx.lineTo(e.offsetX, e.offsetY); miniCtx.stroke();
-            mx = e.offsetX; my = e.offsetY;
-        });
-        window.addEventListener('mouseup', () => isMiniDrawing = false);
-        function clearMiniCanvas() { miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height); }
-
-        function submitQoorNote() {
-            const text = document.getElementById('qoor-note-text').value.trim();
-            if (text.length < 2) return showToast('متن یادداشت را کامل بنویسید');
-            if (roomRef) {
-                roomRef.child('qoor_notes').push({
-                    type: activeNoteType,
-                    text,
-                    sender: myUserId,
-                    sketch: miniCanvas.toDataURL(),
-                    time: new Date().toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'})
-                });
-            }
-            document.getElementById('qoor-note-text').value = '';
-            clearMiniCanvas();
-            closeNotebook();
-            showToast('یادداشت ثبت شد');
-        }
-
-        function initQoorSync(ref) {
-            const feed = document.getElementById('qoor-notes-list');
-            feed.innerHTML = '';
-            ref.child('qoor_notes').on('value', snap => {
-                feed.innerHTML = '';
-                const val = snap.val();
-                if (!val) {
-                    feed.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:0.8rem;">هنوز یادداشتی ثبت نشده است</div>`;
-                    return;
-                }
-                Object.values(val).forEach(note => {
-                    const card = document.createElement('div');
-                    card.className = `note-card ${note.type === 'qoor' ? 'type-qoor' : 'type-thanks'}`;
-                    card.innerHTML = `<div><strong>${note.sender}:</strong> ${note.text}</div><span style="font-size:0.7rem; color:var(--text-muted);">${note.time}</span>`;
-                    feed.appendChild(card);
-                });
-            });
-        }
-
-        // چت اتاق
-        function sendRoomChatMessage() {
-            const input = document.getElementById('chat-msg-input');
-            const text = input.value.trim();
-            if (!text) return;
-            if (roomRef) {
-                roomRef.child('chat_messages').push({
-                    sender: myUserId,
-                    text,
-                    time: new Date().toLocaleTimeString('fa-IR', {hour:'2-digit', minute:'2-digit'})
-                });
-            }
-            input.value = '';
-        }
-
-        function initChatSync(ref) {
-            const list = document.getElementById('chat-messages-list');
-            ref.child('chat_messages').on('value', snap => {
-                list.innerHTML = '';
-                const val = snap.val();
-                if (!val) {
-                    list.innerHTML = `<div style="text-align:center; color:var(--text-muted); font-size:0.8rem; margin-top:20px;">هنوز پیامی در اتاق ثبت نشده است</div>`;
-                    return;
-                }
-                Object.values(val).forEach(msg => {
-                    const isMe = msg.sender === myUserId;
-                    const bubble = document.createElement('div');
-                    bubble.className = `chat-bubble ${isMe ? 'me' : 'other'}`;
-                    bubble.innerHTML = `<div><b>${msg.sender}:</b> ${msg.text}</div><span style="font-size:0.6rem; opacity:0.8; display:block; text-align:left;">${msg.time}</span>`;
-                    list.appendChild(bubble);
-                });
-                list.scrollTop = list.scrollHeight;
-            });
-        }
-
-        // TV LOVE
-        function initTvSync(ref) {
-            const videoEl = document.getElementById('shared-video-player');
-            ref.child('meta/videoUrl').on('value', snap => {
-                const url = snap.val();
-                if (url && videoEl.src !== url) {
-                    videoEl.src = url;
+                if (roomData) {
+                    // اتاق وجود دارد، بررسی رمز عبور
+                    if (roomData.password === password) {
+                        enterRoom(roomKey, roomName, roomData);
+                    } else {
+                        errorBox.innerText = "رمز عبور اشتباه است!";
+                    }
+                } else {
+                    // ساخت اتاق جدید
+                    const newRoomData = {
+                        password: password,
+                        videoUrl: "",
+                        currentTime: 0,
+                        paused: true,
+                        lastUpdated: Date.now()
+                    };
+                    roomRef.set(newRoomData).then(() => {
+                        enterRoom(roomKey, roomName, newRoomData);
+                    });
                 }
             });
+        }
 
-            ref.child('state').on('value', snap => {
-                const st = snap.val();
-                if (!st) return;
-                isSyncingFromRemote = true;
-                if (Math.abs(videoEl.currentTime - st.time) > 0.8) videoEl.currentTime = st.time;
-                if (st.playing && videoEl.paused) {
-                    videoEl.play().catch(() => {});
-                    document.getElementById('tv-pp-icon').className = 'fa-solid fa-pause';
-                } else if (!st.playing && !videoEl.paused) {
-                    videoEl.pause();
-                    document.getElementById('tv-pp-icon').className = 'fa-solid fa-play';
+        function enterRoom(key, name, data) {
+            currentRoomKey = key;
+            authSection.classList.add('hidden');
+            roomSection.classList.remove('hidden');
+            roomTitleDisplay.innerText = `اتاق: ${name}`;
+
+            if (data.videoUrl) {
+                videoPlayer.src = data.videoUrl;
+                videoPlayer.currentTime = data.currentTime || 0;
+            }
+
+            listenToRoomUpdates();
+        }
+
+        function updateVideoUrl() {
+            const url = videoInput.value.trim();
+            if (!url || !currentRoomKey) return;
+
+            db.ref('rooms/' + currentRoomKey).update({
+                videoUrl: url,
+                currentTime: 0,
+                paused: true,
+                lastUpdated: Date.now()
+            });
+        }
+
+        // گوش دادن به تغییرات دیتابیس برای همگام‌سازی لحظه‌ای
+        function listenToRoomUpdates() {
+            const roomRef = db.ref('rooms/' + currentRoomKey);
+
+            roomRef.on('value', (snapshot) => {
+                const data = snapshot.val();
+                if (!data) return;
+
+                // تغییر لینک ویدیو اگر متفاوت بود
+                if (data.videoUrl && videoPlayer.src !== data.videoUrl) {
+                    videoPlayer.src = data.videoUrl;
                 }
-                setTimeout(() => { isSyncingFromRemote = false; }, 300);
+
+                isSyncing = true;
+                // همگام‌سازی وضعیت Play/Pause
+                if (data.paused && !videoPlayer.paused) {
+                    videoPlayer.pause();
+                } else if (!data.paused && videoPlayer.paused) {
+                    videoPlayer.play().catch(e => console.log(e));
+                }
+
+                // همگام‌سازی زمان ویدیو (اگر اختلاف بیشتر از ۱.۵ ثانیه بود)
+                if (Math.abs(videoPlayer.currentTime - data.currentTime) > 1.5) {
+                    videoPlayer.currentTime = data.currentTime;
+                }
+                isSyncing = false;
             });
 
-            videoEl.onplay = () => { if (!isSyncingFromRemote && roomRef) roomRef.child('state').update({ playing: true, time: videoEl.currentTime }); };
-            videoEl.onpause = () => { if (!isSyncingFromRemote && roomRef) roomRef.child('state').update({ playing: false, time: videoEl.currentTime }); };
-            videoEl.ontimeupdate = () => {
-                updateTvTime();
-                if (!isSyncingFromRemote && !videoEl.paused && Math.random() < 0.2 && roomRef) {
-                    roomRef.child('state').update({ time: videoEl.currentTime });
-                }
+            // ارسال رویدادهای پلیر کاربر به فایربیس
+            videoPlayer.onplay = () => {
+                if (isSyncing) return;
+                db.ref('rooms/' + currentRoomKey).update({
+                    paused: false,
+                    currentTime: videoPlayer.currentTime,
+                    lastUpdated: Date.now()
+                });
+            };
+
+            videoPlayer.onpause = () => {
+                if (isSyncing) return;
+                db.ref('rooms/' + currentRoomKey).update({
+                    paused: true,
+                    currentTime: videoPlayer.currentTime,
+                    lastUpdated: Date.now()
+                });
+            };
+
+            videoPlayer.onseeked = () => {
+                if (isSyncing) return;
+                db.ref('rooms/' + currentRoomKey).update({
+                    currentTime: videoPlayer.currentTime,
+                    lastUpdated: Date.now()
+                });
             };
         }
 
-        function toggleTvPlayPause() {
-            const videoEl = document.getElementById('shared-video-player');
-            if (videoEl.paused) videoEl.play(); else videoEl.pause();
-        }
-        function onTvScrubInput(val) {
-            const videoEl = document.getElementById('shared-video-player');
-            if (videoEl.duration) videoEl.currentTime = (val / 100) * videoEl.duration;
-        }
-        function onTvScrubChange(val) {
-            const videoEl = document.getElementById('shared-video-player');
-            if (videoEl.duration && roomRef) {
-                const t = (val / 100) * videoEl.duration;
-                roomRef.child('state').update({ time: t });
+        function leaveRoom() {
+            if (currentRoomKey) {
+                db.ref('rooms/' + currentRoomKey).off();
             }
-        }
-        function updateTvTime() {
-            const videoEl = document.getElementById('shared-video-player');
-            if (!videoEl.duration) return;
-            document.getElementById('tv-video-scrubber').value = (videoEl.currentTime / videoEl.duration) * 100;
-            const m = Math.floor(videoEl.currentTime / 60), s = Math.floor(videoEl.currentTime % 60);
-            document.getElementById('tv-time-label').innerText = `${m < 10 ? '0' + m : m}:${s < 10 ? '0' + s : s}`;
-        }
-        function toggleTvFullscreen() {
-            const c = document.getElementById('tv-video-container');
-            if (!document.fullscreenElement) c.requestFullscreen().catch(() => {});
-            else document.exitFullscreen().catch(() => {});
+            location.reload();
         }
     </script>
 </body>
