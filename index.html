@@ -4,9 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تماشای مشترک فیلم - Watch Together</title>
-    <!-- بارگذاری کتابخانه‌های فایربیس (نسخه سازگار با Realtime Database) -->
+    <!-- بارگذاری فایربیس -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    <!-- بارگذاری پلی‌جی‌اس (Plyr) برای ظاهر شیشه‌ای و پشتیبانی کامل از انواع فرمت‌ها -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css" />
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.polyfilled.js"></script>
+    
     <style>
         :root {
             --bg-color: #0f0c1b;
@@ -14,6 +18,7 @@
             --glass-border: rgba(255, 255, 255, 0.15);
             --primary: #ff6584;
             --text-color: #ffffff;
+            --plyr-color-main: #ff758c;
         }
 
         body {
@@ -31,17 +36,17 @@
 
         .container {
             width: 90%;
-            max-width: 800px;
+            max-width: 850px;
             background: var(--glass-bg);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 30px;
+            padding: 25px;
             box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        h2, h3 {
+        h3 {
             text-align: center;
             margin-bottom: 20px;
             color: #ff8fab;
@@ -97,58 +102,55 @@
         }
 
         .player-container {
-            position: relative;
             width: 100%;
-            padding-top: 56.25%; /* نسبت 16:9 */
             background: #000;
             border-radius: 15px;
             overflow: hidden;
             border: 1px solid var(--glass-border);
-            margin-bottom: 20px;
-        }
-
-        video, iframe {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            border: none;
+            margin-bottom: 15px;
         }
 
         .controls-bar {
             display: flex;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
         }
 
         .error-msg {
             color: #ff4d4d;
             text-align: center;
-            font-size: 14px;
-            margin-top: 10px;
+            font-size: 13px;
+            background: rgba(255, 0, 0, 0.1);
+            padding: 8px;
+            border-radius: 8px;
+        }
+
+        /* شخصی‌سازی استایل شیشه‌ای پلیر Plyr */
+        .plyr {
+            border-radius: 15px;
+            max-height: 500px;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <!-- بخش ورود یا ساخت اتاق -->
+        <!-- بخش احراز هویت اتاق -->
         <div id="auth-section">
             <h3>ساخت یا ورود به اتاق مشترک</h3>
             <div class="form-group">
-                <label>نام اتاق:</label>
-                <input type="text" id="room-name" placeholder="مثلاً: love-room">
+                <label>نام اتاق (انگلیسی):</label>
+                <input type="text" id="room-name" placeholder="مثلاً: room1">
             </div>
             <div class="form-group">
                 <label>رمز عبور اتاق:</label>
-                <input type="password" id="room-pass" placeholder="رمز عبور محرمانه">
+                <input type="password" id="room-pass" placeholder="رمز عبور">
             </div>
             <button onclick="joinOrCreateRoom()">ورود / ساخت اتاق</button>
-            <div id="error-box" class="error-msg"></div>
+            <div id="error-box" style="margin-top:10px;" class="error-msg"></div>
         </div>
 
-        <!-- بخش اصلی پلیر و تماشای فیلم -->
+        <!-- بخش اتاق و پلیر شیشه‌ای -->
         <div id="room-section" class="hidden">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <h3 id="room-title-display" style="margin: 0;">اتاق: </h3>
@@ -156,18 +158,20 @@
             </div>
 
             <div class="controls-bar">
-                <input type="text" id="video-url-input" placeholder="لینک مستقیم ویدیو (mp4, mkv...) را وارد کنید">
-                <button onclick="updateVideoUrl()" style="width: 150px; margin-top: 0;">تغییر فیلم</button>
+                <input type="text" id="video-url-input" placeholder="لینک مستقیم ویدیو (پشتیبانی از mp4, mkv, webm و...)">
+                <button onclick="updateVideoUrl()" style="width: 140px; margin-top: 0;">تغییر فیلم</button>
             </div>
 
             <div class="player-container">
-                <video id="sync-video" controls playsinline></video>
+                <video id="player" playsinline controls>
+                    <source id="video-source" src="" type="video/mp4" />
+                </video>
             </div>
+            <div id="player-error" class="error-msg hidden">خطا: مرورگر شما قادر به پخش این فرمت یا لینک نیست. لطفاً از لینک مستقیم معتبر استفاده کنید.</div>
         </div>
     </div>
 
     <script>
-        // تنظیمات اتصال به دیتابیس فایربیس شما[span_1](start_span)[span_1](end_span)
         const firebaseConfig = {
             databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com"
         };
@@ -176,8 +180,7 @@
         const db = firebase.database();
 
         let currentRoomKey = null;
-        let isSyncing = پرتره; // جلوگیری از لوپ بی‌فایده رویدادها
-        let localChange = false;
+        let isSyncing = false;
 
         const authSection = document.getElementById('auth-section');
         const roomSection = document.getElementById('room-section');
@@ -185,10 +188,14 @@
         const passInput = document.getElementById('room-pass');
         const errorBox = document.getElementById('error-box');
         const videoInput = document.getElementById('video-url-input');
-        const videoPlayer = document.getElementById('sync-video');
         const roomTitleDisplay = document.getElementById('room-title-display');
+        const playerError = document.getElementById('player-error');
 
-        // تبدیل نام اتاق به کلید امن برای دیتابیس
+        // راه‌اندازی پلیر پیشرفته Plyr
+        const player = new Plyr('#player', {
+            controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen']
+        });
+
         function sanitizeRoomName(name) {
             return name.trim().replace(/[.#$\/\[\]]/g, "_");
         }
@@ -205,18 +212,15 @@
             const roomKey = sanitizeRoomName(roomName);
             const roomRef = db.ref('rooms/' + roomKey);
 
-            roomRef.once('value', (snapshot) => {
+            roomRef.once('value').then((snapshot) => {
                 const roomData = snapshot.val();
-
                 if (roomData) {
-                    // اتاق وجود دارد، بررسی رمز عبور
                     if (roomData.password === password) {
                         enterRoom(roomKey, roomName, roomData);
                     } else {
                         errorBox.innerText = "رمز عبور اشتباه است!";
                     }
                 } else {
-                    // ساخت اتاق جدید
                     const newRoomData = {
                         password: password,
                         videoUrl: "",
@@ -228,6 +232,8 @@
                         enterRoom(roomKey, roomName, newRoomData);
                     });
                 }
+            }).catch(err => {
+                errorBox.innerText = "خطا در اتصال: " + err.message;
             });
         }
 
@@ -238,8 +244,12 @@
             roomTitleDisplay.innerText = `اتاق: ${name}`;
 
             if (data.videoUrl) {
-                videoPlayer.src = data.videoUrl;
-                videoPlayer.currentTime = data.currentTime || 0;
+                videoInput.value = data.videoUrl;
+                player.source = {
+                    type: 'video',
+                    sources: [{ src: data.videoUrl, provider: 'html5' }]
+                };
+                player.currentTime = data.currentTime || 0;
             }
 
             listenToRoomUpdates();
@@ -249,6 +259,7 @@
             const url = videoInput.value.trim();
             if (!url || !currentRoomKey) return;
 
+            playerError.classList.add('hidden');
             db.ref('rooms/' + currentRoomKey).update({
                 videoUrl: url,
                 currentTime: 0,
@@ -257,7 +268,33 @@
             });
         }
 
-        // گوش دادن به تغییرات دیتابیس برای همگام‌سازی لحظه‌ای
+        // مدیریت همگام‌سازی رویدادها با پلیر جدید
+        player.on('play', () => {
+            if (isSyncing || !currentRoomKey) return;
+            db.ref('rooms/' + currentRoomKey).update({
+                paused: false,
+                currentTime: player.currentTime,
+                lastUpdated: Date.now()
+            });
+        });
+
+        player.on('pause', () => {
+            if (isSyncing || !currentRoomKey) return;
+            db.ref('rooms/' + currentRoomKey).update({
+                paused: true,
+                currentTime: player.currentTime,
+                lastUpdated: Date.now()
+            });
+        });
+
+        player.on('seeked', () => {
+            if (isSyncing || !currentRoomKey) return;
+            db.ref('rooms/' + currentRoomKey).update({
+                currentTime: player.currentTime,
+                lastUpdated: Date.now()
+            });
+        });
+
         function listenToRoomUpdates() {
             const roomRef = db.ref('rooms/' + currentRoomKey);
 
@@ -265,52 +302,31 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // تغییر لینک ویدیو اگر متفاوت بود
-                if (data.videoUrl && videoPlayer.src !== data.videoUrl) {
-                    videoPlayer.src = data.videoUrl;
+                // به‌روزرسانی لینک ویدیو اگر تغییر کرده بود
+                if (data.videoUrl && player.source !== data.videoUrl) {
+                    if (videoInput.value !== data.videoUrl) {
+                        videoInput.value = data.videoUrl;
+                        player.source = {
+                            type: 'video',
+                            sources: [{ src: data.videoUrl, provider: 'html5' }]
+                        };
+                    }
                 }
 
                 isSyncing = true;
-                // همگام‌سازی وضعیت Play/Pause
-                if (data.paused && !videoPlayer.paused) {
-                    videoPlayer.pause();
-                } else if (!data.paused && videoPlayer.paused) {
-                    videoPlayer.play().catch(e => console.log(e));
+                // همگام‌سازی حالت پخش / توقف
+                if (data.paused && player.playing) {
+                    player.pause();
+                } else if (!data.paused && player.paused) {
+                    player.play().catch(e => console.log(e));
                 }
 
-                // همگام‌سازی زمان ویدیو (اگر اختلاف بیشتر از ۱.۵ ثانیه بود)
-                if (Math.abs(videoPlayer.currentTime - data.currentTime) > 1.5) {
-                    videoPlayer.currentTime = data.currentTime;
+                // همگام‌سازی زمان فیلم
+                if (Math.abs(player.currentTime - data.currentTime) > 1.5) {
+                    player.currentTime = data.currentTime;
                 }
                 isSyncing = false;
             });
-
-            // ارسال رویدادهای پلیر کاربر به فایربیس
-            videoPlayer.onplay = () => {
-                if (isSyncing) return;
-                db.ref('rooms/' + currentRoomKey).update({
-                    paused: false,
-                    currentTime: videoPlayer.currentTime,
-                    lastUpdated: Date.now()
-                });
-            };
-
-            videoPlayer.onpause = () => {
-                if (isSyncing) return;
-                db.ref('rooms/' + currentRoomKey).update({
-                    paused: true,
-                    currentTime: videoPlayer.currentTime,
-                    lastUpdated: Date.now()
-                });
-            };
-
-            videoPlayer.onseeked = () => {
-                if (isSyncing) return;
-                db.ref('rooms/' + currentRoomKey).update({
-                    currentTime: videoPlayer.currentTime,
-                    lastUpdated: Date.now()
-                });
-            };
         }
 
         function leaveRoom() {
