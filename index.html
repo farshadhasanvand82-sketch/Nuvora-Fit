@@ -183,6 +183,8 @@
             padding: 12px 18px;
             border-radius: 14px;
             border: 1px solid var(--glass-border);
+            flex-wrap: wrap;
+            gap: 10px;
         }
 
         .badge {
@@ -192,6 +194,11 @@
             border-radius: 20px;
             font-size: 13px;
             border: 1px solid rgba(255, 143, 175, 0.3);
+        }
+
+        .room-actions {
+            display: flex;
+            gap: 8px;
         }
 
         .plyr {
@@ -220,7 +227,7 @@
                     <label>رمز عبور اختصاصی:</label>
                     <input type="password" id="create-room-pass" placeholder="رمز عبور">
                 </div>
-                <button class="action-btn" onclick="createRoom()">ساخت فوری اتاق</button>
+                <button class="action-btn" onclick="createRoom()">ساخت اتاق</button>
             </div>
 
             <!-- فرم ورود به اتاق -->
@@ -246,7 +253,10 @@
                     <h3 id="room-title-display" style="margin: 0 0 5px 0; text-align: right;">اتاق: </h3>
                     <span class="badge" id="online-users-badge">👥 افراد حاضر: ۱ نفر</span>
                 </div>
-                <button onclick="leaveRoom()" style="width: auto; padding: 8px 16px; background: rgba(255, 107, 107, 0.2); border:1px solid rgba(255, 107, 107, 0.4); color:#ff8fab; border-radius:10px; cursor:pointer; font-weight:bold;">خروج</button>
+                <div class="room-actions">
+                    <button onclick="leaveRoom()" style="padding: 8px 14px; background: rgba(255, 255, 255, 0.1); border:1px solid rgba(255, 255, 255, 0.2); color:#fff; border-radius:10px; cursor:pointer; font-weight:bold;">خروج</button>
+                    <button onclick="deleteRoom()" style="padding: 8px 14px; background: rgba(255, 107, 107, 0.25); border:1px solid rgba(255, 107, 107, 0.5); color:#ff8fab; border-radius:10px; cursor:pointer; font-weight:bold;">حذف اتاق</button>
+                </div>
             </div>
 
             <div class="controls-bar">
@@ -324,6 +334,7 @@
             errorBox.classList.remove('hidden');
         }
 
+        // ساخت اتاق با بررسی تکراری نبودن
         function createRoom() {
             const roomName = document.getElementById('create-room-name').value.trim();
             const password = document.getElementById('create-room-pass').value.trim();
@@ -336,18 +347,21 @@
             const roomKey = sanitizeRoomName(roomName);
             const roomRef = db.ref('rooms/' + roomKey);
 
-            const newRoomData = {
-                password: password,
-                videoUrl: "",
-                currentTime: 0,
-                paused: true,
-                lastUpdated: Date.now()
-            };
-
-            roomRef.set(newRoomData).then(() => {
-                enterRoom(roomKey, roomName);
-            }).catch(err => {
-                showError("خطا در ساخت اتاق: " + err.message);
+            roomRef.once('value').then((snapshot) => {
+                if (snapshot.exists()) {
+                    showError("این اتاق قبلاً ساخته شده است! از بخش 'ورود به اتاق' استفاده کنید.");
+                } else {
+                    const newRoomData = {
+                        password: password,
+                        videoUrl: "",
+                        currentTime: 0,
+                        paused: true,
+                        lastUpdated: Date.now()
+                    };
+                    roomRef.set(newRoomData).then(() => {
+                        enterRoom(roomKey, roomName);
+                    });
+                }
             });
         }
 
@@ -390,6 +404,14 @@
             db.ref(`rooms/${key}/presence`).on('value', (snap) => {
                 const count = snap.numChildren();
                 onlineUsersBadge.innerText = `👥 افراد حاضر: ${count} نفر`;
+            });
+
+            // نظارت لحظه‌ای در صورت حذف اتاق کلیک‌شده توسط دیگران
+            db.ref(`rooms/${key}`).on('value', (snapshot) => {
+                if (!snapshot.exists() && currentRoomKey) {
+                    alert("این اتاق توسط یکی از کاربران حذف شد.");
+                    location.reload();
+                }
             });
 
             listenToRoomUpdates();
@@ -453,14 +475,13 @@
             });
         }
 
-        // ارسال فرمان‌ها به دیتابیس به همراه شناسه آخرین فرستنده
+        // ارسال فرمان‌ها به دیتابیس به همراه زمان دقیق
         player.on('play', () => {
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
                 paused: false,
                 currentTime: player.currentTime,
-                lastUpdated: Date.now(),
-                sender: myUserId
+                lastUpdated: Date.now()
             });
         });
 
@@ -469,8 +490,7 @@
             db.ref('rooms/' + currentRoomKey).update({
                 paused: true,
                 currentTime: player.currentTime,
-                lastUpdated: Date.now(),
-                sender: myUserId
+                lastUpdated: Date.now()
             });
         });
 
@@ -478,8 +498,7 @@
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
                 currentTime: player.currentTime,
-                lastUpdated: Date.now(),
-                sender: myUserId
+                lastUpdated: Date.now()
             });
         });
 
@@ -490,7 +509,6 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // آپدیت آنی لینک ویدیو
                 if (data.videoUrl && data.videoUrl !== currentLoadedUrl) {
                     videoInput.value = data.videoUrl;
                     loadVideoIntoPlayer(data.videoUrl);
@@ -498,26 +516,20 @@
 
                 isSyncing = true;
 
-                // تنظیم زمان دقیق ویدیو روی دستگاه همه کاربران
+                // همگام‌سازی زمان (اگر اختلاف کمتر از ۳ ثانیه یا بیشتر از ۰.۵ ثانیه بود برای کاربر جدید فیکس شود)
                 let timeDiff = Math.abs(player.currentTime - data.currentTime);
-                if (timeDiff > 0.2) {
+                if (timeDiff > 0.5) {
                     player.currentTime = data.currentTime;
                 }
                 
-                // اعمال وضعیت Play یا Pause به صورت هماهنگ
+                // سینک وضعیت Play / Pause
                 if (data.paused) {
                     if (!player.paused) {
                         player.pause();
                     }
                 } else {
                     if (player.paused) {
-                        // استفاده از متد استاندارد هندل خطای مرورگر برای پلی شدن خودکار
-                        let playPromise = player.play();
-                        if (playPromise !== undefined) {
-                            playPromise.catch(error => {
-                                console.log("مرورگر اجازه پخش خودکار نداد، کاربر باید یکبار روی صفحه بزند.");
-                            });
-                        }
+                        player.play().catch(e => console.log(e));
                     }
                 }
 
@@ -525,12 +537,22 @@
             });
         }
 
+        // خروج کاربر از اتاق
         function leaveRoom() {
             if (currentRoomKey) {
                 db.ref(`rooms/${currentRoomKey}/presence/${myUserId}`).remove();
                 db.ref('rooms/' + currentRoomKey).off();
             }
             location.reload();
+        }
+
+        // حذف کامل اتاق از دیتابیس
+        function deleteRoom() {
+            if (currentRoomKey && confirm("آیا مطمئن هستید که می‌خواهید اتاق را به طور کامل حذف کنید؟")) {
+                db.ref('rooms/' + currentRoomKey).remove().then(() => {
+                    location.reload();
+                });
+            }
         }
     </script>
 </body>
