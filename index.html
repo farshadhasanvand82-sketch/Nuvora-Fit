@@ -453,13 +453,14 @@
             });
         }
 
-        // ارسال تغییرات پلیر به دیتابیس با دقت بالا
+        // ارسال فرمان‌ها به دیتابیس به همراه شناسه آخرین فرستنده
         player.on('play', () => {
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
                 paused: false,
                 currentTime: player.currentTime,
-                lastUpdated: Date.now()
+                lastUpdated: Date.now(),
+                sender: myUserId
             });
         });
 
@@ -468,7 +469,8 @@
             db.ref('rooms/' + currentRoomKey).update({
                 paused: true,
                 currentTime: player.currentTime,
-                lastUpdated: Date.now()
+                lastUpdated: Date.now(),
+                sender: myUserId
             });
         });
 
@@ -476,7 +478,8 @@
             if (isSyncing || !currentRoomKey) return;
             db.ref('rooms/' + currentRoomKey).update({
                 currentTime: player.currentTime,
-                lastUpdated: Date.now()
+                lastUpdated: Date.now(),
+                sender: myUserId
             });
         });
 
@@ -487,25 +490,35 @@
                 const data = snapshot.val();
                 if (!data) return;
 
-                // آپدیت آنی لینک ویدیو به محض تغییر توسط هر کاربری
+                // آپدیت آنی لینک ویدیو
                 if (data.videoUrl && data.videoUrl !== currentLoadedUrl) {
                     videoInput.value = data.videoUrl;
                     loadVideoIntoPlayer(data.videoUrl);
                 }
 
                 isSyncing = true;
-                
-                // سینک کردن پلی و پاز
-                if (data.paused && player.playing) {
-                    player.pause();
-                } else if (!data.paused && player.paused) {
-                    player.play().catch(e => console.log(e));
-                }
 
-                // سینک دقیق زمان ویدیو (جلوگیری از اختلاف حتی کمتر از ۰.۳ ثانیه)
+                // تنظیم زمان دقیق ویدیو روی دستگاه همه کاربران
                 let timeDiff = Math.abs(player.currentTime - data.currentTime);
-                if (timeDiff > 0.3) {
+                if (timeDiff > 0.2) {
                     player.currentTime = data.currentTime;
+                }
+                
+                // اعمال وضعیت Play یا Pause به صورت هماهنگ
+                if (data.paused) {
+                    if (!player.paused) {
+                        player.pause();
+                    }
+                } else {
+                    if (player.paused) {
+                        // استفاده از متد استاندارد هندل خطای مرورگر برای پلی شدن خودکار
+                        let playPromise = player.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                console.log("مرورگر اجازه پخش خودکار نداد، کاربر باید یکبار روی صفحه بزند.");
+                            });
+                        }
+                    }
                 }
 
                 isSyncing = false;
