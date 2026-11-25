@@ -122,7 +122,6 @@
             display: none !important;
         }
 
-        /* وقتی در حالت اکسپلور هستیم، تولبار بالا محو و تولبار اکسپلور ظاهر می‌شود؛ تولبار پایین سر جای خودش می‌ماند */
         body.explore-mode-active .top-header {
             display: none !important;
         }
@@ -335,7 +334,6 @@
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
         }
 
-        /* نشان‌های رنگی اختصاصی دوبله (سبز)، زیرنویس (قرمز)، زبان اصلی (مشکی) */
         .lang-badge {
             display: inline-flex;
             align-items: center;
@@ -380,7 +378,6 @@
         .lang-badge-sub .lang-dot { background: #ef4444; }
         .lang-badge-orig .lang-dot { background: #111111; box-shadow: 0 0 0 1px rgba(255,255,255,0.45); }
 
-        /* مودال‌ها */
         .modal-backdrop {
             position: fixed;
             inset: 0;
@@ -409,7 +406,6 @@
             padding: 22px;
         }
 
-        /* هدر ثابت شفاف شیشه‌ای در بالا */
         .top-header {
             position: fixed;
             top: 0;
@@ -538,7 +534,6 @@
             white-space: nowrap;
         }
 
-        /* کانتینر صفحات */
         .page-view {
             display: none;
             padding: 14px 16px 24px;
@@ -556,7 +551,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ==================== اسکرول افقی چپ و راست اینستاگرامی در اکسپلور ==================== */
+        /* ==================== اسکرول افقی چپ و راست در اکسپلور ==================== */
         .explore-horizontal-track {
             display: flex;
             flex-direction: row;
@@ -565,12 +560,12 @@
             overflow-y: hidden;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: 10px;
-            margin-bottom: 14px;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
         }
 
         .explore-story-card {
-            flex: 0 0 250px;
+            flex: 0 0 245px;
             scroll-snap-align: start;
             border-radius: 24px;
             padding: 12px;
@@ -582,7 +577,7 @@
 
         .explore-story-cover {
             width: 100%;
-            height: 155px;
+            height: 150px;
             border-radius: 16px;
             object-fit: cover;
             background: rgba(255, 46, 85, 0.14);
@@ -765,7 +760,6 @@
             color: var(--text-muted);
         }
 
-        /* دکمه شناور خروج از تمام‌صفحه */
         .floating-exit-fs-btn {
             position: fixed;
             top: 14px;
@@ -789,7 +783,6 @@
             display: inline-flex;
         }
 
-        /* صفحه جزئیات فیلم */
         .movie-detail-card {
             border-radius: 26px;
             padding: 16px;
@@ -863,7 +856,6 @@
             gap: 10px;
         }
 
-        /* باکس پخش‌کننده فیلم و تمام صفحه */
         .player-wrapper-outer {
             padding: 8px 16px 0;
             max-width: 560px;
@@ -995,7 +987,6 @@
             cursor: pointer;
         }
 
-        /* چت و ری‌اکشن زیر فیلم در اتاق فعال */
         .under-player-chat-card {
             margin-top: 10px;
             border-radius: 20px;
@@ -1085,7 +1076,6 @@
             outline: none;
         }
 
-        /* بنر خوشامدگویی و آمار صفحه اصلی */
         .welcome-banner {
             border-radius: 26px;
             padding: 20px;
@@ -1182,7 +1172,6 @@
             gap: 5px;
         }
 
-        /* سکشن لیست فیلم‌ها و پست‌ها */
         .sec-title-row {
             display: flex;
             align-items: center;
@@ -1192,7 +1181,7 @@
         }
 
         .sec-title-row h2 {
-            font-size: 17.5px;
+            font-size: 17px;
             font-weight: 900;
             color: var(--text-strong);
         }
@@ -1320,7 +1309,6 @@
             color: #fff;
         }
 
-        /* کشوهای راهنمای تماشا */
         .secrets-list {
             display: flex;
             flex-direction: column;
@@ -1373,7 +1361,6 @@
             animation: fadePage 0.2s ease;
         }
 
-        /* تب جستجو و ژانر */
         .filter-card {
             border-radius: 26px;
             padding: 18px;
@@ -1443,7 +1430,6 @@
             color: var(--text-muted);
         }
 
-        /* ==================== صفحه پیج اختصاصی کاربر ==================== */
         .page-profile-header {
             border-radius: 26px;
             padding: 18px;
@@ -1573,7 +1559,6 @@
             color: #ffffff;
         }
 
-        /* استایل‌های صفحه اتاق */
         .room-menu-card {
             border-radius: 26px;
             padding: 18px;
@@ -1646,7 +1631,6 @@
             white-space: nowrap;
         }
 
-        /* ادمین */
         .adm-panel-card {
             border-radius: 24px;
             padding: 16px;
@@ -1689,7 +1673,6 @@
             cursor: pointer;
         }
 
-        /* تولبار ثابت شفاف شیشه‌ای در پایین */
         .bottom-toolbar {
             position: fixed;
             bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -1770,7 +1753,7 @@
         ✕ خروج از تمام‌صفحه
     </button>
 
-    <!-- تولبار بالایی اختصاصی اکسپلور (هنگام ورود به اکسپلور جایگزین هدر اصلی می‌شود) -->
+    <!-- تولبار بالایی اختصاصی اکسپلور -->
     <header id="explore-top-toolbar" class="explore-top-toolbar" aria-label="منوی اکسپلور">
         <div class="explore-subnav-grid">
             <button type="button" id="ex-sub-pages" class="explore-subtab-btn" onclick="switchExploreSubtab('pages')">
@@ -1866,7 +1849,7 @@
         </div>
     </div>
 
-    <!-- مودال تکمیل و ویرایش حساب کاربری (پروفایل + آیدی شخصی + رمز اختصاصی) -->
+    <!-- مودال تکمیل و ویرایش حساب کاربری -->
     <div id="user-name-modal" class="modal-backdrop">
         <div class="glass modal-card">
             <span class="pill-tag">امنیت و حساب کاربری ZEUC MOVIE</span>
@@ -1946,7 +1929,7 @@
         </div>
     </header>
 
-    <!-- پخش‌کننده فیلم فعال + کنترل اتاق + چت زیر فیلم -->
+    <!-- پخش‌کننده فیلم/پست فعال + کنترل اتاق + چت زیر فیلم -->
     <div class="player-wrapper-outer">
         <div id="active-player-box" class="glass player-card">
             <div id="player-frame-wrap" class="player-frame-wrap">
@@ -1961,7 +1944,7 @@
                 <div class="player-btns">
                     <button type="button" id="btn-unmute-player" class="btn-sec" style="display:none;" onclick="unmuteCurrentMovie()">🔊 وصل صدا</button>
                     <button type="button" id="btn-retry-movie" class="btn-sec" style="display:none;" onclick="retryCurrentMoviePlayback()">🔄 پخش مجدد</button>
-                    <button type="button" class="btn-fs" onclick="enterFullscreenNow()">⛶ تمام صفحه</button>
+                    <button type="button" id="btn-player-fullscreen" class="btn-fs" onclick="enterFullscreenNow()">⛶ تمام صفحه</button>
                     <button type="button" class="btn-sec" onclick="closePlayer()">بستن پخش</button>
                 </div>
             </div>
@@ -2027,8 +2010,8 @@
             <div id="detail-movie-desc" class="detail-desc-box">توضیحی ثبت نشده است.</div>
 
             <div class="detail-action-grid">
-                <button type="button" class="btn-main" onclick="playCurrentDetailMovieFullscreen()">
-                    ⛶ پخش تمام‌صفحه
+                <button type="button" id="detail-primary-play-btn" class="btn-main" onclick="playCurrentDetailMovie()">
+                    ▶ پخش
                 </button>
                 <button type="button" class="btn-sec" style="padding:13px 14px;" onclick="openQuickRoomModalForMovie(selectedDetailMovieId)">
                     👥 تماشا در اتاق
@@ -2054,7 +2037,7 @@
             <div class="stats-two-grid">
                 <div class="stat-highlight">
                     <strong id="stat-movies-count">۰</strong>
-                    <span>فیلم و پست</span>
+                    <span>فیلم اصلی</span>
                 </div>
                 <div class="stat-highlight">
                     <strong id="stat-rooms-count">۰</strong>
@@ -2072,7 +2055,7 @@
 
         <section>
             <div class="sec-title-row">
-                <h2>فیلم‌ها و پست‌های موجود</h2>
+                <h2>فیلم‌های موجود</h2>
             </div>
             <div id="home-movies-list" class="movies-list"></div>
         </section>
@@ -2094,11 +2077,11 @@
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. اکسپلور اسکرولی چپ و راست، پیج‌ها و فالو شده‌هـا</span>
+                        <span>۲. پست‌ها و فیلم‌های کاربران در پیج و اکسپلور</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        پس از تکمیل حساب کاربری، با زدن «اکسپلور» در تولبار پایین می‌توانید بین پیج‌ها سرچ و فالو کنید، پست‌ها و فیلم‌ها را به صورت رندوم چپ و راست اسکرول کنید و جدیدترین محتوای فالو شده‌هـا را ببینید.
+                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم به‌صورت درون‌صفحه‌ای پخش می‌شوند.
                     </div>
                 </div>
             </div>
@@ -2219,7 +2202,7 @@
                 </div>
                 <div class="glass adm-kpi">
                     <strong id="adm-mv-count">0</strong>
-                    <span>کل فیلم‌ها</span>
+                    <span>کل آیتم‌ها</span>
                 </div>
             </div>
 
@@ -2255,7 +2238,7 @@
             </div>
 
             <div class="glass adm-panel-card">
-                <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">فیلم‌های منتشرشده</h3>
+                <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">آیتم‌های منتشرشده</h3>
                 <div id="adm-movies-list"></div>
             </div>
         </div>
@@ -2296,7 +2279,6 @@
             </div>
         </div>
 
-        <!-- فرم شیشه‌ای افزودن پست یا فیلم -->
         <div id="page-composer-card" class="glass composer-glass-card" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
                 <div>
@@ -2360,7 +2342,7 @@
                     <textarea id="page-item-desc" rows="2" placeholder="توضیحات کوتاه..."></textarea>
                 </div>
 
-                <button type="submit" class="btn-main">🚀 انتشار در پیج و اپ</button>
+                <button type="submit" class="btn-main">🚀 انتشار در پیج و اکسپلور</button>
             </form>
         </div>
 
@@ -2370,9 +2352,8 @@
         <div id="page-my-items-list" class="movies-list"></div>
     </section>
 
-    <!-- ======================= ۷. صفحه اکسپلور (پیج ها | اکسپلور | فالو شده ها) ======================= -->
+    <!-- ======================= ۷. صفحه اکسپلور ======================= -->
     <section id="tab-explore" class="page-view">
-        <!-- زیرتب ۱: پیج ها + سرچ + فالو + مشاهده پست‌ها و فیلم‌های پیج انتخاب‌شده -->
         <div id="explore-panel-pages">
             <div class="glass filter-card">
                 <span class="pill-tag">پیج های کاربران</span>
@@ -2396,21 +2377,20 @@
             <div id="explore-pages-list" class="movies-list"></div>
         </div>
 
-        <!-- زیرتب ۲: اکسپلور رندوم اسکرولی چپ و راست با تفکیک پست و فیلم -->
+        <!-- زیرتب ۲: اکسپلور با تفکیک پست‌ها و فیلم‌ها و اسکرول افقی چپ و راست -->
         <div id="explore-panel-feed">
             <div class="sec-title-row">
-                <h2>پست‌های رندوم (اسکرول چپ و راست)</h2>
-                <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 رندوم جدید</button>
+                <h2>پست‌ها (اسکرول چپ و راست)</h2>
+                <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 ترتیب جدید</button>
             </div>
             <div id="explore-random-posts-track" class="explore-horizontal-track"></div>
 
             <div class="sec-title-row">
-                <h2>فیلم‌های رندوم (اسکرول چپ و راست)</h2>
+                <h2>فیلم‌ها (اسکرول چپ و راست)</h2>
             </div>
             <div id="explore-random-movies-track" class="explore-horizontal-track"></div>
         </div>
 
-        <!-- زیرتب ۳: فالو شده ها (پست‌ها و فیلم‌های جدید به قدیم افراد فالو شده) -->
         <div id="explore-panel-following" style="display:none;">
             <div class="sec-title-row">
                 <h2>جدیدترین‌های فالو شده‌ها</h2>
@@ -2482,9 +2462,6 @@
     </nav>
 
     <script>
-        // =====================================================================
-        // حالت کاملاً اپ‌مانند (Standalone PWA Manifest + اسکرول روان)
-        // =====================================================================
         (function setupStandaloneAppMeta() {
             try {
                 const iconSvg = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="44" fill="#b80f30"/><polygon points="74,56 142,96 74,136" fill="#ffffff"/></svg>`);
@@ -2518,9 +2495,6 @@
             }
         });
 
-        // =====================================================================
-        // مدیریت تم روز و شب (ذخیره دائمی)
-        // =====================================================================
         const THEME_STORAGE_KEY = "zeuc_movie_theme_mode";
         let currentThemeMode = localStorage.getItem(THEME_STORAGE_KEY) || "night";
 
@@ -2543,9 +2517,6 @@
         }
         applyThemeMode(currentThemeMode);
 
-        // =====================================================================
-        // تنظیمات Firebase و صفحه لودینگ اتصال
-        // =====================================================================
         const firebaseConfig = {
             databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com"
         };
@@ -2559,6 +2530,14 @@
 
         let appBootedOnce = false;
         let bootTimeoutTimer = null;
+
+        function isUserCreatedItem(item) {
+            return Boolean(item && item.authorId);
+        }
+
+        function getHomeMoviesList() {
+            return moviesList.filter(m => !isUserCreatedItem(m));
+        }
 
         function getRequestedMovieIdFromUrl() {
             try {
@@ -2625,7 +2604,8 @@
             moviesRef.child(target.id).child("views").transaction(v => (Number(v) || 0) + 1);
             renderMovieDetailContent();
             openTab("movie-detail");
-            loadVideoSource(target, true, null, false);
+            const shouldFull = target.itemType !== "post";
+            loadVideoSource(target, true, null, shouldFull);
         }
 
         function startBootTimeoutCheck() {
@@ -2673,9 +2653,6 @@
 
         startBootTimeoutCheck();
 
-        // =====================================================================
-        // حساب کاربری امن (نام + آیدی شخصی + رمز اختصاصی + عکس پروفایل) و پیج
-        // =====================================================================
         const USER_ID_KEY = "zeuc_movie_persistent_uid";
         const USER_NAME_KEY = "zeuc_movie_user_name";
         const USER_HANDLE_KEY = "zeuc_movie_user_handle";
@@ -2955,7 +2932,7 @@
         }
 
         // =====================================================================
-        // بخش اکسپلور: پیج ها (با سرچ و فالو) | اکسپلور رندوم چپ و راست | فالو شده ها
+        // بخش اکسپلور: پیج ها | پست‌ها و فیلم‌های تفکیک‌شده اسکرولی چپ و راست | فالو شده ها
         // =====================================================================
         let activeExploreSubtab = "feed";
         let inspectedCreatorId = null;
@@ -3071,7 +3048,9 @@
 
         function buildHorizontalExploreCard(item) {
             const coverSrc = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
-            const kindLabel = item.itemType === "post" ? "پست" : "فیلم";
+            const isPost = item.itemType === "post";
+            const kindLabel = isPost ? "پست" : "فیلم";
+            const playFull = isPost ? "false" : "true";
             return `
                 <div class="glass explore-story-card" onclick="openMovieDetail('${escAttr(item.id)}', 'explore')">
                     <img class="explore-story-cover" src="${escAttr(coverSrc)}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
@@ -3082,7 +3061,7 @@
                     <strong style="font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.title)}</strong>
                     <span style="font-size:11px; color:var(--text-muted);">${esc(item.genre || "درام")} ${item.year ? "• " + esc(item.year) : ""}</span>
                     <div style="display:flex; gap:6px; margin-top:auto;" onclick="event.stopPropagation()">
-                        <button type="button" class="btn-watch" style="flex:1;" onclick="playMovieById('${escAttr(item.id)}', true)">▶ پخش</button>
+                        <button type="button" class="btn-watch" style="flex:1;" onclick="playMovieById('${escAttr(item.id)}', ${playFull})">▶ پخش</button>
                         <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(item.id)}')">🔗</button>
                     </div>
                 </div>
@@ -3136,9 +3115,6 @@
             renderExploreFollowingSection();
         }
 
-        // =====================================================================
-        // فرم شیشه‌ای افزودن پست یا فیلم با چند ژانر و نشان زبان رنگی
-        // =====================================================================
         const AVAILABLE_GENRES = ["اکشن", "ترسناک", "کمدی", "ایرانی", "عاشقانه", "درام"];
         let composerKind = "post";
         let selectedComposerGenres = ["درام"];
@@ -3277,7 +3253,7 @@
 
             closePageComposer();
             renderPageMyItems();
-            alert(composerKind === "movie" ? "فیلم با موفقیت منتشر شد." : "پست با موفقیت منتشر شد.");
+            alert(composerKind === "movie" ? "فیلم در پیج و اکسپلور منتشر شد." : "پست در پیج و اکسپلور منتشر شد.");
         }
 
         function renderPageMyItems() {
@@ -3605,7 +3581,7 @@
         }
 
         // =====================================================================
-        // مدیریت کامل و بی‌باگ تمام‌صفحه
+        // پخش‌کننده اصلی + قطع کامل هنگام بستن + پخش درون‌صفحه‌ای پست‌ها
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -3623,6 +3599,7 @@
         let suppressSyncEvents = false;
         let currentLoadedMovieId = null;
         let currentLoadedMovieObj = null;
+        let playbackStoppedManually = false;
         let roomMode = "create";
         let selectedDetailMovieId = null;
         let previousTabBeforeDetail = "home";
@@ -3691,6 +3668,7 @@
         }
 
         function enterFullscreenNow() {
+            if (playbackStoppedManually || !currentLoadedMovieObj) return;
             if (isCurrentlyFullscreen()) {
                 exitFullscreenNow();
                 return;
@@ -3734,9 +3712,6 @@
         plyrInstance.on("enterfullscreen", syncFloatingExitButton);
         plyrInstance.on("exitfullscreen", () => setTimeout(syncFloatingExitButton, 60));
 
-        // =====================================================================
-        // پخش فیلم، اشتراک‌گذاری، صفحه فیلم، اتاق‌ها، علاقه‌مندی‌ها و ادمین
-        // =====================================================================
         function getActiveDisplayName() {
             return currentUserName || "کاربر";
         }
@@ -3751,6 +3726,7 @@
         }
 
         function unmuteCurrentMovie() {
+            if (playbackStoppedManually) return;
             videoEl.muted = false;
             plyrInstance.muted = false;
             plyrInstance.volume = 1;
@@ -3763,30 +3739,49 @@
 
         function retryCurrentMoviePlayback() {
             if (!currentLoadedMovieObj) return;
+            playbackStoppedManually = false;
             const mv = currentLoadedMovieObj;
             currentLoadedMovieId = null;
             loadVideoSource(mv, true, Number(videoEl.currentTime || 0), false);
         }
 
         function triggerPlayWithFallback(onSuccess) {
+            if (playbackStoppedManually) return;
             videoEl.muted = false;
             plyrInstance.muted = false;
             const p1 = plyrInstance.play();
             const handlePromise = (promiseObj) => {
+                if (playbackStoppedManually) {
+                    videoEl.pause();
+                    return;
+                }
                 if (!promiseObj || !promiseObj.then) {
                     if (onSuccess) onSuccess();
                     return;
                 }
                 promiseObj.then(() => {
+                    if (playbackStoppedManually) {
+                        videoEl.pause();
+                        return;
+                    }
                     setMoviePlayerStatus("در حال پخش", false, false);
                     if (onSuccess) onSuccess();
                 }).catch(() => {
+                    if (playbackStoppedManually) return;
                     videoEl.muted = true;
                     plyrInstance.muted = true;
                     const p2 = plyrInstance.play();
                     const handleMuted = (pr) => {
+                        if (playbackStoppedManually) {
+                            videoEl.pause();
+                            return;
+                        }
                         if (pr && pr.then) {
                             pr.then(() => {
+                                if (playbackStoppedManually) {
+                                    videoEl.pause();
+                                    return;
+                                }
                                 setMoviePlayerStatus("در حال پخش (بی‌صدا؛ برای صدا «وصل صدا» را بزنید)", false, true);
                                 if (onSuccess) onSuccess();
                             }).catch(() => {
@@ -3818,6 +3813,7 @@
         }
 
         function attachDirectNativeVideo(url, seekToSec, autoPlay, triggerFullAfterPlay) {
+            if (playbackStoppedManually) return;
             if (hlsInstance) {
                 hlsInstance.destroy();
                 hlsInstance = null;
@@ -3829,6 +3825,7 @@
 
             let playedOnce = false;
             const runPlayback = () => {
+                if (playbackStoppedManually) return;
                 if (typeof seekToSec === "number" && seekToSec >= 0) {
                     suppressSyncEvents = true;
                     try { videoEl.currentTime = seekToSec; } catch (_) {}
@@ -3841,10 +3838,16 @@
             };
 
             videoEl.onerror = () => {
-                setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false);
+                if (!playbackStoppedManually) {
+                    setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false);
+                }
             };
 
             videoEl.onplaying = () => {
+                if (playbackStoppedManually) {
+                    videoEl.pause();
+                    return;
+                }
                 setMoviePlayerStatus(videoEl.muted ? "در حال پخش (بی‌صدا)" : "در حال پخش", false, videoEl.muted);
             };
 
@@ -3858,21 +3861,29 @@
 
         function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
             if (!mv || !mv.videoUrl) return;
+            playbackStoppedManually = false;
             currentLoadedMovieObj = mv;
+
+            const isPostItem = mv.itemType === "post";
+            const allowAutoFull = Boolean(autoFullscreen && !isPostItem);
+
             const box = document.getElementById("active-player-box");
             box.classList.add("show");
             document.getElementById("now-playing-title").innerText = mv.title;
-            document.getElementById("now-playing-meta").innerText = `${mv.genre || "فیلم"} • ${mv.year || ""}`;
-            setMoviePlayerStatus("در حال بارگذاری فیلم...", false, false);
+            document.getElementById("now-playing-meta").innerText =
+                `${isPostItem ? "پست • پخش درون‌صفحه‌ای" : (mv.genre || "فیلم")} ${mv.year ? "• " + mv.year : ""}`;
+            setMoviePlayerStatus("در حال بارگذاری...", false, false);
 
             const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             videoEl.setAttribute("poster", posterUrl);
             plyrInstance.poster = posterUrl;
 
             const triggerFullAfterPlay = () => {
-                if (autoFullscreen) {
+                if (allowAutoFull && !playbackStoppedManually) {
                     setTimeout(() => {
-                        if (!isCurrentlyFullscreen()) enterFullscreenNow();
+                        if (!playbackStoppedManually && !isCurrentlyFullscreen()) {
+                            enterFullscreenNow();
+                        }
                     }, 160);
                 }
             };
@@ -3905,6 +3916,7 @@
                 hlsInstance.loadSource(parsed.url);
                 hlsInstance.attachMedia(videoEl);
                 hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                    if (playbackStoppedManually) return;
                     if (typeof seekToSec === "number" && seekToSec >= 0) {
                         suppressSyncEvents = true;
                         try { videoEl.currentTime = seekToSec; } catch (_) {}
@@ -3915,7 +3927,7 @@
                     }
                 });
                 hlsInstance.on(window.Hls.Events.ERROR, (_, errData) => {
-                    if (errData && errData.fatal) {
+                    if (errData && errData.fatal && !playbackStoppedManually) {
                         if (hlsInstance) {
                             hlsInstance.destroy();
                             hlsInstance = null;
@@ -3951,6 +3963,7 @@
             const mv = moviesList.find(m => m.id === selectedDetailMovieId);
             if (!mv) return;
 
+            const isPost = mv.itemType === "post";
             const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const posterEl = document.getElementById("detail-poster-img");
             posterEl.src = posterSrc;
@@ -3959,7 +3972,12 @@
 
             const kindBadge = document.getElementById("detail-item-kind-badge");
             if (kindBadge) {
-                kindBadge.innerText = mv.itemType === "post" ? "صفحه پست" : "صفحه فیلم";
+                kindBadge.innerText = isPost ? "صفحه پست (پخش درون‌صفحه‌ای)" : "صفحه فیلم";
+            }
+
+            const playBtn = document.getElementById("detail-primary-play-btn");
+            if (playBtn) {
+                playBtn.innerText = isPost ? "▶ پخش در همین صفحه" : "⛶ پخش تمام‌صفحه";
             }
 
             document.getElementById("detail-movie-title").innerText = mv.title || "بدون عنوان";
@@ -3989,23 +4007,31 @@
             toggleFavorite(selectedDetailMovieId);
         }
 
-        function playCurrentDetailMovieFullscreen() {
+        function playCurrentDetailMovie() {
             if (!selectedDetailMovieId) return;
-            playMovieById(selectedDetailMovieId, true);
+            const mv = moviesList.find(m => m.id === selectedDetailMovieId);
+            const fullScreen = mv && mv.itemType === "post" ? false : true;
+            playMovieById(selectedDetailMovieId, fullScreen);
         }
 
         function playMovieById(id, fullScreen = true) {
             leaveActiveRoom();
             const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
-            loadVideoSource(mv, true, null, fullScreen);
+            const shouldFull = mv.itemType === "post" ? false : Boolean(fullScreen);
+            loadVideoSource(mv, true, null, shouldFull);
         }
 
         function closePlayer() {
+            playbackStoppedManually = true;
             leaveActiveRoom();
             exitFullscreenNow();
-            videoEl.pause();
+            try { plyrInstance.pause(); } catch (_) {}
+            try { videoEl.pause(); } catch (_) {}
+            videoEl.muted = true;
+            try { videoEl.currentTime = 0; } catch (_) {}
             videoEl.removeAttribute("src");
+            videoEl.src = "";
             videoEl.load();
             currentLoadedMovieId = null;
             currentLoadedMovieObj = null;
@@ -4018,10 +4044,11 @@
         }
 
         function playFeaturedMovie() {
-            if (moviesList.length > 0) {
-                playMovieById(moviesList[0].id, true);
+            const homeItems = getHomeMoviesList();
+            if (homeItems.length > 0) {
+                playMovieById(homeItems[0].id, true);
             } else {
-                alert("هنوز فیلم یا پستی ثبت نشده است.");
+                alert("هنوز فیلمی در صفحه اصلی ثبت نشده است.");
             }
         }
 
@@ -4173,6 +4200,7 @@
 
         function syncToHostNow() {
             if (!latestRoomSnapshot || isRoomHost) return;
+            playbackStoppedManually = false;
             const targetSec = computeExpectedHostTime(latestRoomSnapshot);
             suppressSyncEvents = true;
             try {
@@ -4353,6 +4381,10 @@
         }
 
         videoEl.addEventListener("play", () => {
+            if (playbackStoppedManually) {
+                videoEl.pause();
+                return;
+            }
             if (activeRoomId && !isRoomHost) {
                 syncToHostNow();
             } else {
@@ -4510,7 +4542,9 @@
             const isFav = favIds.includes(mv.id);
             const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const viewsCount = Number(mv.views) || 0;
-            const kindTag = mv.itemType === "post" ? "پست" : "فیلم";
+            const isPost = mv.itemType === "post";
+            const kindTag = isPost ? "پست" : "فیلم";
+            const fullScreenArg = isPost ? "false" : "true";
             return `
                 <div class="glass movie-card" onclick="openMovieDetail('${escAttr(mv.id)}')">
                     <div class="movie-poster-box">
@@ -4526,7 +4560,7 @@
                         </div>
                         <div class="movie-desc-short">${esc(mv.desc || "برای مشاهده توضیحات و پخش ضربه بزنید")}</div>
                         <div class="movie-actions-row" onclick="event.stopPropagation()">
-                            <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(mv.id)}', true)">▶ پخش</button>
+                            <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(mv.id)}', ${fullScreenArg})">▶ پخش</button>
                             <button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>
                             <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 اشتراک</button>
                             <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">
@@ -4539,12 +4573,13 @@
         }
 
         function renderAllMovieViews() {
-            document.getElementById("stat-movies-count").innerText = String(moviesList.length);
+            const homeItems = getHomeMoviesList();
+            document.getElementById("stat-movies-count").innerText = String(homeItems.length);
             document.getElementById("adm-mv-count").innerText = String(moviesList.length);
 
-            document.getElementById("home-movies-list").innerHTML = moviesList.length
-                ? moviesList.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">هنوز فیلم یا پستی ثبت نشده است.</div>`;
+            document.getElementById("home-movies-list").innerHTML = homeItems.length
+                ? homeItems.map(buildMovieCardHtml).join("")
+                : `<div class="glass empty-note">هنوز فیلمی در صفحه اصلی ثبت نشده است.</div>`;
 
             renderGenreChips();
             renderFilteredMovies();
@@ -4654,12 +4689,12 @@
         function renderAdminMovies() {
             const box = document.getElementById("adm-movies-list");
             if (!moviesList.length) {
-                box.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">هنوز فیلمی ثبت نشده است.</p>`;
+                box.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">هنوز آیتمی ثبت نشده است.</p>`;
                 return;
             }
             box.innerHTML = moviesList.map(m => `
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,59,92,0.16); font-size:12.5px;">
-                    <span><strong>${esc(m.title)}</strong> — ${esc(m.genre || "")} (👁 ${Number(m.views) || 0})</span>
+                    <span><strong>${esc(m.title)}</strong> — ${esc(m.itemType === "post" ? "پست" : "فیلم")} • ${esc(m.genre || "")} (👁 ${Number(m.views) || 0})</span>
                     <button type="button" class="btn-del" onclick="moviesRef.child('${m.id}').remove()">حذف</button>
                 </div>
             `).join("");
