@@ -539,6 +539,25 @@
             background: var(--red-soft);
         }
 
+        .livetv-channel-item.dead-stream {
+            opacity: 0.72;
+            border-color: rgba(239, 68, 68, 0.45);
+            background: rgba(127, 29, 29, 0.16);
+        }
+
+        .dead-status-badge {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.22);
+            color: #ff6b86;
+            border: 1px solid rgba(248, 113, 113, 0.45);
+            font-size: 10px;
+            font-weight: 900;
+            padding: 2px 8px;
+            border-radius: 999px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+
         .livetv-channel-meta strong {
             display: block;
             font-size: 13.5px;
@@ -2068,7 +2087,7 @@
         `);
 
         // =====================================================================
-        // فضای مستقل LIVE TV با لینک https://iptv-org.github.io/iptv/index.m3u
+        // فضای مستقل LIVE TV با علامت‌گذاری استریم‌های غیرفعال روی لیست
         // =====================================================================
         const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
         const liveTvVideoEl = document.getElementById("livetv-video-el");
@@ -2080,6 +2099,13 @@
         let liveTvHls = null;
         let activeLiveTvUrl = "";
         let liveTvFailoverTimer = null;
+        const deadLiveTvUrls = new Set();
+
+        function markLiveTvUrlDead(url) {
+            if (!url) return;
+            deadLiveTvUrls.add(url);
+            renderLiveTvChannels();
+        }
 
         function openLiveTvScreen() {
             if (!videoEl.paused) videoEl.pause();
@@ -2218,15 +2244,19 @@
 
             const visibleSlice = liveTvFiltered.slice(0, 250);
             listBox.innerHTML = visibleSlice.map(ch => {
-                const isPlaying = ch.url === activeLiveTvUrl;
+                const isDead = deadLiveTvUrls.has(ch.url);
+                const isPlaying = ch.url === activeLiveTvUrl && !isDead;
                 return `
-                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.name)}', '${escAttr(ch.group)}', true)">
+                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""} ${isDead ? "dead-stream" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.name)}', '${escAttr(ch.group)}', true)">
                         <div class="livetv-channel-meta" style="min-width:0; flex:1;">
-                            <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(ch.name)}</strong>
+                            <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                                ${esc(ch.name)}
+                                ${isDead ? `<span class="dead-status-badge">غیرفعال</span>` : ""}
+                            </strong>
                             <span>${esc(ch.group || "پخش زنده")} ${ch.isHls ? "• HLS" : ""}</span>
                         </div>
-                        <button type="button" class="btn-watch" style="padding:6px 11px; font-size:11px;">
-                            ${isPlaying ? "▶ در حال پخش" : "▶ پخش"}
+                        <button type="button" class="${isDead ? "btn-sec" : "btn-watch"}" style="padding:6px 11px; font-size:11px;">
+                            ${isDead ? "غیرفعال" : (isPlaying ? "▶ در حال پخش" : "▶ پخش")}
                         </button>
                     </div>
                 `;
@@ -2237,9 +2267,11 @@
             const pool = liveTvFiltered.length ? liveTvFiltered : liveTvChannels;
             if (!pool.length) return null;
             const idx = pool.findIndex(c => c.url === currentUrl);
-            for (let offset = 1; offset <= Math.min(pool.length, 15); offset++) {
+            for (let offset = 1; offset <= pool.length; offset++) {
                 const candidate = pool[(idx + offset + pool.length) % pool.length];
-                if (candidate && candidate.url !== currentUrl) return candidate;
+                if (candidate && candidate.url !== currentUrl && !deadLiveTvUrls.has(candidate.url)) {
+                    return candidate;
+                }
             }
             return null;
         }
@@ -2261,45 +2293,48 @@
                 liveTvHls = null;
             }
 
-            let switched = false;
-            const tryNextStream = (reasonText) => {
-                if (switched || !autoSkipOnDead) {
-                    document.getElementById("livetv-status-text").innerText = reasonText;
-                    return;
-                }
-                switched = true;
-                const nextCh = findNextLiveTvChannel(url);
+            let handledFailure = false;
+            const handleDeadStream = (reasonText) => {
+                if (handledFailure) return;
+                handledFailure = true;
+                markLiveTvUrlDead(url);
+
+                const nextCh = autoSkipOnDead ? findNextLiveTvChannel(url) : null;
                 if (nextCh) {
                     document.getElementById("livetv-status-text").innerText =
-                        `استریم قبلی پاسخ نداد؛ در حال رفتن به «${nextCh.name}»...`;
+                        `«${name}» غیرفعال علامت خورد؛ در حال رفتن به «${nextCh.name}»...`;
                     setTimeout(() => {
                         playLiveTvChannel(nextCh.url, nextCh.name, nextCh.group, true);
                     }, 220);
+                } else {
+                    document.getElementById("livetv-status-text").innerText = reasonText;
                 }
             };
 
             liveTvFailoverTimer = setTimeout(() => {
                 if (liveTvVideoEl.readyState < 2 && liveTvVideoEl.paused) {
-                    tryNextStream("زمان اتصال به شبکه تمام شد؛ شبکه دیگری انتخاب کنید.");
+                    handleDeadStream("این استریم غیرفعال است (عدم پاسخ سرور).");
                 }
-            }, 6500);
+            }, 6000);
 
-            const onPlayingSuccess = () => {
+            liveTvVideoEl.onplaying = () => {
                 if (liveTvFailoverTimer) {
                     clearTimeout(liveTvFailoverTimer);
                     liveTvFailoverTimer = null;
                 }
+                if (deadLiveTvUrls.has(url)) {
+                    deadLiveTvUrls.delete(url);
+                    renderLiveTvChannels();
+                }
                 document.getElementById("livetv-status-text").innerText = `پخش زنده فعال • ${group}`;
             };
-
-            liveTvVideoEl.onplaying = onPlayingSuccess;
 
             if (/\.m3u8(\?|$)/i.test(url) && window.Hls && window.Hls.isSupported()) {
                 liveTvHls = new window.Hls({
                     enableWorker: true,
                     lowLatencyMode: true,
-                    manifestLoadingTimeOut: 5000,
-                    fragLoadingTimeOut: 6000
+                    manifestLoadingTimeOut: 4500,
+                    fragLoadingTimeOut: 5500
                 });
                 liveTvHls.loadSource(url);
                 liveTvHls.attachMedia(liveTvVideoEl);
@@ -2311,13 +2346,13 @@
                 });
                 liveTvHls.on(window.Hls.Events.ERROR, (_, errData) => {
                     if (errData && errData.fatal) {
-                        tryNextStream("این استریم در دسترس نیست؛ شبکه دیگری انتخاب کنید.");
+                        handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
                     }
                 });
             } else {
                 liveTvVideoEl.src = url;
                 liveTvVideoEl.onerror = () => {
-                    tryNextStream("استریم این شبکه خطا داد؛ شبکه دیگری انتخاب کنید.");
+                    handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
                 };
                 liveTvVideoEl.play().catch(() => {
                     liveTvVideoEl.muted = true;
@@ -2327,8 +2362,11 @@
         }
 
         function quickPlayLiveTv() {
-            const pool = liveTvFiltered.length ? liveTvFiltered : liveTvChannels;
-            if (!pool || !pool.length) return;
+            const pool = (liveTvFiltered.length ? liveTvFiltered : liveTvChannels).filter(ch => !deadLiveTvUrls.has(ch.url));
+            if (!pool.length) {
+                document.getElementById("livetv-status-text").innerText = "تمام استریم‌های موجود در این فیلتر غیرفعال شده‌اند.";
+                return;
+            }
             const preferred = pool.find(ch => ch.isHls) || pool[0];
             playLiveTvChannel(preferred.url, preferred.name, preferred.group, true);
         }
