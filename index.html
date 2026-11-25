@@ -2,8 +2,13 @@
 <html lang="fa" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>ZEUC MOVIE | تماشای آنلاین فیلم</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#080305">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ZEUC MOVIE">
+    <title>ZEUC MOVIE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -66,6 +71,7 @@
             padding: 0;
             font-family: 'Vazirmatn', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
 
         html, body {
@@ -78,9 +84,17 @@
             min-height: 100vh;
             line-height: 1.65;
             overflow-x: hidden;
-            padding-top: 72px;
-            padding-bottom: 104px;
+            overscroll-behavior-y: contain;
+            user-select: none;
+            -webkit-user-select: none;
+            padding-top: calc(72px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
             transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        input, textarea, select {
+            user-select: text;
+            -webkit-user-select: text;
         }
 
         body.app-boot-locked,
@@ -283,7 +297,7 @@
             left: 0;
             right: 0;
             z-index: 200;
-            padding: 9px 12px;
+            padding: calc(9px + env(safe-area-inset-top, 0px)) 12px 9px;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -745,6 +759,7 @@
             display: flex;
             gap: 6px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .sync-status-bar {
@@ -1361,7 +1376,7 @@
         /* تولبار ثابت شفاف شیشه‌ای در پایین (۵ آیتم) */
         .bottom-toolbar {
             position: fixed;
-            bottom: 10px;
+            bottom: calc(10px + env(safe-area-inset-bottom, 0px));
             left: 10px;
             right: 10px;
             max-width: 560px;
@@ -1583,7 +1598,7 @@
     <div class="player-wrapper-outer">
         <div id="active-player-box" class="glass player-card">
             <div id="player-frame-wrap" class="player-frame-wrap">
-                <video id="main-video-player" playsinline webkit-playsinline controls preload="metadata"></video>
+                <video id="main-video-player" playsinline webkit-playsinline controls preload="auto"></video>
             </div>
             <div class="player-meta-row">
                 <div>
@@ -1592,6 +1607,8 @@
                     <span id="now-playing-status" style="display:block; font-size:11px; color:var(--chip-text);"></span>
                 </div>
                 <div class="player-btns">
+                    <button type="button" id="btn-unmute-player" class="btn-sec" style="display:none;" onclick="unmuteCurrentMovie()">🔊 وصل صدا</button>
+                    <button type="button" id="btn-retry-movie" class="btn-sec" style="display:none;" onclick="retryCurrentMoviePlayback()">🔄 پخش مجدد</button>
                     <button type="button" class="btn-fs" onclick="enterFullscreenNow()">⛶ تمام صفحه</button>
                     <button type="button" class="btn-sec" onclick="closePlayer()">بستن پخش</button>
                 </div>
@@ -1938,6 +1955,42 @@
 
     <script>
         // =====================================================================
+        // حالت کاملاً اپ‌مانند (Standalone PWA Manifest + غیرفعال کردن منوی راست‌کلیک)
+        // =====================================================================
+        (function setupStandaloneAppMeta() {
+            try {
+                const iconSvg = encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="192" height="192" viewBox="0 0 192 192"><rect width="192" height="192" rx="44" fill="#b80f30"/><polygon points="74,56 142,96 74,136" fill="#ffffff"/></svg>`);
+                const manifestObj = {
+                    name: "ZEUC MOVIE",
+                    short_name: "ZEUC MOVIE",
+                    start_url: window.location.href,
+                    display: "standalone",
+                    orientation: "portrait",
+                    background_color: "#080305",
+                    theme_color: "#ff2e55",
+                    icons: [{
+                        src: "data:image/svg+xml;utf8," + iconSvg,
+                        sizes: "192x192",
+                        type: "image/svg+xml"
+                    }]
+                };
+                const blob = new Blob([JSON.stringify(manifestObj)], { type: "application/manifest+json" });
+                const manifestUrl = URL.createObjectURL(blob);
+                const link = document.createElement("link");
+                link.rel = "manifest";
+                link.href = manifestUrl;
+                document.head.appendChild(link);
+            } catch (_) {}
+        })();
+
+        document.addEventListener("contextmenu", (e) => {
+            const tag = (e.target && e.target.tagName || "").toLowerCase();
+            if (tag !== "input" && tag !== "textarea") {
+                e.preventDefault();
+            }
+        });
+
+        // =====================================================================
         // مدیریت تم روز و شب (ذخیره دائمی)
         // =====================================================================
         const THEME_STORAGE_KEY = "zeuc_movie_theme_mode";
@@ -1950,6 +2003,10 @@
             const btn = document.getElementById("theme-toggle-btn");
             if (btn) {
                 btn.innerText = currentThemeMode === "day" ? "🌙 شب" : "☀️ روز";
+            }
+            const themeMeta = document.querySelector('meta[name="theme-color"]');
+            if (themeMeta) {
+                themeMeta.setAttribute("content", currentThemeMode === "day" ? "#f4f6fb" : "#080305");
             }
         }
 
@@ -2494,6 +2551,7 @@
         let chatListener = null;
         let suppressSyncEvents = false;
         let currentLoadedMovieId = null;
+        let currentLoadedMovieObj = null;
         let roomMode = "create";
         let selectedDetailMovieId = null;
         let previousTabBeforeDetail = "home";
@@ -2612,17 +2670,76 @@
             return currentUserName || "کاربر";
         }
 
-        function setMoviePlayerStatus(msg) {
+        function setMoviePlayerStatus(msg, showRetry = false, showUnmute = false) {
             const el = document.getElementById("now-playing-status");
             if (el) el.innerText = msg || "";
+            const retryBtn = document.getElementById("btn-retry-movie");
+            if (retryBtn) retryBtn.style.display = showRetry ? "inline-flex" : "none";
+            const unmuteBtn = document.getElementById("btn-unmute-player");
+            if (unmuteBtn) unmuteBtn.style.display = showUnmute ? "inline-flex" : "none";
+        }
+
+        function unmuteCurrentMovie() {
+            videoEl.muted = false;
+            plyrInstance.muted = false;
+            plyrInstance.volume = 1;
+            const playRes = plyrInstance.play();
+            if (playRes && playRes.catch) {
+                playRes.catch(() => videoEl.play().catch(() => {}));
+            }
+            setMoviePlayerStatus("در حال پخش با صدا", false, false);
+        }
+
+        function retryCurrentMoviePlayback() {
+            if (!currentLoadedMovieObj) return;
+            const mv = currentLoadedMovieObj;
+            currentLoadedMovieId = null;
+            loadVideoSource(mv, true, Number(videoEl.currentTime || 0), false);
+        }
+
+        function triggerPlayWithFallback(onSuccess) {
+            videoEl.muted = false;
+            plyrInstance.muted = false;
+            const p1 = plyrInstance.play();
+            const handlePromise = (promiseObj) => {
+                if (!promiseObj || !promiseObj.then) {
+                    if (onSuccess) onSuccess();
+                    return;
+                }
+                promiseObj.then(() => {
+                    setMoviePlayerStatus("در حال پخش", false, false);
+                    if (onSuccess) onSuccess();
+                }).catch(() => {
+                    videoEl.muted = true;
+                    plyrInstance.muted = true;
+                    const p2 = plyrInstance.play();
+                    const handleMuted = (pr) => {
+                        if (pr && pr.then) {
+                            pr.then(() => {
+                                setMoviePlayerStatus("در حال پخش (بی‌صدا؛ برای صدا «وصل صدا» را بزنید)", false, true);
+                                if (onSuccess) onSuccess();
+                            }).catch(() => {
+                                setMoviePlayerStatus("برای شروع پخش روی دکمه پخش بزنید.", true, false);
+                            });
+                        } else {
+                            setMoviePlayerStatus("در حال پخش (بی‌صدا)", false, true);
+                            if (onSuccess) onSuccess();
+                        }
+                    };
+                    if (p2 && p2.then) handleMuted(p2);
+                    else handleMuted(videoEl.play());
+                });
+            };
+
+            if (p1 && p1.then) {
+                handlePromise(p1);
+            } else {
+                handlePromise(videoEl.play());
+            }
         }
 
         function normalizePlayableVideoUrl(rawUrl) {
             const trimmed = (rawUrl || "").trim();
-            const ytMatch = trimmed.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-            if (ytMatch) {
-                return { kind: "youtube", id: ytMatch[1], url: trimmed };
-            }
             if (/\.m3u8(\?|$)/i.test(trimmed)) {
                 return { kind: "hls", url: trimmed };
             }
@@ -2634,55 +2751,48 @@
                 hlsInstance.destroy();
                 hlsInstance = null;
             }
+            try { plyrInstance.source = { type: "video", sources: [{ src: url }] }; } catch (_) {}
             videoEl.removeAttribute("src");
             videoEl.src = url;
             videoEl.load();
 
+            let playedOnce = false;
             const runPlayback = () => {
                 if (typeof seekToSec === "number" && seekToSec >= 0) {
                     suppressSyncEvents = true;
                     try { videoEl.currentTime = seekToSec; } catch (_) {}
                     setTimeout(() => { suppressSyncEvents = false; }, 350);
                 }
-                if (autoPlay) {
-                    const p = videoEl.play();
-                    if (p && p.then) {
-                        p.then(() => {
-                            setMoviePlayerStatus("در حال پخش");
-                            triggerFullAfterPlay();
-                        }).catch(() => {
-                            videoEl.muted = true;
-                            videoEl.play().then(() => {
-                                setMoviePlayerStatus("در حال پخش (بی‌صدا؛ برای صدا دکمه صدا را بزنید)");
-                                triggerFullAfterPlay();
-                            }).catch(() => {
-                                setMoviePlayerStatus("روی دکمه پخش بزنید تا ویدیو شروع شود.");
-                            });
-                        });
-                    } else {
-                        triggerFullAfterPlay();
-                    }
+                if (autoPlay && !playedOnce) {
+                    playedOnce = true;
+                    triggerPlayWithFallback(triggerFullAfterPlay);
                 }
             };
 
             videoEl.onerror = () => {
-                setMoviePlayerStatus("لینک مستقیم فیلم در این مرورگر یا سرور در دسترس نیست.");
+                setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false);
+            };
+
+            videoEl.onplaying = () => {
+                setMoviePlayerStatus(videoEl.muted ? "در حال پخش (بی‌صدا)" : "در حال پخش", false, videoEl.muted);
             };
 
             if (typeof seekToSec === "number" && seekToSec > 0) {
                 videoEl.addEventListener("loadedmetadata", runPlayback, { once: true });
             } else {
-                runPlayback();
+                videoEl.addEventListener("canplay", runPlayback, { once: true });
+                setTimeout(runPlayback, 120);
             }
         }
 
         function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
             if (!mv || !mv.videoUrl) return;
+            currentLoadedMovieObj = mv;
             const box = document.getElementById("active-player-box");
             box.classList.add("show");
             document.getElementById("now-playing-title").innerText = mv.title;
             document.getElementById("now-playing-meta").innerText = `${mv.genre || "فیلم"} • ${mv.year || ""}`;
-            setMoviePlayerStatus("در حال آماده‌سازی پخش...");
+            setMoviePlayerStatus("در حال بارگذاری فیلم...", false, false);
 
             const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             videoEl.setAttribute("poster", posterUrl);
@@ -2692,17 +2802,11 @@
                 if (autoFullscreen) {
                     setTimeout(() => {
                         if (!isCurrentlyFullscreen()) enterFullscreenNow();
-                    }, 140);
+                    }, 160);
                 }
             };
 
             const parsed = normalizePlayableVideoUrl(mv.videoUrl);
-            if (parsed.kind === "youtube") {
-                setMoviePlayerStatus("لینک یوتیوب شناسایی شد؛ در حال باز کردن پخش‌کننده...");
-                attachDirectNativeVideo(parsed.url, seekToSec, autoPlay, triggerFullAfterPlay);
-                return;
-            }
-
             const isSameMovie = currentLoadedMovieId === mv.id && Boolean(videoEl.src);
             if (isSameMovie) {
                 if (typeof seekToSec === "number" && seekToSec >= 0) {
@@ -2711,16 +2815,7 @@
                     setTimeout(() => { suppressSyncEvents = false; }, 350);
                 }
                 if (autoPlay) {
-                    videoEl.play().then(() => {
-                        setMoviePlayerStatus("در حال پخش");
-                        triggerFullAfterPlay();
-                    }).catch(() => {
-                        videoEl.muted = true;
-                        videoEl.play().then(() => {
-                            setMoviePlayerStatus("در حال پخش (بی‌صدا؛ برای صدا دکمه صدا را بزنید)");
-                            triggerFullAfterPlay();
-                        }).catch(() => {});
-                    });
+                    triggerPlayWithFallback(triggerFullAfterPlay);
                 }
                 return;
             }
@@ -2745,16 +2840,7 @@
                         setTimeout(() => { suppressSyncEvents = false; }, 350);
                     }
                     if (autoPlay) {
-                        videoEl.play().then(() => {
-                            setMoviePlayerStatus("در حال پخش HLS");
-                            triggerFullAfterPlay();
-                        }).catch(() => {
-                            videoEl.muted = true;
-                            videoEl.play().then(() => {
-                                setMoviePlayerStatus("در حال پخش HLS (بی‌صدا)");
-                                triggerFullAfterPlay();
-                            }).catch(() => {});
-                        });
+                        triggerPlayWithFallback(triggerFullAfterPlay);
                     }
                 });
                 hlsInstance.on(window.Hls.Events.ERROR, (_, errData) => {
@@ -2842,7 +2928,8 @@
             videoEl.removeAttribute("src");
             videoEl.load();
             currentLoadedMovieId = null;
-            setMoviePlayerStatus("");
+            currentLoadedMovieObj = null;
+            setMoviePlayerStatus("", false, false);
             if (hlsInstance) {
                 hlsInstance.destroy();
                 hlsInstance = null;
