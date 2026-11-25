@@ -565,23 +565,68 @@
         }
 
         .explore-story-card {
-            flex: 0 0 245px;
+            flex: 0 0 265px;
             scroll-snap-align: start;
             border-radius: 24px;
             padding: 12px;
             display: flex;
             flex-direction: column;
             gap: 8px;
+        }
+
+        .explore-author-strip {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            padding: 6px 8px;
+            border-radius: 15px;
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.24);
             cursor: pointer;
+        }
+
+        .explore-author-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 10px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1px solid var(--red-primary);
+            background: var(--red-soft);
         }
 
         .explore-story-cover {
             width: 100%;
-            height: 150px;
+            height: 155px;
             border-radius: 16px;
             object-fit: cover;
-            background: rgba(255, 46, 85, 0.14);
+            background: #090305;
             border: 1px solid rgba(255, 77, 109, 0.28);
+        }
+
+        .inline-post-player-box {
+            margin-top: 8px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #050203;
+            border: 1px solid rgba(255, 77, 109, 0.36);
+            display: none;
+            flex-direction: column;
+            gap: 6px;
+            padding: 6px;
+        }
+
+        .inline-post-player-box.active {
+            display: flex;
+        }
+
+        .inline-post-player-box video {
+            width: 100%;
+            max-height: 220px;
+            border-radius: 12px;
+            background: #000;
+            display: block;
         }
 
         .creator-page-card {
@@ -1197,9 +1242,15 @@
             border-radius: 24px;
             padding: 12px;
             display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .movie-card-top-row {
+            display: flex;
             gap: 12px;
             align-items: center;
-            cursor: pointer;
         }
 
         .movie-poster-box {
@@ -1208,11 +1259,12 @@
             border-radius: 16px;
             overflow: hidden;
             flex-shrink: 0;
-            background: rgba(255, 46, 85, 0.14);
+            background: #090305;
             border: 1px solid rgba(255, 77, 109, 0.25);
         }
 
-        .movie-poster-box img {
+        .movie-poster-box img,
+        .movie-poster-box video {
             width: 100%;
             height: 100%;
             object-fit: cover;
@@ -1929,7 +1981,7 @@
         </div>
     </header>
 
-    <!-- پخش‌کننده فیلم/پست فعال + کنترل اتاق + چت زیر فیلم -->
+    <!-- پخش‌کننده فیلم فعال + کنترل اتاق + چت زیر فیلم -->
     <div class="player-wrapper-outer">
         <div id="active-player-box" class="glass player-card">
             <div id="player-frame-wrap" class="player-frame-wrap">
@@ -1985,7 +2037,7 @@
         </div>
     </div>
 
-    <!-- ======================= صفحه اختصاصی فیلم / پست ======================= -->
+    <!-- ======================= صفحه اختصاصی فیلم ======================= -->
     <section id="tab-movie-detail" class="page-view">
         <div class="glass movie-detail-card">
             <div class="detail-top-bar">
@@ -2011,7 +2063,7 @@
 
             <div class="detail-action-grid">
                 <button type="button" id="detail-primary-play-btn" class="btn-main" onclick="playCurrentDetailMovie()">
-                    ▶ پخش
+                    ⛶ پخش تمام‌صفحه
                 </button>
                 <button type="button" class="btn-sec" style="padding:13px 14px;" onclick="openQuickRoomModalForMovie(selectedDetailMovieId)">
                     👥 تماشا در اتاق
@@ -2081,7 +2133,7 @@
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم به‌صورت درون‌صفحه‌ای پخش می‌شوند.
+                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم روی خودشان پخش می‌شوند.
                     </div>
                 </div>
             </div>
@@ -2296,7 +2348,7 @@
 
                 <div class="field-box">
                     <label for="page-item-cover">کاور فیلم / تصویر پست (لینک عکس)</label>
-                    <input type="url" id="page-item-cover" placeholder="https://... لینک کاور">
+                    <input type="url" id="page-item-cover" placeholder="https://... لینک کاور (اختیاری؛ در صورت خالی بودن از خود ویدئو استفاده می‌شود)">
                 </div>
 
                 <div class="field-box">
@@ -2364,12 +2416,18 @@
             </div>
 
             <div id="inspected-creator-panel" class="glass filter-card" style="display:none;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                    <div>
-                        <strong id="inspected-creator-title" style="display:block; font-size:15.5px; font-weight:900; color:var(--text-strong);">پست‌ها و فیلم‌های پیج</strong>
-                        <span id="inspected-creator-handle" style="font-size:12px; color:var(--chip-text);">@handle</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img id="inspected-creator-avatar" class="creator-avatar-sm" src="" alt="پروفایل" onerror="this.src=DEFAULT_AVATAR">
+                        <div>
+                            <strong id="inspected-creator-title" style="display:block; font-size:15.5px; font-weight:900; color:var(--text-strong);">پست‌ها و فیلم‌های پیج</strong>
+                            <span id="inspected-creator-handle" style="font-size:12px; color:var(--chip-text);">@handle</span>
+                        </div>
                     </div>
-                    <button type="button" class="btn-sec" onclick="closeInspectedCreator()">✕ بستن پیج</button>
+                    <div style="display:flex; gap:6px; align-items:center;">
+                        <span id="inspected-creator-follow-btn-wrap"></span>
+                        <button type="button" class="btn-sec" onclick="closeInspectedCreator()">✕ بستن پیج</button>
+                    </div>
                 </div>
                 <div id="inspected-creator-items" class="movies-list" style="margin-bottom:0;"></div>
             </div>
@@ -2400,6 +2458,7 @@
     </section>
 
     <!-- ======================= تولبار ثابت شیشه‌ای در پایین ======================= -->
+    <!-- ترتیب RTL: راست (لیست من، اتاق، جستجو) | وسط (خانه) | چپ (پیج، اکسپلور، ادمین) -->
     <nav id="main-bottom-toolbar" class="bottom-toolbar" aria-label="تولبار پایین">
         <button type="button" id="tb-favorites" class="tb-btn" onclick="openTab('favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2418,6 +2477,14 @@
             <span>اتاق</span>
         </button>
 
+        <button type="button" id="tb-search" class="tb-btn" onclick="openTab('search')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="7"/>
+                <path d="m21 21-4.35-4.35"/>
+            </svg>
+            <span>جستجو</span>
+        </button>
+
         <button type="button" id="tb-home" class="tb-btn tb-center-home active" onclick="openTab('home')">
             <div class="home-circle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -2427,12 +2494,13 @@
             <span>خانه</span>
         </button>
 
-        <button type="button" id="tb-search" class="tb-btn" onclick="openTab('search')">
+        <button type="button" id="tb-page" class="tb-btn" style="display:none;" onclick="openTab('page')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="7"/>
-                <path d="m21 21-4.35-4.35"/>
+                <rect x="3" y="3" width="18" height="18" rx="4"/>
+                <circle cx="12" cy="10" r="3"/>
+                <path d="M7 19c1.2-2.2 3-3.5 5-3.5s3.8 1.3 5 3.5"/>
             </svg>
-            <span>جستجو</span>
+            <span>پیج</span>
         </button>
 
         <button type="button" id="tb-explore" class="tb-btn" style="display:none;" onclick="openTab('explore')">
@@ -2449,15 +2517,6 @@
                 <path d="m9 12 2 2 4-4"/>
             </svg>
             <span>ادمین</span>
-        </button>
-
-        <button type="button" id="tb-page" class="tb-btn" style="display:none;" onclick="openTab('page')">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="4"/>
-                <circle cx="12" cy="10" r="3"/>
-                <path d="M7 19c1.2-2.2 3-3.5 5-3.5s3.8 1.3 5 3.5"/>
-            </svg>
-            <span>پیج</span>
         </button>
     </nav>
 
@@ -2600,12 +2659,16 @@
             const target = moviesList.find(m => m.id === pendingDeepLinkMovieId);
             if (!target) return;
             deepLinkHandled = true;
+            if (target.itemType === "post") {
+                openTab("explore");
+                setTimeout(() => playPostInlineOnCard(target.id), 180);
+                return;
+            }
             selectedDetailMovieId = target.id;
             moviesRef.child(target.id).child("views").transaction(v => (Number(v) || 0) + 1);
             renderMovieDetailContent();
             openTab("movie-detail");
-            const shouldFull = target.itemType !== "post";
-            loadVideoSource(target, true, null, shouldFull);
+            loadVideoSource(target, true, null, true);
         }
 
         function startBootTimeoutCheck() {
@@ -2932,6 +2995,72 @@
         }
 
         // =====================================================================
+        // پخش درون‌کارت برای پست‌ها (روی خود پست بدون صفحه یا باکس مجزا)
+        // =====================================================================
+        let activeInlinePostId = null;
+
+        function stopAllInlinePostPlayers(exceptId = null) {
+            document.querySelectorAll(".inline-post-player-box").forEach(box => {
+                const boxItemId = box.dataset.postId;
+                const vid = box.querySelector("video");
+                if (vid) {
+                    try { vid.pause(); } catch (_) {}
+                }
+                if (!exceptId || boxItemId !== exceptId) {
+                    box.classList.remove("active");
+                    if (vid) {
+                        vid.removeAttribute("src");
+                        vid.load();
+                    }
+                }
+            });
+            if (!exceptId) {
+                activeInlinePostId = null;
+            }
+        }
+
+        function closeInlinePostPlayer(itemId) {
+            const box = document.querySelector(`.inline-post-player-box[data-post-id="${CSS.escape(itemId)}"]`);
+            if (box) {
+                const vid = box.querySelector("video");
+                if (vid) {
+                    try { vid.pause(); } catch (_) {}
+                    vid.removeAttribute("src");
+                    vid.load();
+                }
+                box.classList.remove("active");
+            }
+            if (activeInlinePostId === itemId) {
+                activeInlinePostId = null;
+            }
+        }
+
+        function playPostInlineOnCard(itemId) {
+            const item = moviesList.find(m => m.id === itemId);
+            if (!item || !item.videoUrl) return;
+
+            // توقف پخش‌کننده بالایی فیلم‌ها در صورت باز بودن
+            closePlayer();
+            stopAllInlinePostPlayers(itemId);
+            activeInlinePostId = itemId;
+
+            moviesRef.child(itemId).child("views").transaction(v => (Number(v) || 0) + 1);
+
+            const box = document.querySelector(`.inline-post-player-box[data-post-id="${CSS.escape(itemId)}"]`);
+            if (!box) return;
+            const vid = box.querySelector("video");
+            box.classList.add("active");
+            if (vid) {
+                vid.src = item.videoUrl;
+                vid.muted = false;
+                vid.play().catch(() => {
+                    vid.muted = true;
+                    vid.play().catch(() => {});
+                });
+            }
+        }
+
+        // =====================================================================
         // بخش اکسپلور: پیج ها | پست‌ها و فیلم‌های تفکیک‌شده اسکرولی چپ و راست | فالو شده ها
         // =====================================================================
         let activeExploreSubtab = "feed";
@@ -2967,16 +3096,38 @@
             renderExploreRandomTracks();
         }
 
-        function inspectCreatorPage(creatorId) {
+        function openCreatorPageInExplore(creatorId) {
+            if (!creatorId) return;
             inspectedCreatorId = creatorId;
-            renderExplorePagesSection();
+            switchExploreSubtab("pages");
             const panel = document.getElementById("inspected-creator-panel");
-            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+            if (panel) {
+                setTimeout(() => panel.scrollIntoView({ behavior: "smooth", block: "nearest" }), 80);
+            }
         }
 
         function closeInspectedCreator() {
             inspectedCreatorId = null;
             renderExplorePagesSection();
+        }
+
+        function getCreatorInfo(itemOrUid) {
+            const uid = typeof itemOrUid === "string" ? itemOrUid : (itemOrUid && itemOrUid.authorId);
+            const uData = (uid && allUsersMap[uid]) || {};
+            const name = (uid === persistentUserId ? currentUserName : "") ||
+                uData.name ||
+                (typeof itemOrUid === "object" && itemOrUid.authorName) ||
+                "کاربر";
+            const handle = normalizeHandle(
+                (uid === persistentUserId ? currentUserHandle : "") ||
+                uData.handle ||
+                (typeof itemOrUid === "object" && itemOrUid.authorHandle) ||
+                "@user"
+            ) || "@user";
+            const avatar = (uid === persistentUserId ? currentUserAvatar : "") ||
+                uData.avatar ||
+                DEFAULT_AVATAR;
+            return { uid, name, handle, avatar };
         }
 
         function renderExplorePagesSection() {
@@ -3001,13 +3152,29 @@
             const inspPanel = document.getElementById("inspected-creator-panel");
             const inspItemsBox = document.getElementById("inspected-creator-items");
             if (inspectedCreatorId && inspPanel && inspItemsBox) {
-                const targetPage = pagesFromUsers.find(p => p.uid === inspectedCreatorId);
+                const cInfo = getCreatorInfo(inspectedCreatorId);
                 const creatorItems = moviesList.filter(m => m.authorId === inspectedCreatorId);
+                const isMe = inspectedCreatorId === persistentUserId;
+                const isFollowed = followingList.includes(inspectedCreatorId);
+
                 inspPanel.style.display = "block";
-                document.getElementById("inspected-creator-title").innerText =
-                    targetPage ? `محتوای پیج ${targetPage.name}` : "محتوای پیج";
-                document.getElementById("inspected-creator-handle").innerText =
-                    targetPage ? targetPage.handle : "";
+                const avEl = document.getElementById("inspected-creator-avatar");
+                if (avEl) {
+                    avEl.src = cInfo.avatar || DEFAULT_AVATAR;
+                    avEl.onerror = () => { avEl.src = DEFAULT_AVATAR; };
+                }
+                document.getElementById("inspected-creator-title").innerText = `پیج ${cInfo.name}`;
+                document.getElementById("inspected-creator-handle").innerText = cInfo.handle;
+
+                const followWrap = document.getElementById("inspected-creator-follow-btn-wrap");
+                if (followWrap) {
+                    if (isMe) {
+                        followWrap.innerHTML = `<span class="pill-tag" style="margin-bottom:0;">پیج شما</span>`;
+                    } else {
+                        followWrap.innerHTML = `<button type="button" class="${isFollowed ? "btn-sec" : "btn-watch"}" style="padding:6px 12px; font-size:11.5px;" onclick="toggleFollowUser('${escAttr(inspectedCreatorId)}')">${isFollowed ? "✓ دنبال‌شده" : "+ فالو"}</button>`;
+                    }
+                }
+
                 inspItemsBox.innerHTML = creatorItems.length
                     ? creatorItems.map(buildMovieCardHtml).join("")
                     : `<div class="empty-note">این پیج هنوز پست یا فیلمی منتشر نکرده است.</div>`;
@@ -3026,7 +3193,7 @@
                 const itemsCount = moviesList.filter(m => m.authorId === p.uid).length;
                 return `
                     <div class="glass creator-page-card">
-                        <div class="creator-page-info" onclick="inspectCreatorPage('${escAttr(p.uid)}')">
+                        <div class="creator-page-info" onclick="openCreatorPageInExplore('${escAttr(p.uid)}')">
                             <img class="creator-avatar-sm" src="${escAttr(p.avatar)}" alt="${escAttr(p.name)}" onerror="this.src='${DEFAULT_AVATAR}'">
                             <div style="min-width:0; flex:1;">
                                 <strong style="display:block; font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(p.name)}</strong>
@@ -3034,7 +3201,7 @@
                             </div>
                         </div>
                         <div style="display:flex; gap:6px; align-items:center;">
-                            <button type="button" class="btn-sec" style="padding:7px 10px; font-size:11px;" onclick="inspectCreatorPage('${escAttr(p.uid)}')">مشاهده</button>
+                            <button type="button" class="btn-sec" style="padding:7px 10px; font-size:11px;" onclick="openCreatorPageInExplore('${escAttr(p.uid)}')">مشاهده</button>
                             ${!isMe ? `
                                 <button type="button" class="${isFollowed ? "btn-sec" : "btn-watch"}" style="padding:7px 11px; font-size:11px;" onclick="toggleFollowUser('${escAttr(p.uid)}')">
                                     ${isFollowed ? "✓ دنبال‌شده" : "+ فالو"}
@@ -3046,22 +3213,70 @@
             }).join("");
         }
 
+        function renderCardCoverHtml(item, cssClass) {
+            const hasCustomCover = Boolean(item.poster && item.poster.trim());
+            if (hasCustomCover) {
+                return `<img class="${cssClass}" src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
+            }
+            if (item.itemType === "post" && item.videoUrl) {
+                return `<video class="${cssClass}" src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline></video>`;
+            }
+            return `<img class="${cssClass}" src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
+        }
+
         function buildHorizontalExploreCard(item) {
-            const coverSrc = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
             const isPost = item.itemType === "post";
             const kindLabel = isPost ? "پست" : "فیلم";
-            const playFull = isPost ? "false" : "true";
+            const cInfo = getCreatorInfo(item);
+            const hasCreator = Boolean(cInfo.uid);
+            const isMe = cInfo.uid === persistentUserId;
+            const isFollowed = cInfo.uid ? followingList.includes(cInfo.uid) : false;
+
+            const onCardClick = isPost
+                ? `playPostInlineOnCard('${escAttr(item.id)}')`
+                : `openMovieDetail('${escAttr(item.id)}', 'explore')`;
+
+            const onPlayClick = isPost
+                ? `playPostInlineOnCard('${escAttr(item.id)}')`
+                : `playMovieById('${escAttr(item.id)}', true)`;
+
             return `
-                <div class="glass explore-story-card" onclick="openMovieDetail('${escAttr(item.id)}', 'explore')">
-                    <img class="explore-story-cover" src="${escAttr(coverSrc)}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
+                <div class="glass explore-story-card" onclick="${onCardClick}">
+                    ${hasCreator ? `
+                        <div class="explore-author-strip" onclick="event.stopPropagation(); openCreatorPageInExplore('${escAttr(cInfo.uid)}')">
+                            <div style="display:flex; align-items:center; gap:7px; min-width:0; flex:1;">
+                                <img class="explore-author-avatar" src="${escAttr(cInfo.avatar)}" alt="${escAttr(cInfo.name)}" onerror="this.src='${DEFAULT_AVATAR}'">
+                                <div style="min-width:0;">
+                                    <strong style="display:block; font-size:11.5px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.name)}</strong>
+                                    <span style="display:block; font-size:10px; color:var(--chip-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.handle)}</span>
+                                </div>
+                            </div>
+                            ${!isMe ? `
+                                <button type="button" class="${isFollowed ? "btn-sec" : "btn-watch"}" style="padding:4px 8px; font-size:10px;" onclick="event.stopPropagation(); toggleFollowUser('${escAttr(cInfo.uid)}')">
+                                    ${isFollowed ? "✓" : "+ فالو"}
+                                </button>
+                            ` : ``}
+                        </div>
+                    ` : ``}
+
+                    ${renderCardCoverHtml(item, "explore-story-cover")}
+
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                         <span class="pill-tag" style="margin-bottom:0;">${esc(kindLabel)}</span>
                         ${renderLangBadgeHtml(item.langType || "dub")}
                     </div>
                     <strong style="font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.title)}</strong>
                     <span style="font-size:11px; color:var(--text-muted);">${esc(item.genre || "درام")} ${item.year ? "• " + esc(item.year) : ""}</span>
+
+                    ${isPost ? `
+                        <div class="inline-post-player-box ${activeInlinePostId === item.id ? "active" : ""}" data-post-id="${escAttr(item.id)}" onclick="event.stopPropagation()">
+                            <video controls playsinline webkit-playsinline preload="none"></video>
+                            <button type="button" class="btn-sec" style="padding:5px 8px; font-size:11px;" onclick="closeInlinePostPlayer('${escAttr(item.id)}')">✕ بستن پست</button>
+                        </div>
+                    ` : ``}
+
                     <div style="display:flex; gap:6px; margin-top:auto;" onclick="event.stopPropagation()">
-                        <button type="button" class="btn-watch" style="flex:1;" onclick="playMovieById('${escAttr(item.id)}', ${playFull})">▶ پخش</button>
+                        <button type="button" class="btn-watch" style="flex:1;" onclick="${onPlayClick}">▶ پخش</button>
                         <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(item.id)}')">🔗</button>
                     </div>
                 </div>
@@ -3299,6 +3514,7 @@
 
         function openLiveTvScreen() {
             if (!videoEl.paused) videoEl.pause();
+            stopAllInlinePostPlayers();
             document.body.classList.add("livetv-active");
             document.getElementById("livetv-overlay-screen").classList.add("show");
 
@@ -3581,7 +3797,7 @@
         }
 
         // =====================================================================
-        // پخش‌کننده اصلی + قطع کامل هنگام بستن + پخش درون‌صفحه‌ای پست‌ها
+        // پخش‌کننده اصلی فیلم‌ها + قطع کامل هنگام بستن
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -3861,17 +4077,15 @@
 
         function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
             if (!mv || !mv.videoUrl) return;
+            stopAllInlinePostPlayers();
             playbackStoppedManually = false;
             currentLoadedMovieObj = mv;
-
-            const isPostItem = mv.itemType === "post";
-            const allowAutoFull = Boolean(autoFullscreen && !isPostItem);
 
             const box = document.getElementById("active-player-box");
             box.classList.add("show");
             document.getElementById("now-playing-title").innerText = mv.title;
             document.getElementById("now-playing-meta").innerText =
-                `${isPostItem ? "پست • پخش درون‌صفحه‌ای" : (mv.genre || "فیلم")} ${mv.year ? "• " + mv.year : ""}`;
+                `${mv.genre || "فیلم"} ${mv.year ? "• " + mv.year : ""}`;
             setMoviePlayerStatus("در حال بارگذاری...", false, false);
 
             const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
@@ -3879,7 +4093,7 @@
             plyrInstance.poster = posterUrl;
 
             const triggerFullAfterPlay = () => {
-                if (allowAutoFull && !playbackStoppedManually) {
+                if (autoFullscreen && !playbackStoppedManually) {
                     setTimeout(() => {
                         if (!playbackStoppedManually && !isCurrentlyFullscreen()) {
                             enterFullscreenNow();
@@ -3944,6 +4158,12 @@
             const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
 
+            // پست‌ها روی خودشان پخش می‌شوند و صفحه جداگانه باز نمی‌کنند
+            if (mv.itemType === "post") {
+                playPostInlineOnCard(id);
+                return;
+            }
+
             const currentActive = document.querySelector(".page-view.active");
             if (fromTab) {
                 previousTabBeforeDetail = fromTab;
@@ -3963,22 +4183,14 @@
             const mv = moviesList.find(m => m.id === selectedDetailMovieId);
             if (!mv) return;
 
-            const isPost = mv.itemType === "post";
             const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const posterEl = document.getElementById("detail-poster-img");
             posterEl.src = posterSrc;
             posterEl.alt = mv.title || "کاور";
             posterEl.onerror = () => { posterEl.src = FALLBACK_POSTER; };
 
-            const kindBadge = document.getElementById("detail-item-kind-badge");
-            if (kindBadge) {
-                kindBadge.innerText = isPost ? "صفحه پست (پخش درون‌صفحه‌ای)" : "صفحه فیلم";
-            }
-
-            const playBtn = document.getElementById("detail-primary-play-btn");
-            if (playBtn) {
-                playBtn.innerText = isPost ? "▶ پخش در همین صفحه" : "⛶ پخش تمام‌صفحه";
-            }
+            document.getElementById("detail-item-kind-badge").innerText = "صفحه فیلم";
+            document.getElementById("detail-primary-play-btn").innerText = "⛶ پخش تمام‌صفحه";
 
             document.getElementById("detail-movie-title").innerText = mv.title || "بدون عنوان";
             const langContainer = document.getElementById("detail-movie-lang-badge");
@@ -4009,17 +4221,18 @@
 
         function playCurrentDetailMovie() {
             if (!selectedDetailMovieId) return;
-            const mv = moviesList.find(m => m.id === selectedDetailMovieId);
-            const fullScreen = mv && mv.itemType === "post" ? false : true;
-            playMovieById(selectedDetailMovieId, fullScreen);
+            playMovieById(selectedDetailMovieId, true);
         }
 
         function playMovieById(id, fullScreen = true) {
-            leaveActiveRoom();
             const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
-            const shouldFull = mv.itemType === "post" ? false : Boolean(fullScreen);
-            loadVideoSource(mv, true, null, shouldFull);
+            if (mv.itemType === "post") {
+                playPostInlineOnCard(id);
+                return;
+            }
+            leaveActiveRoom();
+            loadVideoSource(mv, true, null, Boolean(fullScreen));
         }
 
         function closePlayer() {
@@ -4447,6 +4660,7 @@
                 return;
             }
 
+            stopAllInlinePostPlayers();
             document.body.classList.toggle("explore-mode-active", tabKey === "explore");
 
             document.querySelectorAll(".page-view").forEach(p => p.classList.remove("active"));
@@ -4540,34 +4754,47 @@
 
         function buildMovieCardHtml(mv) {
             const isFav = favIds.includes(mv.id);
-            const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const viewsCount = Number(mv.views) || 0;
             const isPost = mv.itemType === "post";
             const kindTag = isPost ? "پست" : "فیلم";
-            const fullScreenArg = isPost ? "false" : "true";
+            const onCardClick = isPost
+                ? `playPostInlineOnCard('${escAttr(mv.id)}')`
+                : `openMovieDetail('${escAttr(mv.id)}')`;
+            const onPlayClick = isPost
+                ? `playPostInlineOnCard('${escAttr(mv.id)}')`
+                : `playMovieById('${escAttr(mv.id)}', true)`;
+
             return `
-                <div class="glass movie-card" onclick="openMovieDetail('${escAttr(mv.id)}')">
-                    <div class="movie-poster-box">
-                        <img src="${escAttr(posterSrc)}" alt="${escAttr(mv.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
-                    </div>
-                    <div class="movie-info-col">
-                        <strong>${esc(mv.title)}</strong>
-                        <div class="movie-sub-meta">
-                            ${renderLangBadgeHtml(mv.langType || "dub")}
-                            <span>${esc(kindTag)} • ${esc(mv.genre || "درام")}</span>
-                            ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
-                            <span>• 👁 ${viewsCount}</span>
+                <div class="glass movie-card" onclick="${onCardClick}">
+                    <div class="movie-card-top-row">
+                        <div class="movie-poster-box">
+                            ${renderCardCoverHtml(mv, "")}
                         </div>
-                        <div class="movie-desc-short">${esc(mv.desc || "برای مشاهده توضیحات و پخش ضربه بزنید")}</div>
-                        <div class="movie-actions-row" onclick="event.stopPropagation()">
-                            <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(mv.id)}', ${fullScreenArg})">▶ پخش</button>
-                            <button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>
-                            <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 اشتراک</button>
-                            <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">
-                                ${isFav ? "♥" : "♡"}
-                            </button>
+                        <div class="movie-info-col">
+                            <strong>${esc(mv.title)}</strong>
+                            <div class="movie-sub-meta">
+                                ${renderLangBadgeHtml(mv.langType || "dub")}
+                                <span>${esc(kindTag)} • ${esc(mv.genre || "درام")}</span>
+                                ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
+                                <span>• 👁 ${viewsCount}</span>
+                            </div>
+                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش مستقیم روی همین پست ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
+                            <div class="movie-actions-row" onclick="event.stopPropagation()">
+                                <button type="button" class="btn-watch" onclick="${onPlayClick}">▶ پخش</button>
+                                ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>` : ``}
+                                <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 اشتراک</button>
+                                <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">
+                                    ${isFav ? "♥" : "♡"}
+                                </button>
+                            </div>
                         </div>
                     </div>
+                    ${isPost ? `
+                        <div class="inline-post-player-box ${activeInlinePostId === mv.id ? "active" : ""}" data-post-id="${escAttr(mv.id)}" onclick="event.stopPropagation()">
+                            <video controls playsinline webkit-playsinline preload="none"></video>
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="closeInlinePostPlayer('${escAttr(mv.id)}')">✕ بستن پخش پست</button>
+                        </div>
+                    ` : ``}
                 </div>
             `;
         }
