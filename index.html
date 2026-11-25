@@ -23,7 +23,8 @@
             --glass-border: rgba(255, 59, 92, 0.28);
             --surface-sub: rgba(14, 4, 8, 0.72);
             --input-bg: rgba(12, 4, 7, 0.82);
-            --toolbar-bg: rgba(24, 7, 13, 0.9);
+            --header-bar-bg: rgba(20, 6, 11, 0.74);
+            --toolbar-bg: rgba(22, 7, 12, 0.76);
             --red-primary: #ff2e55;
             --red-dark: #b80f30;
             --red-soft: rgba(255, 46, 85, 0.16);
@@ -46,7 +47,8 @@
             --glass-border: rgba(255, 255, 255, 0.9);
             --surface-sub: rgba(255, 255, 255, 0.68);
             --input-bg: rgba(255, 255, 255, 0.85);
-            --toolbar-bg: rgba(255, 255, 255, 0.82);
+            --header-bar-bg: rgba(255, 255, 255, 0.74);
+            --toolbar-bg: rgba(255, 255, 255, 0.76);
             --red-primary: #e6294d;
             --red-dark: #b80f30;
             --red-soft: rgba(230, 41, 77, 0.12);
@@ -76,13 +78,15 @@
             min-height: 100vh;
             line-height: 1.65;
             overflow-x: hidden;
-            padding-bottom: 108px;
+            padding-top: 72px;
+            padding-bottom: 104px;
             transition: background 0.3s ease, color 0.3s ease;
         }
 
         body.app-boot-locked,
         body.livetv-active {
             overflow: hidden;
+            padding-top: 0;
             padding-bottom: 0;
         }
 
@@ -272,52 +276,59 @@
             padding: 22px;
         }
 
-        /* هدر موبایل */
+        /* هدر ثابت شفاف شیشه‌ای در بالا */
         .top-header {
-            position: sticky;
+            position: fixed;
             top: 0;
-            z-index: 80;
-            padding: 10px 12px;
+            left: 0;
+            right: 0;
+            z-index: 200;
+            padding: 9px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 6px;
-            border-bottom-left-radius: 24px;
-            border-bottom-right-radius: 24px;
+            background: var(--header-bar-bg);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border-bottom: 1.5px solid var(--glass-border);
+            border-bottom-left-radius: 22px;
+            border-bottom-right-radius: 22px;
+            box-shadow: var(--glass-highlight), 0 8px 24px rgba(0, 0, 0, 0.12);
+            transform: translateZ(0);
         }
 
         .brand-row {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
             min-width: 0;
         }
 
         .brand-logo-box {
-            width: 34px;
-            height: 34px;
-            border-radius: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 11px;
             background: linear-gradient(135deg, #ff4766, #9e0b28);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 6px 18px var(--red-glow);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 4px 12px var(--red-glow);
         }
 
         .brand-row strong {
             display: block;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 900;
-            letter-spacing: 0.2px;
             color: var(--text-strong);
             white-space: nowrap;
         }
 
         .brand-row span {
             display: block;
-            font-size: 10px;
+            font-size: 9.5px;
             color: var(--text-muted);
             white-space: nowrap;
         }
@@ -340,22 +351,21 @@
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
             white-space: nowrap;
-            box-shadow: 0 4px 14px var(--red-glow);
+            box-shadow: 0 4px 12px var(--red-glow);
         }
 
         .live-dot {
-            width: 7px;
-            height: 7px;
+            width: 6px;
+            height: 6px;
             border-radius: 50%;
             background: #fff;
-            animation: pulseCore 1s infinite;
+            flex-shrink: 0;
         }
 
         .theme-toggle-btn {
             background: var(--red-soft);
-            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 77, 109, 0.36);
             color: var(--text-strong);
             font-size: 10.5px;
@@ -371,7 +381,6 @@
 
         .user-chip-btn {
             background: var(--surface-sub);
-            backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 77, 109, 0.34);
             color: var(--text-light);
             font-size: 10.5px;
@@ -379,7 +388,7 @@
             padding: 5px 8px;
             border-radius: 999px;
             cursor: pointer;
-            max-width: 76px;
+            max-width: 72px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -399,7 +408,7 @@
         /* کانتینر صفحات */
         .page-view {
             display: none;
-            padding: 16px;
+            padding: 14px 16px 16px;
             max-width: 560px;
             margin: 0 auto;
             animation: fadePage 0.2s ease;
@@ -488,10 +497,12 @@
             display: flex;
             gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .livetv-search-row input {
             flex: 1;
+            min-width: 170px;
             background: var(--input-bg);
             border: 1.5px solid rgba(255, 77, 109, 0.34);
             border-radius: 14px;
@@ -540,7 +551,7 @@
             color: var(--text-muted);
         }
 
-        /* دکمه شناور خروج از تمام‌صفحه برای حل دائمی باگ گیر افتادن */
+        /* دکمه شناور خروج از تمام‌صفحه */
         .floating-exit-fs-btn {
             position: fixed;
             top: 14px;
@@ -640,7 +651,7 @@
 
         /* باکس پخش‌کننده فیلم و تمام صفحه */
         .player-wrapper-outer {
-            padding: 12px 16px 0;
+            padding: 8px 16px 0;
             max-width: 560px;
             margin: 0 auto;
             position: relative;
@@ -1317,7 +1328,7 @@
             cursor: pointer;
         }
 
-        /* تولبار ثابت پایین (۵ آیتم) */
+        /* تولبار ثابت شفاف شیشه‌ای در پایین (۵ آیتم) */
         .bottom-toolbar {
             position: fixed;
             bottom: 10px;
@@ -1325,18 +1336,19 @@
             right: 10px;
             max-width: 560px;
             margin: 0 auto;
-            height: 72px;
+            height: 70px;
             border-radius: 24px;
             background: var(--toolbar-bg);
-            backdrop-filter: blur(24px);
-            -webkit-backdrop-filter: blur(24px);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
             border: 1.5px solid rgba(255, 77, 109, 0.34);
-            box-shadow: inset 0 1px 0 rgba(255,255,255,0.16), var(--shadow-soft);
+            box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 28px rgba(0, 0, 0, 0.16);
             display: grid;
             grid-template-columns: repeat(5, 1fr);
             align-items: center;
-            z-index: 85;
+            z-index: 200;
             padding: 0 4px;
+            transform: translateZ(0);
         }
 
         .tb-btn {
@@ -1388,18 +1400,18 @@
 </head>
 <body class="app-boot-locked">
 
-    <!-- دکمه شناور خروج از تمام‌صفحه (همیشه بالای لایه تمام‌صفحه برای جلوگیری از گیر افتادن) -->
+    <!-- دکمه شناور خروج از تمام‌صفحه -->
     <button type="button" id="floating-exit-fs-btn" class="floating-exit-fs-btn" onclick="exitFullscreenNow()">
         ✕ خروج از تمام‌صفحه
     </button>
 
-    <!-- فضای جداگانه پخش زنده شبکه‌ها (LIVE TV) -->
+    <!-- فضای مستقل پخش زنده شبکه‌ها (LIVE TV) -->
     <div id="livetv-overlay-screen" class="livetv-overlay-screen">
         <div class="glass livetv-shell">
             <div class="livetv-top-header">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="live-dot" style="background:var(--red-primary); width:9px; height:9px;"></span>
-                    <strong style="font-size:16px; font-weight:900; color:var(--text-strong);">LIVE TV</strong>
+                    <span class="live-dot" style="background:var(--red-primary); width:8px; height:8px;"></span>
+                    <strong style="font-size:15.5px; font-weight:900; color:var(--text-strong);">LIVE TV</strong>
                     <span id="livetv-count-badge" class="pill-tag" style="margin-bottom:0;">در حال بارگذاری...</span>
                 </div>
                 <button type="button" class="btn-main" style="width:auto; padding:8px 14px; font-size:12px;" onclick="closeLiveTvScreen()">
@@ -1425,7 +1437,8 @@
             </div>
 
             <div class="livetv-search-row">
-                <input type="search" id="livetv-search-input" placeholder="جستجوی نام شبکه یا کشور (مثلاً: BBC, News, Music)..." oninput="filterLiveTvChannels()">
+                <input type="search" id="livetv-search-input" placeholder="جستجوی نام شبکه یا کشور (مثلاً: News, Sport, Music)..." oninput="filterLiveTvChannels()">
+                <button type="button" id="livetv-hls-only-btn" class="btn-sec" onclick="toggleLiveTvHlsFilter()">HLS فعال</button>
                 <button type="button" class="btn-sec" onclick="clearLiveTvSearch()">پاک</button>
             </div>
 
@@ -1513,10 +1526,10 @@
     </div>
 
     <!-- هدر -->
-    <header class="glass top-header">
+    <header class="top-header">
         <div class="brand-row">
             <div class="brand-logo-box" aria-hidden="true">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="6 4 20 12 6 20 6 4"/>
                 </svg>
             </div>
@@ -2063,14 +2076,13 @@
         let liveTvChannels = [];
         let liveTvFiltered = [];
         let liveTvLoadedOnce = false;
+        let liveTvOnlyHls = true;
         let liveTvHls = null;
         let activeLiveTvUrl = "";
+        let liveTvFailoverTimer = null;
 
         function openLiveTvScreen() {
-            // توقف پخش فیلم یا اتاق در صورت باز بودن
-            const mv = moviesList.find(m => m.id === currentLoadedMovieId);
-            if (mv && !videoEl.paused) videoEl.pause();
-
+            if (!videoEl.paused) videoEl.pause();
             document.body.classList.add("livetv-active");
             document.getElementById("livetv-overlay-screen").classList.add("show");
 
@@ -2090,6 +2102,10 @@
         }
 
         function stopLiveTvStream() {
+            if (liveTvFailoverTimer) {
+                clearTimeout(liveTvFailoverTimer);
+                liveTvFailoverTimer = null;
+            }
             activeLiveTvUrl = "";
             if (liveTvHls) {
                 liveTvHls.destroy();
@@ -2112,20 +2128,19 @@
                     const commaIdx = line.indexOf(",");
                     const title = commaIdx !== -1 ? line.slice(commaIdx + 1).trim() : "شبکه زنده";
                     const groupMatch = line.match(/group-title="([^"]*)"/i);
-                    const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
                     pendingMeta = {
                         name: title || "شبکه زنده",
-                        group: groupMatch ? groupMatch[1].trim() : "زنده",
-                        logo: logoMatch ? logoMatch[1].trim() : ""
+                        group: groupMatch ? groupMatch[1].trim() : "زنده"
                     };
                 } else if (!line.startsWith("#") && /^https?:\/\//i.test(line)) {
-                    const meta = pendingMeta || { name: "شبکه زنده", group: "زنده", logo: "" };
+                    const meta = pendingMeta || { name: "شبکه زنده", group: "زنده" };
+                    const isHls = /\.m3u8(\?|$)/i.test(line);
                     channels.push({
                         id: "ch_" + channels.length,
                         name: meta.name,
                         group: meta.group,
-                        logo: meta.logo,
-                        url: line
+                        url: line,
+                        isHls
                     });
                     pendingMeta = null;
                 }
@@ -2144,13 +2159,10 @@
                 if (!res.ok) throw new Error("HTTP " + res.status);
                 const text = await res.text();
                 liveTvChannels = parseM3uText(text);
-                liveTvFiltered = liveTvChannels.slice();
                 liveTvLoadedOnce = true;
+                filterLiveTvChannels();
 
-                badge.innerText = `${liveTvChannels.length} شبکه`;
-                renderLiveTvChannels();
-
-                if (liveTvChannels.length > 0) {
+                if (liveTvFiltered.length > 0) {
                     quickPlayLiveTv();
                 }
             } catch (_) {
@@ -2166,16 +2178,26 @@
             }
         }
 
+        function toggleLiveTvHlsFilter() {
+            liveTvOnlyHls = !liveTvOnlyHls;
+            const btn = document.getElementById("livetv-hls-only-btn");
+            if (btn) {
+                btn.className = liveTvOnlyHls ? "btn-sync-now" : "btn-sec";
+            }
+            filterLiveTvChannels();
+        }
+
         function filterLiveTvChannels() {
             const q = (document.getElementById("livetv-search-input").value || "").trim().toLowerCase();
-            if (!q) {
-                liveTvFiltered = liveTvChannels.slice();
-            } else {
-                liveTvFiltered = liveTvChannels.filter(ch =>
-                    ch.name.toLowerCase().includes(q) ||
-                    ch.group.toLowerCase().includes(q)
-                );
-            }
+            const badge = document.getElementById("livetv-count-badge");
+
+            liveTvFiltered = liveTvChannels.filter(ch => {
+                if (liveTvOnlyHls && !ch.isHls) return false;
+                if (!q) return true;
+                return ch.name.toLowerCase().includes(q) || ch.group.toLowerCase().includes(q);
+            });
+
+            if (badge) badge.innerText = `${liveTvFiltered.length} شبکه`;
             renderLiveTvChannels();
         }
 
@@ -2190,19 +2212,18 @@
             if (!listBox) return;
 
             if (!liveTvFiltered.length) {
-                listBox.innerHTML = `<div class="empty-note">شبکه‌ای با این نام پیدا نشد.</div>`;
+                listBox.innerHTML = `<div class="empty-note">شبکه‌ای با این فیلتر پیدا نشد.</div>`;
                 return;
             }
 
-            // نمایش سریع تا ۲۵۰ شبکه هم‌زمان برای سرعت بالای سرچ و رندر
             const visibleSlice = liveTvFiltered.slice(0, 250);
             listBox.innerHTML = visibleSlice.map(ch => {
                 const isPlaying = ch.url === activeLiveTvUrl;
                 return `
-                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.name)}', '${escAttr(ch.group)}')">
+                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.name)}', '${escAttr(ch.group)}', true)">
                         <div class="livetv-channel-meta" style="min-width:0; flex:1;">
                             <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(ch.name)}</strong>
-                            <span>${esc(ch.group || "پخش زنده")}</span>
+                            <span>${esc(ch.group || "پخش زنده")} ${ch.isHls ? "• HLS" : ""}</span>
                         </div>
                         <button type="button" class="btn-watch" style="padding:6px 11px; font-size:11px;">
                             ${isPlaying ? "▶ در حال پخش" : "▶ پخش"}
@@ -2212,11 +2233,27 @@
             }).join("");
         }
 
-        function playLiveTvChannel(url, name, group = "زنده") {
+        function findNextLiveTvChannel(currentUrl) {
+            const pool = liveTvFiltered.length ? liveTvFiltered : liveTvChannels;
+            if (!pool.length) return null;
+            const idx = pool.findIndex(c => c.url === currentUrl);
+            for (let offset = 1; offset <= Math.min(pool.length, 15); offset++) {
+                const candidate = pool[(idx + offset + pool.length) % pool.length];
+                if (candidate && candidate.url !== currentUrl) return candidate;
+            }
+            return null;
+        }
+
+        function playLiveTvChannel(url, name, group = "زنده", autoSkipOnDead = false) {
             if (!url) return;
+            if (liveTvFailoverTimer) {
+                clearTimeout(liveTvFailoverTimer);
+                liveTvFailoverTimer = null;
+            }
+
             activeLiveTvUrl = url;
             document.getElementById("livetv-current-title").innerText = name || "شبکه زنده";
-            document.getElementById("livetv-status-text").innerText = `در حال اتصال (${group})...`;
+            document.getElementById("livetv-status-text").innerText = `در حال اتصال به استریم (${group})...`;
             renderLiveTvChannels();
 
             if (liveTvHls) {
@@ -2224,48 +2261,76 @@
                 liveTvHls = null;
             }
 
-            const startPlayback = () => {
-                const p = liveTvVideoEl.play();
-                if (p && p.then) {
-                    p.then(() => {
-                        document.getElementById("livetv-status-text").innerText = `پخش زنده • ${group}`;
-                    }).catch(() => {
-                        liveTvVideoEl.muted = true;
-                        liveTvVideoEl.play().catch(() => {});
-                        document.getElementById("livetv-status-text").innerText = `پخش زنده (بی‌صدا تا لمس صدا) • ${group}`;
-                    });
+            let switched = false;
+            const tryNextStream = (reasonText) => {
+                if (switched || !autoSkipOnDead) {
+                    document.getElementById("livetv-status-text").innerText = reasonText;
+                    return;
+                }
+                switched = true;
+                const nextCh = findNextLiveTvChannel(url);
+                if (nextCh) {
+                    document.getElementById("livetv-status-text").innerText =
+                        `استریم قبلی پاسخ نداد؛ در حال رفتن به «${nextCh.name}»...`;
+                    setTimeout(() => {
+                        playLiveTvChannel(nextCh.url, nextCh.name, nextCh.group, true);
+                    }, 220);
                 }
             };
+
+            liveTvFailoverTimer = setTimeout(() => {
+                if (liveTvVideoEl.readyState < 2 && liveTvVideoEl.paused) {
+                    tryNextStream("زمان اتصال به شبکه تمام شد؛ شبکه دیگری انتخاب کنید.");
+                }
+            }, 6500);
+
+            const onPlayingSuccess = () => {
+                if (liveTvFailoverTimer) {
+                    clearTimeout(liveTvFailoverTimer);
+                    liveTvFailoverTimer = null;
+                }
+                document.getElementById("livetv-status-text").innerText = `پخش زنده فعال • ${group}`;
+            };
+
+            liveTvVideoEl.onplaying = onPlayingSuccess;
 
             if (/\.m3u8(\?|$)/i.test(url) && window.Hls && window.Hls.isSupported()) {
                 liveTvHls = new window.Hls({
                     enableWorker: true,
-                    lowLatencyMode: true
+                    lowLatencyMode: true,
+                    manifestLoadingTimeOut: 5000,
+                    fragLoadingTimeOut: 6000
                 });
                 liveTvHls.loadSource(url);
                 liveTvHls.attachMedia(liveTvVideoEl);
-                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                    liveTvVideoEl.play().catch(() => {
+                        liveTvVideoEl.muted = true;
+                        liveTvVideoEl.play().catch(() => {});
+                    });
+                });
                 liveTvHls.on(window.Hls.Events.ERROR, (_, errData) => {
                     if (errData && errData.fatal) {
-                        document.getElementById("livetv-status-text").innerText =
-                            "استریم این شبکه در دسترس نیست؛ شبکه دیگری انتخاب کنید.";
+                        tryNextStream("این استریم در دسترس نیست؛ شبکه دیگری انتخاب کنید.");
                     }
                 });
             } else {
                 liveTvVideoEl.src = url;
                 liveTvVideoEl.onerror = () => {
-                    document.getElementById("livetv-status-text").innerText =
-                        "استریم این شبکه خطا داد؛ شبکه دیگری انتخاب کنید.";
+                    tryNextStream("استریم این شبکه خطا داد؛ شبکه دیگری انتخاب کنید.");
                 };
-                startPlayback();
+                liveTvVideoEl.play().catch(() => {
+                    liveTvVideoEl.muted = true;
+                    liveTvVideoEl.play().catch(() => {});
+                });
             }
         }
 
         function quickPlayLiveTv() {
             const pool = liveTvFiltered.length ? liveTvFiltered : liveTvChannels;
             if (!pool || !pool.length) return;
-            const preferred = pool.find(ch => /\.m3u8(\?|$)/i.test(ch.url)) || pool[0];
-            playLiveTvChannel(preferred.url, preferred.name, preferred.group);
+            const preferred = pool.find(ch => ch.isHls) || pool[0];
+            playLiveTvChannel(preferred.url, preferred.name, preferred.group, true);
         }
 
         function enterLiveTvFullscreen() {
