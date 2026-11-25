@@ -1705,14 +1705,14 @@
             border: 1.5px solid rgba(255, 77, 109, 0.34);
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 28px rgba(0, 0, 0, 0.16);
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             align-items: center;
             z-index: 200;
             padding: 0 4px;
             transform: translateZ(0);
         }
 
-        .bottom-toolbar.has-page-tab {
+        .bottom-toolbar.account-ready {
             grid-template-columns: repeat(7, 1fr);
         }
 
@@ -1872,7 +1872,7 @@
             <span class="pill-tag">امنیت و حساب کاربری ZEUC MOVIE</span>
             <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--text-strong);">ساخت پروفایل، آیدی و رمز اختصاصی</h2>
             <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
-                برای افزایش امنیت آیدی شخصی خود، یک رمز اختصاصی تعیین کنید تا تب «پیج» برایتان فعال شود.
+                پس از تکمیل حساب کاربری، منوهای «پیج» و «اکسپلور» برایتان فعال می‌شوند.
             </p>
             <form onsubmit="saveUserProfileModal(event)">
                 <div class="field-box">
@@ -1896,7 +1896,7 @@
                     <label for="modal-user-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
                     <input type="file" id="modal-user-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event)">
                 </div>
-                <button type="submit" class="btn-main">ثبت امن حساب و فعال‌سازی پیج</button>
+                <button type="submit" class="btn-main">ثبت امن حساب و فعال‌سازی پیج و اکسپلور</button>
             </form>
         </div>
     </div>
@@ -2098,7 +2098,7 @@
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        با زدن «اکسپلور» در تولبار پایین، می‌توانید بین پیج‌ها سرچ و فالو کنید، پست‌ها و فیلم‌ها را به صورت رندوم چپ و راست اسکرول کنید و جدیدترین محتوای فالو شده‌هـا را ببینید.
+                        پس از تکمیل حساب کاربری، با زدن «اکسپلور» در تولبار پایین می‌توانید بین پیج‌ها سرچ و فالو کنید، پست‌ها و فیلم‌ها را به صورت رندوم چپ و راست اسکرول کنید و جدیدترین محتوای فالو شده‌هـا را ببینید.
                     </div>
                 </div>
             </div>
@@ -2455,7 +2455,7 @@
             <span>جستجو</span>
         </button>
 
-        <button type="button" id="tb-explore" class="tb-btn" onclick="openTab('explore')">
+        <button type="button" id="tb-explore" class="tb-btn" style="display:none;" onclick="openTab('explore')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="9"/>
                 <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
@@ -2724,19 +2724,35 @@
         }
 
         function syncPageTabAndHeader() {
+            const completed = isAccountCompleted();
+
             const btn = document.getElementById("header-user-name-btn");
             if (btn) {
-                btn.innerText = isAccountCompleted() ? `👤 ${currentUserName}` : "پروفایل";
+                btn.innerText = completed ? `👤 ${currentUserName}` : "پروفایل";
             }
 
             const pageTabBtn = document.getElementById("tb-page");
+            const exploreTabBtn = document.getElementById("tb-explore");
             const toolbarEl = document.getElementById("main-bottom-toolbar");
-            const completed = isAccountCompleted();
             if (pageTabBtn) {
                 pageTabBtn.style.display = completed ? "flex" : "none";
             }
+            if (exploreTabBtn) {
+                exploreTabBtn.style.display = completed ? "flex" : "none";
+            }
             if (toolbarEl) {
-                toolbarEl.classList.toggle("has-page-tab", completed);
+                toolbarEl.classList.toggle("account-ready", completed);
+            }
+
+            if (!completed) {
+                document.body.classList.remove("explore-mode-active");
+                const exploreSection = document.getElementById("tab-explore");
+                const pageSection = document.getElementById("tab-page");
+                if (exploreSection && exploreSection.classList.contains("active")) {
+                    openTab("home");
+                } else if (pageSection && pageSection.classList.contains("active")) {
+                    openTab("home");
+                }
             }
 
             const avatarImg = document.getElementById("page-avatar-img");
@@ -4394,7 +4410,7 @@
         }
 
         function openTab(tabKey) {
-            if (tabKey === "page" && !isAccountCompleted()) {
+            if ((tabKey === "page" || tabKey === "explore") && !isAccountCompleted()) {
                 openNameModal();
                 return;
             }
