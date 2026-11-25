@@ -36,7 +36,6 @@
             --plyr-color-main: #ff2e55;
         }
 
-        /* تم روز: سفید شیشه‌ای شفاف */
         body.day-theme {
             --bg-main: #f4f6fb;
             --bg-grad-1: rgba(255, 255, 255, 0.92);
@@ -81,8 +80,16 @@
             transition: background 0.3s ease, color 0.3s ease;
         }
 
-        body.app-boot-locked {
+        body.app-boot-locked,
+        body.livetv-active {
             overflow: hidden;
+            padding-bottom: 0;
+        }
+
+        body.livetv-active .top-header,
+        body.livetv-active .player-wrapper-outer,
+        body.livetv-active .bottom-toolbar {
+            display: none !important;
         }
 
         /* ==================== صفحه لودینگ گرافیکی و اتصال ==================== */
@@ -174,14 +181,8 @@
             animation: pulseCore 1.6s ease-in-out infinite;
         }
 
-        @keyframes spinCW {
-            to { transform: rotate(360deg); }
-        }
-
-        @keyframes spinCCW {
-            to { transform: rotate(-360deg); }
-        }
-
+        @keyframes spinCW { to { transform: rotate(360deg); } }
+        @keyframes spinCCW { to { transform: rotate(-360deg); } }
         @keyframes pulseCore {
             0%, 100% { transform: scale(1); }
             50% { transform: scale(1.09); }
@@ -276,11 +277,11 @@
             position: sticky;
             top: 0;
             z-index: 80;
-            padding: 11px 14px;
+            padding: 10px 12px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 8px;
+            gap: 6px;
             border-bottom-left-radius: 24px;
             border-bottom-right-radius: 24px;
         }
@@ -288,13 +289,13 @@
         .brand-row {
             display: flex;
             align-items: center;
-            gap: 9px;
+            gap: 8px;
             min-width: 0;
         }
 
         .brand-logo-box {
-            width: 36px;
-            height: 36px;
+            width: 34px;
+            height: 34px;
             border-radius: 12px;
             background: linear-gradient(135deg, #ff4766, #9e0b28);
             color: #fff;
@@ -307,16 +308,16 @@
 
         .brand-row strong {
             display: block;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 900;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.2px;
             color: var(--text-strong);
             white-space: nowrap;
         }
 
         .brand-row span {
             display: block;
-            font-size: 10.5px;
+            font-size: 10px;
             color: var(--text-muted);
             white-space: nowrap;
         }
@@ -324,8 +325,32 @@
         .header-right-group {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 5px;
             flex-shrink: 0;
+        }
+
+        .live-tv-icon-btn {
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
+            border: 1px solid rgba(255, 165, 182, 0.35);
+            color: #fff;
+            font-size: 10.5px;
+            font-weight: 900;
+            padding: 5px 9px;
+            border-radius: 999px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            box-shadow: 0 4px 14px var(--red-glow);
+        }
+
+        .live-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: #fff;
+            animation: pulseCore 1s infinite;
         }
 
         .theme-toggle-btn {
@@ -333,14 +358,14 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 77, 109, 0.36);
             color: var(--text-strong);
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 800;
-            padding: 5px 9px;
+            padding: 5px 8px;
             border-radius: 999px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
             white-space: nowrap;
         }
 
@@ -349,12 +374,12 @@
             backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 77, 109, 0.34);
             color: var(--text-light);
-            font-size: 11px;
+            font-size: 10.5px;
             font-weight: 800;
-            padding: 5px 9px;
+            padding: 5px 8px;
             border-radius: 999px;
             cursor: pointer;
-            max-width: 92px;
+            max-width: 76px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -364,9 +389,9 @@
             background: var(--red-soft);
             border: 1px solid rgba(255, 77, 109, 0.34);
             color: var(--chip-text);
-            font-size: 10.5px;
+            font-size: 10px;
             font-weight: 800;
-            padding: 5px 9px;
+            padding: 5px 8px;
             border-radius: 999px;
             white-space: nowrap;
         }
@@ -387,6 +412,156 @@
         @keyframes fadePage {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==================== فضای مستقل LIVE TV ==================== */
+        .livetv-overlay-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 320;
+            display: none;
+            flex-direction: column;
+            padding: 12px;
+            background:
+                radial-gradient(circle at 12% 8%, var(--bg-grad-1), transparent 44%),
+                radial-gradient(circle at 88% 16%, var(--bg-grad-2), transparent 46%),
+                var(--bg-main);
+        }
+
+        .livetv-overlay-screen.show {
+            display: flex;
+            animation: fadePage 0.22s ease;
+        }
+
+        .livetv-shell {
+            flex: 1;
+            min-height: 0;
+            max-width: 680px;
+            width: 100%;
+            margin: 0 auto;
+            border-radius: 26px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .livetv-top-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .livetv-player-box {
+            border-radius: 18px;
+            overflow: hidden;
+            background: #040102;
+            border: 1px solid rgba(255, 77, 109, 0.28);
+            aspect-ratio: 16 / 9;
+            width: 100%;
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .livetv-player-box video {
+            width: 100%;
+            height: 100%;
+            display: block;
+            object-fit: contain;
+        }
+
+        .livetv-now-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            border-radius: 16px;
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.24);
+        }
+
+        .livetv-search-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .livetv-search-row input {
+            flex: 1;
+            background: var(--input-bg);
+            border: 1.5px solid rgba(255, 77, 109, 0.34);
+            border-radius: 14px;
+            padding: 10px 13px;
+            font-size: 13px;
+            color: var(--text-strong);
+            outline: none;
+        }
+
+        .livetv-channels-list {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-left: 2px;
+        }
+
+        .livetv-channel-item {
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.25);
+            border-radius: 16px;
+            padding: 10px 12px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        .livetv-channel-item.playing {
+            border-color: var(--red-primary);
+            background: var(--red-soft);
+        }
+
+        .livetv-channel-meta strong {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 900;
+            color: var(--text-strong);
+        }
+
+        .livetv-channel-meta span {
+            font-size: 11px;
+            color: var(--text-muted);
+        }
+
+        /* دکمه شناور خروج از تمام‌صفحه برای حل دائمی باگ گیر افتادن */
+        .floating-exit-fs-btn {
+            position: fixed;
+            top: 14px;
+            left: 14px;
+            z-index: 2147483647;
+            display: none;
+            align-items: center;
+            gap: 6px;
+            background: rgba(184, 15, 48, 0.92);
+            color: #fff;
+            border: 1.5px solid rgba(255, 255, 255, 0.45);
+            padding: 8px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65);
+        }
+
+        .floating-exit-fs-btn.visible {
+            display: inline-flex;
         }
 
         /* صفحه جزئیات فیلم */
@@ -1213,6 +1388,53 @@
 </head>
 <body class="app-boot-locked">
 
+    <!-- دکمه شناور خروج از تمام‌صفحه (همیشه بالای لایه تمام‌صفحه برای جلوگیری از گیر افتادن) -->
+    <button type="button" id="floating-exit-fs-btn" class="floating-exit-fs-btn" onclick="exitFullscreenNow()">
+        ✕ خروج از تمام‌صفحه
+    </button>
+
+    <!-- فضای جداگانه پخش زنده شبکه‌ها (LIVE TV) -->
+    <div id="livetv-overlay-screen" class="livetv-overlay-screen">
+        <div class="glass livetv-shell">
+            <div class="livetv-top-header">
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="live-dot" style="background:var(--red-primary); width:9px; height:9px;"></span>
+                    <strong style="font-size:16px; font-weight:900; color:var(--text-strong);">LIVE TV</strong>
+                    <span id="livetv-count-badge" class="pill-tag" style="margin-bottom:0;">در حال بارگذاری...</span>
+                </div>
+                <button type="button" class="btn-main" style="width:auto; padding:8px 14px; font-size:12px;" onclick="closeLiveTvScreen()">
+                    ✕ بستن و ورود به خانه
+                </button>
+            </div>
+
+            <div id="livetv-player-box" class="livetv-player-box">
+                <video id="livetv-video-el" playsinline webkit-playsinline controls autoplay preload="metadata"></video>
+            </div>
+
+            <div class="livetv-now-bar">
+                <div style="min-width:0; flex:1;">
+                    <strong id="livetv-current-title" style="display:block; font-size:13.5px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
+                        یک شبکه را انتخاب کنید یا پخش سریع بزنید
+                    </strong>
+                    <span id="livetv-status-text" style="font-size:11px; color:var(--text-muted);">منبع: IPTV-ORG</span>
+                </div>
+                <div style="display:flex; gap:6px;">
+                    <button type="button" class="btn-sync-now" onclick="quickPlayLiveTv()">⚡ پخش سریع</button>
+                    <button type="button" class="btn-fs" onclick="enterLiveTvFullscreen()">⛶ تمام صفحه</button>
+                </div>
+            </div>
+
+            <div class="livetv-search-row">
+                <input type="search" id="livetv-search-input" placeholder="جستجوی نام شبکه یا کشور (مثلاً: BBC, News, Music)..." oninput="filterLiveTvChannels()">
+                <button type="button" class="btn-sec" onclick="clearLiveTvSearch()">پاک</button>
+            </div>
+
+            <div id="livetv-channels-list" class="livetv-channels-list">
+                <div class="empty-note">در حال دریافت لیست شبکه‌های زنده...</div>
+            </div>
+        </div>
+    </div>
+
     <!-- صفحه لودینگ گرافیکی و بررسی اتصال فایربیس / فیلترشکن -->
     <div id="boot-splash-screen" class="boot-splash-screen">
         <div class="glass boot-card">
@@ -1294,16 +1516,20 @@
     <header class="glass top-header">
         <div class="brand-row">
             <div class="brand-logo-box" aria-hidden="true">
-                <svg width="19" height="19" viewBox="0 0 24 24" fill="currentColor">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="6 4 20 12 6 20 6 4"/>
                 </svg>
             </div>
             <div>
                 <strong>ZEUC MOVIE</strong>
-                <span>سینمای آنلاین زئوس</span>
+                <span>سینمای آنلاین</span>
             </div>
         </div>
         <div class="header-right-group">
+            <button type="button" class="live-tv-icon-btn" onclick="openLiveTvScreen()" title="پخش زنده شبکه‌ها">
+                <span class="live-dot"></span>
+                <span>LIVE TV</span>
+            </button>
             <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleDayNightTheme()">☀️ روز</button>
             <button type="button" id="header-user-name-btn" class="user-chip-btn" onclick="openNameModal()">نام من</button>
             <div class="online-tag" id="top-online-tag">آنلاین: ۰</div>
@@ -1439,21 +1665,21 @@
             <div class="secrets-list">
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۱. پخش در کل صفحه و مشاهده جزئیات فیلم</span>
+                        <span>۱. پخش در کل صفحه و خروج آسان از تمام‌صفحه</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        روی هر فیلم بزنید تا وارد صفحه آن شوید و توضیحات و تعداد بازدید را ببینید؛ با زدن «پخش» ویدیو در کل صفحه باز می‌شود.
+                        با زدن پخش، ویدیو تمام‌صفحه می‌شود و در هر لحظه با دکمه «✕ خروج از تمام‌صفحه» یا دکمه تمام‌صفحه پخش‌کننده می‌توانید خارج شوید.
                     </div>
                 </div>
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. تماشا در اتاق با اسم دلخواه</span>
+                        <span>۲. تماشا در اتاق با اسم دلخواه و پخش زنده LIVE TV</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        روی دکمه «تماشا در اتاق» هر فیلم بزنید، اسم دلخواه اتاق را وارد کنید و فیلم را همراه چت و واکنش همزمان تماشا کنید.
+                        برای تماشای همزمان فیلم با اسم دلخواه دکمه «تماشا در اتاق» را بزنید و برای دیدن شبکه‌های زنده از دکمه «LIVE TV» بالای صفحه استفاده کنید.
                     </div>
                 </div>
             </div>
@@ -1799,7 +2025,6 @@
 
         refreshUserNameHeader();
 
-        // همگام‌سازی پروفایل و علاقه‌مندی‌های کاربر با Firebase برای ماندگاری دائمی
         userProfileRef.on("value", (snap) => {
             const data = snap.val();
             if (!data) return;
@@ -1829,6 +2054,242 @@
             </svg>
         `);
 
+        // =====================================================================
+        // فضای مستقل LIVE TV با لینک https://iptv-org.github.io/iptv/index.m3u
+        // =====================================================================
+        const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
+        const liveTvVideoEl = document.getElementById("livetv-video-el");
+        const liveTvPlayerBox = document.getElementById("livetv-player-box");
+        let liveTvChannels = [];
+        let liveTvFiltered = [];
+        let liveTvLoadedOnce = false;
+        let liveTvHls = null;
+        let activeLiveTvUrl = "";
+
+        function openLiveTvScreen() {
+            // توقف پخش فیلم یا اتاق در صورت باز بودن
+            const mv = moviesList.find(m => m.id === currentLoadedMovieId);
+            if (mv && !videoEl.paused) videoEl.pause();
+
+            document.body.classList.add("livetv-active");
+            document.getElementById("livetv-overlay-screen").classList.add("show");
+
+            if (!liveTvLoadedOnce) {
+                loadLiveTvPlaylist();
+            } else if (liveTvChannels.length && !activeLiveTvUrl) {
+                quickPlayLiveTv();
+            }
+        }
+
+        function closeLiveTvScreen() {
+            exitFullscreenNow();
+            stopLiveTvStream();
+            document.getElementById("livetv-overlay-screen").classList.remove("show");
+            document.body.classList.remove("livetv-active");
+            openTab("home");
+        }
+
+        function stopLiveTvStream() {
+            activeLiveTvUrl = "";
+            if (liveTvHls) {
+                liveTvHls.destroy();
+                liveTvHls = null;
+            }
+            liveTvVideoEl.pause();
+            liveTvVideoEl.removeAttribute("src");
+            liveTvVideoEl.load();
+        }
+
+        function parseM3uText(rawText) {
+            const lines = String(rawText || "").split(/\r?\n/);
+            const channels = [];
+            let pendingMeta = null;
+
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                if (line.startsWith("#EXTINF:")) {
+                    const commaIdx = line.indexOf(",");
+                    const title = commaIdx !== -1 ? line.slice(commaIdx + 1).trim() : "شبکه زنده";
+                    const groupMatch = line.match(/group-title="([^"]*)"/i);
+                    const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
+                    pendingMeta = {
+                        name: title || "شبکه زنده",
+                        group: groupMatch ? groupMatch[1].trim() : "زنده",
+                        logo: logoMatch ? logoMatch[1].trim() : ""
+                    };
+                } else if (!line.startsWith("#") && /^https?:\/\//i.test(line)) {
+                    const meta = pendingMeta || { name: "شبکه زنده", group: "زنده", logo: "" };
+                    channels.push({
+                        id: "ch_" + channels.length,
+                        name: meta.name,
+                        group: meta.group,
+                        logo: meta.logo,
+                        url: line
+                    });
+                    pendingMeta = null;
+                }
+            }
+            return channels;
+        }
+
+        async function loadLiveTvPlaylist() {
+            const listBox = document.getElementById("livetv-channels-list");
+            const badge = document.getElementById("livetv-count-badge");
+            badge.innerText = "در حال دریافت...";
+            listBox.innerHTML = `<div class="empty-note">در حال بارگذاری لیست شبکه‌های زنده...</div>`;
+
+            try {
+                const res = await fetch(IPTV_PLAYLIST_URL, { cache: "no-store" });
+                if (!res.ok) throw new Error("HTTP " + res.status);
+                const text = await res.text();
+                liveTvChannels = parseM3uText(text);
+                liveTvFiltered = liveTvChannels.slice();
+                liveTvLoadedOnce = true;
+
+                badge.innerText = `${liveTvChannels.length} شبکه`;
+                renderLiveTvChannels();
+
+                if (liveTvChannels.length > 0) {
+                    quickPlayLiveTv();
+                }
+            } catch (_) {
+                badge.innerText = "خطا در لیست";
+                listBox.innerHTML = `
+                    <div class="empty-note">
+                        امکان دریافت لیست شبکه‌ها وجود نداشت. اتصال اینترنت یا فیلترشکن را بررسی کنید.
+                        <div style="margin-top:10px;">
+                            <button type="button" class="btn-sync-now" onclick="loadLiveTvPlaylist()">🔄 تلاش مجدد</button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function filterLiveTvChannels() {
+            const q = (document.getElementById("livetv-search-input").value || "").trim().toLowerCase();
+            if (!q) {
+                liveTvFiltered = liveTvChannels.slice();
+            } else {
+                liveTvFiltered = liveTvChannels.filter(ch =>
+                    ch.name.toLowerCase().includes(q) ||
+                    ch.group.toLowerCase().includes(q)
+                );
+            }
+            renderLiveTvChannels();
+        }
+
+        function clearLiveTvSearch() {
+            const inp = document.getElementById("livetv-search-input");
+            if (inp) inp.value = "";
+            filterLiveTvChannels();
+        }
+
+        function renderLiveTvChannels() {
+            const listBox = document.getElementById("livetv-channels-list");
+            if (!listBox) return;
+
+            if (!liveTvFiltered.length) {
+                listBox.innerHTML = `<div class="empty-note">شبکه‌ای با این نام پیدا نشد.</div>`;
+                return;
+            }
+
+            // نمایش سریع تا ۲۵۰ شبکه هم‌زمان برای سرعت بالای سرچ و رندر
+            const visibleSlice = liveTvFiltered.slice(0, 250);
+            listBox.innerHTML = visibleSlice.map(ch => {
+                const isPlaying = ch.url === activeLiveTvUrl;
+                return `
+                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.name)}', '${escAttr(ch.group)}')">
+                        <div class="livetv-channel-meta" style="min-width:0; flex:1;">
+                            <strong style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(ch.name)}</strong>
+                            <span>${esc(ch.group || "پخش زنده")}</span>
+                        </div>
+                        <button type="button" class="btn-watch" style="padding:6px 11px; font-size:11px;">
+                            ${isPlaying ? "▶ در حال پخش" : "▶ پخش"}
+                        </button>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function playLiveTvChannel(url, name, group = "زنده") {
+            if (!url) return;
+            activeLiveTvUrl = url;
+            document.getElementById("livetv-current-title").innerText = name || "شبکه زنده";
+            document.getElementById("livetv-status-text").innerText = `در حال اتصال (${group})...`;
+            renderLiveTvChannels();
+
+            if (liveTvHls) {
+                liveTvHls.destroy();
+                liveTvHls = null;
+            }
+
+            const startPlayback = () => {
+                const p = liveTvVideoEl.play();
+                if (p && p.then) {
+                    p.then(() => {
+                        document.getElementById("livetv-status-text").innerText = `پخش زنده • ${group}`;
+                    }).catch(() => {
+                        liveTvVideoEl.muted = true;
+                        liveTvVideoEl.play().catch(() => {});
+                        document.getElementById("livetv-status-text").innerText = `پخش زنده (بی‌صدا تا لمس صدا) • ${group}`;
+                    });
+                }
+            };
+
+            if (/\.m3u8(\?|$)/i.test(url) && window.Hls && window.Hls.isSupported()) {
+                liveTvHls = new window.Hls({
+                    enableWorker: true,
+                    lowLatencyMode: true
+                });
+                liveTvHls.loadSource(url);
+                liveTvHls.attachMedia(liveTvVideoEl);
+                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+                liveTvHls.on(window.Hls.Events.ERROR, (_, errData) => {
+                    if (errData && errData.fatal) {
+                        document.getElementById("livetv-status-text").innerText =
+                            "استریم این شبکه در دسترس نیست؛ شبکه دیگری انتخاب کنید.";
+                    }
+                });
+            } else {
+                liveTvVideoEl.src = url;
+                liveTvVideoEl.onerror = () => {
+                    document.getElementById("livetv-status-text").innerText =
+                        "استریم این شبکه خطا داد؛ شبکه دیگری انتخاب کنید.";
+                };
+                startPlayback();
+            }
+        }
+
+        function quickPlayLiveTv() {
+            const pool = liveTvFiltered.length ? liveTvFiltered : liveTvChannels;
+            if (!pool || !pool.length) return;
+            const preferred = pool.find(ch => /\.m3u8(\?|$)/i.test(ch.url)) || pool[0];
+            playLiveTvChannel(preferred.url, preferred.name, preferred.group);
+        }
+
+        function enterLiveTvFullscreen() {
+            const target = liveTvPlayerBox;
+            try {
+                if (liveTvVideoEl.webkitEnterFullscreen) {
+                    liveTvVideoEl.webkitEnterFullscreen();
+                    syncFloatingExitButton();
+                    return;
+                }
+            } catch (_) {}
+            try {
+                if (target.requestFullscreen) {
+                    target.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
+                } else if (target.webkitRequestFullscreen) {
+                    target.webkitRequestFullscreen();
+                    syncFloatingExitButton();
+                }
+            } catch (_) {}
+        }
+
+        // =====================================================================
+        // مدیریت کامل و بی‌باگ تمام‌صفحه (ورود و خروج از تمام‌صفحه)
+        // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
         let activeGenre = "همه";
@@ -1853,28 +2314,74 @@
 
         const videoEl = document.getElementById("main-video-player");
         const frameWrapEl = document.getElementById("player-frame-wrap");
+        const floatingExitBtn = document.getElementById("floating-exit-fs-btn");
         const plyrInstance = new Plyr(videoEl, {
             controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "settings", "fullscreen"],
             fullscreen: { enabled: true, fallback: true, iosNative: true }
         });
         let hlsInstance = null;
 
-        function getActiveDisplayName() {
-            return currentUserName || "کاربر";
+        function isCurrentlyFullscreen() {
+            return Boolean(
+                document.fullscreenElement ||
+                document.webkitFullscreenElement ||
+                document.mozFullScreenElement ||
+                document.msFullscreenElement ||
+                videoEl.webkitDisplayingFullscreen ||
+                liveTvVideoEl.webkitDisplayingFullscreen ||
+                (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active)
+            );
+        }
+
+        function syncFloatingExitButton() {
+            if (!floatingExitBtn) return;
+            floatingExitBtn.classList.toggle("visible", isCurrentlyFullscreen());
+        }
+
+        function exitFullscreenNow() {
+            try {
+                if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active) {
+                    plyrInstance.fullscreen.exit();
+                }
+            } catch (_) {}
+
+            try {
+                if (videoEl.webkitExitFullscreen) {
+                    videoEl.webkitExitFullscreen();
+                }
+            } catch (_) {}
+
+            try {
+                if (liveTvVideoEl.webkitExitFullscreen) {
+                    liveTvVideoEl.webkitExitFullscreen();
+                }
+            } catch (_) {}
+
+            try {
+                if (document.fullscreenElement && document.exitFullscreen) {
+                    document.exitFullscreen().catch(() => {});
+                } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                } else if (document.mozCancelFullScreen) {
+                    document.mozCancelFullScreen();
+                } else if (document.msExitFullscreen) {
+                    document.msExitFullscreen();
+                }
+            } catch (_) {}
+
+            setTimeout(syncFloatingExitButton, 80);
         }
 
         function enterFullscreenNow() {
-            const isFs = Boolean(
-                document.fullscreenElement ||
-                document.webkitFullscreenElement ||
-                videoEl.webkitDisplayingFullscreen ||
-                (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active)
-            );
-            if (isFs) return;
+            if (isCurrentlyFullscreen()) {
+                exitFullscreenNow();
+                return;
+            }
 
             try {
                 if (videoEl.webkitEnterFullscreen) {
                     videoEl.webkitEnterFullscreen();
+                    setTimeout(syncFloatingExitButton, 150);
                     return;
                 }
             } catch (_) {}
@@ -1882,19 +2389,38 @@
             try {
                 if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.enabled) {
                     plyrInstance.fullscreen.enter();
+                    setTimeout(syncFloatingExitButton, 150);
                     return;
                 }
             } catch (_) {}
 
             try {
                 if (frameWrapEl.requestFullscreen) {
-                    frameWrapEl.requestFullscreen().catch(() => {});
+                    frameWrapEl.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
                 } else if (frameWrapEl.webkitRequestFullscreen) {
                     frameWrapEl.webkitRequestFullscreen();
+                    setTimeout(syncFloatingExitButton, 150);
                 } else if (videoEl.requestFullscreen) {
-                    videoEl.requestFullscreen().catch(() => {});
+                    videoEl.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
                 }
             } catch (_) {}
+        }
+
+        ["fullscreenchange", "webkitfullscreenchange", "mozfullscreenchange", "MSFullscreenChange"].forEach(ev => {
+            document.addEventListener(ev, syncFloatingExitButton);
+        });
+        videoEl.addEventListener("webkitbeginfullscreen", syncFloatingExitButton);
+        videoEl.addEventListener("webkitendfullscreen", () => setTimeout(syncFloatingExitButton, 60));
+        liveTvVideoEl.addEventListener("webkitbeginfullscreen", syncFloatingExitButton);
+        liveTvVideoEl.addEventListener("webkitendfullscreen", () => setTimeout(syncFloatingExitButton, 60));
+        plyrInstance.on("enterfullscreen", syncFloatingExitButton);
+        plyrInstance.on("exitfullscreen", () => setTimeout(syncFloatingExitButton, 60));
+
+        // =====================================================================
+        // پخش فیلم، صفحه فیلم، اتاق‌ها، علاقه‌مندی‌ها و ادمین
+        // =====================================================================
+        function getActiveDisplayName() {
+            return currentUserName || "کاربر";
         }
 
         function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
@@ -1910,7 +2436,9 @@
 
             const triggerFullAfterPlay = () => {
                 if (autoFullscreen) {
-                    setTimeout(() => enterFullscreenNow(), 120);
+                    setTimeout(() => {
+                        if (!isCurrentlyFullscreen()) enterFullscreenNow();
+                    }, 120);
                 }
             };
 
@@ -1931,7 +2459,7 @@
                         triggerFullAfterPlay();
                     }
                 } else if (autoFullscreen) {
-                    enterFullscreenNow();
+                    if (!isCurrentlyFullscreen()) enterFullscreenNow();
                 }
             };
 
@@ -2031,9 +2559,7 @@
 
         function closePlayer() {
             leaveActiveRoom();
-            if (document.fullscreenElement && document.exitFullscreen) {
-                document.exitFullscreen().catch(() => {});
-            }
+            exitFullscreenNow();
             videoEl.pause();
             videoEl.removeAttribute("src");
             videoEl.load();
