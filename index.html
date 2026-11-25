@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Negin Cinema | تماشای آنلاین فیلم</title>
+    <title>ZEUC MOVIE | تماشای آنلاین فیلم</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -14,18 +14,17 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     <style>
         :root {
-            --bg-main: #fdf5fa;
-            --glass-bg: rgba(255, 255, 255, 0.85);
-            --glass-border: rgba(255, 255, 255, 0.98);
-            --pink-primary: #e55b9b;
-            --pink-dark: #c02d71;
-            --pink-soft: #ffe3f1;
-            --lavender-soft: #f6e8ff;
-            --pink-glow: rgba(229, 91, 155, 0.25);
-            --text-dark: #281622;
-            --text-muted: #6f5666;
-            --shadow-soft: 0 12px 28px rgba(212, 106, 156, 0.14);
-            --plyr-color-main: #e55b9b;
+            --bg-main: #090406;
+            --glass-bg: rgba(24, 9, 14, 0.72);
+            --glass-border: rgba(255, 59, 92, 0.24);
+            --red-primary: #ff2e55;
+            --red-dark: #b80f30;
+            --red-soft: rgba(255, 46, 85, 0.16);
+            --red-glow: rgba(255, 36, 74, 0.34);
+            --text-light: #fff5f7;
+            --text-muted: #c89aa4;
+            --shadow-soft: 0 14px 32px rgba(0, 0, 0, 0.55);
+            --plyr-color-main: #ff2e55;
         }
 
         * {
@@ -38,11 +37,11 @@
 
         html, body {
             background:
-                radial-gradient(circle at 15% 10%, #ffd6ea 0%, transparent 45%),
-                radial-gradient(circle at 88% 16%, #efd7ff 0%, transparent 45%),
-                radial-gradient(circle at 50% 90%, #ffe4f1 0%, transparent 50%),
+                radial-gradient(circle at 15% 10%, rgba(255, 34, 72, 0.24), transparent 45%),
+                radial-gradient(circle at 88% 18%, rgba(168, 12, 42, 0.22), transparent 45%),
+                radial-gradient(circle at 50% 92%, rgba(255, 46, 85, 0.16), transparent 55%),
                 var(--bg-main);
-            color: var(--text-dark);
+            color: var(--text-light);
             min-height: 100vh;
             line-height: 1.65;
             overflow-x: hidden;
@@ -51,21 +50,48 @@
 
         .glass {
             background: var(--glass-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
             border: 1.5px solid var(--glass-border);
             box-shadow: var(--shadow-soft);
         }
 
         .pill-tag {
             display: inline-block;
-            background: var(--pink-soft);
-            color: var(--pink-dark);
+            background: var(--red-soft);
+            color: #ff758f;
+            border: 1px solid rgba(255, 59, 92, 0.3);
             font-size: 11px;
             font-weight: 800;
             padding: 4px 11px;
             border-radius: 999px;
             margin-bottom: 8px;
+        }
+
+        /* مودال ورود سریع نام کاربر */
+        .name-modal-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 500;
+            background: rgba(6, 2, 4, 0.82);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+        }
+
+        .name-modal-backdrop.show {
+            display: flex;
+            animation: fadePage 0.2s ease;
+        }
+
+        .name-modal-card {
+            width: 100%;
+            max-width: 420px;
+            border-radius: 26px;
+            padding: 22px;
         }
 
         /* هدر موبایل */
@@ -91,18 +117,20 @@
             width: 38px;
             height: 38px;
             border-radius: 13px;
-            background: linear-gradient(135deg, #ff85bc, #cf3479);
+            background: linear-gradient(135deg, #ff3b5c, #9e0b28);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 6px 16px var(--pink-glow);
+            box-shadow: 0 6px 18px var(--red-glow);
         }
 
         .brand-row strong {
             display: block;
-            font-size: 15.5px;
+            font-size: 16px;
             font-weight: 900;
+            letter-spacing: 0.4px;
+            color: #fff;
         }
 
         .brand-row span {
@@ -110,12 +138,34 @@
             color: var(--text-muted);
         }
 
-        .online-tag {
-            background: var(--pink-soft);
-            color: var(--pink-dark);
+        .header-right-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .user-chip-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 59, 92, 0.3);
+            color: #ffb3c1;
             font-size: 11px;
             font-weight: 800;
-            padding: 5px 11px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            max-width: 105px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .online-tag {
+            background: var(--red-soft);
+            color: #ff6b86;
+            border: 1px solid rgba(255, 59, 92, 0.3);
+            font-size: 11px;
+            font-weight: 800;
+            padding: 5px 10px;
             border-radius: 999px;
         }
 
@@ -137,7 +187,7 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* باکس پخش‌کننده فیلم و اصلاح تمام صفحه */
+        /* باکس پخش‌کننده فیلم و تمام صفحه */
         .player-wrapper-outer {
             padding: 12px 16px 0;
             max-width: 560px;
@@ -163,7 +213,7 @@
         .player-frame-wrap {
             border-radius: 18px;
             overflow: hidden;
-            background: #140810;
+            background: #050203;
             margin-bottom: 10px;
             position: relative;
             width: 100%;
@@ -201,6 +251,7 @@
             display: block;
             font-size: 14.5px;
             font-weight: 900;
+            color: #fff;
         }
 
         .player-meta-row span {
@@ -216,20 +267,68 @@
 
         .sync-status-bar {
             margin-top: 8px;
-            padding: 7px 11px;
-            border-radius: 12px;
-            background: var(--pink-soft);
-            color: var(--pink-dark);
+            padding: 9px 11px;
+            border-radius: 14px;
+            background: rgba(255, 46, 85, 0.14);
+            border: 1px solid rgba(255, 59, 92, 0.32);
+            color: #ff9cb0;
             font-size: 11.5px;
             font-weight: 800;
             display: none;
             justify-content: space-between;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
 
         .sync-status-bar.show {
             display: flex;
+        }
+
+        .room-controls-row {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-sync-now {
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-mic {
+            background: rgba(255, 255, 255, 0.09);
+            color: #ffb3c1;
+            border: 1px solid rgba(255, 59, 92, 0.35);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .btn-mic.active {
+            background: #ff2e55;
+            color: #fff;
+            border-color: #ff2e55;
+        }
+
+        .btn-room-del {
+            background: rgba(220, 38, 38, 0.22);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            padding: 5px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
         }
 
         /* بنر خوشامدگویی و آمار صفحه اصلی */
@@ -238,7 +337,7 @@
             padding: 20px;
             margin-bottom: 14px;
             background:
-                radial-gradient(circle at 85% 20%, rgba(255, 138, 195, 0.32), transparent 55%),
+                radial-gradient(circle at 85% 20%, rgba(255, 46, 85, 0.22), transparent 55%),
                 var(--glass-bg);
         }
 
@@ -246,7 +345,7 @@
             font-size: 20px;
             font-weight: 900;
             line-height: 1.4;
-            color: var(--text-dark);
+            color: #fff;
             margin-bottom: 14px;
             text-align: center;
         }
@@ -259,8 +358,8 @@
         }
 
         .stat-highlight {
-            background: rgba(255, 255, 255, 0.92);
-            border: 1.5px solid rgba(229, 91, 155, 0.26);
+            background: rgba(14, 5, 8, 0.72);
+            border: 1px solid rgba(255, 59, 92, 0.28);
             border-radius: 20px;
             padding: 13px 10px;
             text-align: center;
@@ -270,7 +369,7 @@
             display: block;
             font-size: 18px;
             font-weight: 900;
-            color: var(--pink-dark);
+            color: #ff5c7a;
         }
 
         .stat-highlight span {
@@ -280,7 +379,7 @@
         }
 
         .btn-main {
-            background: linear-gradient(135deg, #f568a6, #cf3479);
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
             color: #fff;
             border: none;
             padding: 13px 18px;
@@ -293,13 +392,13 @@
             align-items: center;
             justify-content: center;
             gap: 8px;
-            box-shadow: 0 8px 20px var(--pink-glow);
+            box-shadow: 0 8px 22px var(--red-glow);
         }
 
         .btn-sec {
-            background: rgba(255, 255, 255, 0.94);
-            color: var(--text-dark);
-            border: 1.5px solid rgba(229, 91, 155, 0.3);
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-light);
+            border: 1px solid rgba(255, 59, 92, 0.32);
             padding: 8px 11px;
             border-radius: 12px;
             font-size: 12px;
@@ -312,9 +411,9 @@
         }
 
         .btn-fs {
-            background: var(--pink-soft);
-            color: var(--pink-dark);
-            border: 1.5px solid rgba(229, 91, 155, 0.35);
+            background: var(--red-soft);
+            color: #ff758f;
+            border: 1px solid rgba(255, 59, 92, 0.35);
             padding: 8px 11px;
             border-radius: 12px;
             font-size: 12px;
@@ -338,6 +437,7 @@
         .sec-title-row h2 {
             font-size: 17.5px;
             font-weight: 900;
+            color: #fff;
         }
 
         .movies-list {
@@ -361,7 +461,7 @@
             border-radius: 16px;
             overflow: hidden;
             flex-shrink: 0;
-            background: var(--pink-soft);
+            background: rgba(255, 46, 85, 0.14);
         }
 
         .movie-poster-box img {
@@ -381,6 +481,7 @@
             font-size: 15px;
             font-weight: 900;
             margin-bottom: 3px;
+            color: #fff;
         }
 
         .movie-sub-meta {
@@ -391,7 +492,7 @@
 
         .movie-desc-short {
             font-size: 12px;
-            color: var(--text-dark);
+            color: #ebd0d6;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
@@ -406,7 +507,7 @@
         }
 
         .btn-watch {
-            background: linear-gradient(135deg, #f568a6, #cf3479);
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
             color: #fff;
             border: none;
             padding: 7px 13px;
@@ -417,9 +518,9 @@
         }
 
         .btn-fav {
-            background: var(--pink-soft);
-            color: var(--pink-dark);
-            border: none;
+            background: var(--red-soft);
+            color: #ff859b;
+            border: 1px solid rgba(255, 59, 92, 0.3);
             padding: 7px 10px;
             border-radius: 12px;
             font-size: 12px;
@@ -428,7 +529,7 @@
         }
 
         .btn-fav.saved {
-            background: #cf3479;
+            background: #ff2e55;
             color: #fff;
         }
 
@@ -447,7 +548,7 @@
 
         .secret-trigger {
             width: 100%;
-            background: rgba(255, 255, 255, 0.92);
+            background: rgba(255, 255, 255, 0.04);
             border: none;
             padding: 14px 16px;
             display: flex;
@@ -456,14 +557,14 @@
             gap: 10px;
             font-size: 14px;
             font-weight: 800;
-            color: var(--text-dark);
+            color: var(--text-light);
             cursor: pointer;
             text-align: right;
         }
 
         .secret-arrow {
             font-size: 14px;
-            color: var(--pink-dark);
+            color: #ff5c7a;
             transition: transform 0.22s ease;
         }
 
@@ -476,8 +577,8 @@
             padding: 12px 16px 15px;
             font-size: 13px;
             color: var(--text-muted);
-            background: rgba(255, 245, 250, 0.78);
-            border-top: 1px dashed rgba(229, 91, 155, 0.25);
+            background: rgba(12, 4, 7, 0.65);
+            border-top: 1px dashed rgba(255, 59, 92, 0.25);
         }
 
         .secret-drawer.open .secret-body {
@@ -502,21 +603,22 @@
         .field-box label {
             font-size: 13px;
             font-weight: 800;
+            color: #ffd6de;
         }
 
         .field-box input, .field-box select, .field-box textarea {
-            background: rgba(255, 255, 255, 0.95);
-            border: 1.5px solid rgba(229, 91, 155, 0.28);
+            background: rgba(12, 4, 7, 0.78);
+            border: 1.5px solid rgba(255, 59, 92, 0.28);
             border-radius: 14px;
             padding: 11px 14px;
             font-size: 13.5px;
-            color: var(--text-dark);
+            color: #fff;
             outline: none;
             width: 100%;
         }
 
         .field-box input:focus, .field-box select:focus, .field-box textarea:focus {
-            border-color: var(--pink-primary);
+            border-color: var(--red-primary);
         }
 
         .genre-pills {
@@ -526,9 +628,9 @@
         }
 
         .genre-chip {
-            background: rgba(255, 255, 255, 0.9);
-            border: 1.5px solid rgba(229, 91, 155, 0.25);
-            color: var(--text-dark);
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 59, 92, 0.28);
+            color: var(--text-light);
             padding: 6px 12px;
             border-radius: 999px;
             font-size: 12px;
@@ -537,7 +639,7 @@
         }
 
         .genre-chip.active {
-            background: linear-gradient(135deg, #ff85bc, #cf3479);
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
             color: #fff;
             border-color: transparent;
         }
@@ -551,7 +653,7 @@
             color: var(--text-muted);
         }
 
-        /* استایل‌های صفحه اتاق تماشای همزمان */
+        /* استایل‌های صفحه اتاق + چت + ری‌اکشن */
         .room-menu-card {
             border-radius: 24px;
             padding: 18px;
@@ -572,42 +674,125 @@
             margin-top: 10px;
         }
 
-        .room-item-card {
-            background: rgba(255, 255, 255, 0.94);
-            border: 1.5px solid rgba(229, 91, 155, 0.26);
+        .room-item-row {
+            background: rgba(15, 5, 9, 0.78);
+            border: 1px solid rgba(255, 59, 92, 0.28);
             border-radius: 20px;
             padding: 13px 15px;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 10px;
-            cursor: pointer;
-            text-align: right;
-            width: 100%;
         }
 
-        .room-item-card strong {
+        .room-item-enter {
+            background: none;
+            border: none;
+            cursor: pointer;
+            text-align: right;
+            flex: 1;
+        }
+
+        .room-item-enter strong {
             display: block;
             font-size: 14.5px;
             font-weight: 900;
-            color: var(--text-dark);
+            color: #fff;
         }
 
-        .room-item-card span {
+        .room-item-enter span {
             display: block;
             font-size: 12px;
             color: var(--text-muted);
             margin-top: 2px;
         }
 
+        .room-item-actions {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
         .room-live-pill {
-            background: var(--pink-soft);
-            color: var(--pink-dark);
+            background: var(--red-soft);
+            color: #ff859b;
             padding: 6px 11px;
             border-radius: 999px;
             font-size: 11.5px;
             font-weight: 800;
             white-space: nowrap;
+        }
+
+        .chat-box-card {
+            border-radius: 24px;
+            padding: 16px;
+            margin-top: 14px;
+        }
+
+        .chat-messages-area {
+            max-height: 240px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            border-radius: 16px;
+            background: rgba(8, 3, 5, 0.72);
+            border: 1px solid rgba(255, 59, 92, 0.2);
+            margin-bottom: 10px;
+        }
+
+        .chat-msg-bubble {
+            background: rgba(255, 46, 85, 0.14);
+            border: 1px solid rgba(255, 59, 92, 0.24);
+            border-radius: 14px;
+            padding: 8px 11px;
+            font-size: 12.5px;
+        }
+
+        .chat-msg-bubble.mine {
+            background: rgba(255, 59, 92, 0.28);
+            border-color: rgba(255, 59, 92, 0.5);
+        }
+
+        .chat-msg-sender {
+            font-size: 11px;
+            font-weight: 900;
+            color: #ff859b;
+            margin-bottom: 2px;
+        }
+
+        .reaction-bar {
+            display: flex;
+            gap: 7px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+        }
+
+        .reaction-btn {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 59, 92, 0.3);
+            color: #fff;
+            border-radius: 999px;
+            padding: 5px 11px;
+            font-size: 13px;
+            cursor: pointer;
+        }
+
+        .chat-input-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .chat-input-row input {
+            flex: 1;
+            background: rgba(12, 4, 7, 0.85);
+            border: 1.5px solid rgba(255, 59, 92, 0.3);
+            border-radius: 14px;
+            padding: 10px 13px;
+            color: #fff;
+            font-size: 13px;
+            outline: none;
         }
 
         /* ادمین */
@@ -634,7 +819,7 @@
             display: block;
             font-size: 20px;
             font-weight: 900;
-            color: var(--pink-dark);
+            color: #ff5c7a;
         }
 
         .adm-kpi span {
@@ -643,9 +828,9 @@
         }
 
         .btn-del {
-            background: #fed7d7;
-            color: #9b2c2c;
-            border: none;
+            background: rgba(220, 38, 38, 0.22);
+            color: #fca5a5;
+            border: 1px solid rgba(248, 113, 113, 0.35);
             padding: 6px 11px;
             border-radius: 10px;
             font-size: 11.5px;
@@ -653,7 +838,7 @@
             cursor: pointer;
         }
 
-        /* تولبار ثابت پایین (۶ آیتم) */
+        /* تولبار ثابت پایین (۵ آیتم) */
         .bottom-toolbar {
             position: fixed;
             bottom: 10px;
@@ -663,16 +848,16 @@
             margin: 0 auto;
             height: 70px;
             border-radius: 24px;
-            background: rgba(255, 255, 255, 0.94);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1.5px solid rgba(255, 255, 255, 0.98);
-            box-shadow: 0 12px 32px rgba(45, 16, 36, 0.16);
+            background: rgba(20, 7, 12, 0.92);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border: 1.5px solid rgba(255, 59, 92, 0.28);
+            box-shadow: 0 14px 34px rgba(0, 0, 0, 0.72);
             display: grid;
-            grid-template-columns: repeat(6, 1fr);
+            grid-template-columns: repeat(5, 1fr);
             align-items: center;
             z-index: 85;
-            padding: 0 2px;
+            padding: 0 4px;
         }
 
         .tb-btn {
@@ -684,20 +869,19 @@
             justify-content: center;
             gap: 3px;
             color: var(--text-muted);
-            font-size: 9.8px;
+            font-size: 10.5px;
             font-weight: 700;
             cursor: pointer;
             position: relative;
-            text-decoration: none;
         }
 
         .tb-btn svg {
-            width: 20px;
-            height: 20px;
+            width: 21px;
+            height: 21px;
         }
 
         .tb-btn.active {
-            color: var(--pink-dark);
+            color: #ff4d6d;
         }
 
         .tb-center-home {
@@ -705,46 +889,67 @@
         }
 
         .tb-center-home .home-circle {
-            width: 44px;
-            height: 44px;
+            width: 46px;
+            height: 46px;
             border-radius: 16px;
-            background: linear-gradient(135deg, #ff85bc, #cf3479);
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
             color: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 8px 20px var(--pink-glow);
+            box-shadow: 0 8px 22px var(--red-glow);
         }
 
         .tb-center-home span {
-            color: var(--pink-dark);
+            color: #ff6b86;
             font-weight: 900;
         }
     </style>
 </head>
 <body>
 
+    <!-- مودال پرسش سریع نام کاربر هنگام ورود -->
+    <div id="user-name-modal" class="name-modal-backdrop">
+        <div class="glass name-modal-card">
+            <span class="pill-tag">✨ خوش آمدید به ZEUC MOVIE</span>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:#fff;">اسمت چیه؟</h2>
+            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
+                نامت ثبت میشه تا توی اتاق‌ها و چت با بقیه با همین اسم شناخته بشی.
+            </p>
+            <form onsubmit="saveUserNameModal(event)">
+                <div class="field-box">
+                    <label for="modal-user-name-input">نام نمایشی شما</label>
+                    <input type="text" id="modal-user-name-input" placeholder="مثلاً: زئوس یا نگین" maxlength="28" required>
+                </div>
+                <button type="submit" class="btn-main">ثبت نام و ورود</button>
+            </form>
+        </div>
+    </div>
+
     <!-- هدر -->
     <header class="glass top-header">
         <div class="brand-row">
             <div class="brand-logo-box" aria-hidden="true">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                    <polygon points="6 4 20 12 6 20 6 4" fill="currentColor"/>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <polygon points="6 4 20 12 6 20 6 4"/>
                 </svg>
             </div>
             <div>
-                <strong>Negin Cinema</strong>
-                <span>سینمای آنلاین نگین</span>
+                <strong>ZEUC MOVIE</strong>
+                <span>سینمای آنلاین زئوس</span>
             </div>
         </div>
-        <div class="online-tag" id="top-online-tag">آنلاین: ۰</div>
+        <div class="header-right-group">
+            <button type="button" id="header-user-name-btn" class="user-chip-btn" onclick="openNameModal()">نام من</button>
+            <div class="online-tag" id="top-online-tag">آنلاین: ۰</div>
+        </div>
     </header>
 
     <!-- پخش‌کننده فیلم فعال -->
     <div class="player-wrapper-outer">
         <div id="active-player-box" class="glass player-card">
             <div id="player-frame-wrap" class="player-frame-wrap">
-                <video id="main-video-player" playsinline controls preload="metadata"></video>
+                <video id="main-video-player" playsinline webkit-playsinline controls preload="metadata"></video>
             </div>
             <div class="player-meta-row">
                 <div>
@@ -758,24 +963,30 @@
             </div>
             <div id="room-sync-bar" class="sync-status-bar">
                 <span id="room-sync-info">اتاق فعال</span>
-                <button type="button" class="btn-sec" style="padding:4px 9px; font-size:11px;" onclick="leaveActiveRoom()">خروج از اتاق</button>
+                <div class="room-controls-row">
+                    <button type="button" id="btn-manual-sync" class="btn-sync-now" onclick="syncToHostNow()">🔄 همگام‌سازی</button>
+                    <button type="button" id="btn-mic-toggle" class="btn-mic" onclick="toggleRoomVoice()">🎤 میکروفون خاموش</button>
+                    <button type="button" id="btn-delete-room-bar" class="btn-room-del" style="display:none;" onclick="deleteCurrentRoom()">🗑 حذف اتاق</button>
+                    <button type="button" class="btn-sec" style="padding:4px 9px; font-size:11px;" onclick="leaveActiveRoom()">خروج</button>
+                </div>
             </div>
+            <div id="remote-audios-container" style="display:none;"></div>
         </div>
     </div>
 
     <!-- ======================= ۱. صفحه خانه ======================= -->
     <main id="tab-home" class="page-view active">
         <div class="glass welcome-banner">
-            <h1>به سایت فیلم نگین خوش آمدید</h1>
+            <h1>به ZEUC MOVIE خوش آمدید</h1>
 
             <div class="stats-two-grid">
                 <div class="stat-highlight">
-                    <strong id="stat-movies-count">+۱۰</strong>
-                    <span>فیلم آماده پخش</span>
+                    <strong id="stat-movies-count">۰</strong>
+                    <span>فیلم ثبت‌شده</span>
                 </div>
                 <div class="stat-highlight">
-                    <strong>HD / Full</strong>
-                    <span>پخش آنلاین روان</span>
+                    <strong>همگام</strong>
+                    <span>پخش اتاقی و صوتی</span>
                 </div>
             </div>
 
@@ -783,39 +994,39 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <polygon points="5 3 19 12 5 21 5 3"/>
                 </svg>
-                پخش سریع فیلم ویژه
+                پخش سریع فیلم
             </button>
         </div>
 
         <section>
             <div class="sec-title-row">
-                <h2>تازه‌ترین فیلم‌ها</h2>
+                <h2>فیلم‌های موجود</h2>
             </div>
             <div id="home-movies-list" class="movies-list"></div>
         </section>
 
         <section>
             <div class="sec-title-row">
-                <h2>راهنمای تماشای بهتر</h2>
+                <h2>راهنمای تماشا و اتاق</h2>
             </div>
             <div class="secrets-list">
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۱. تماشای چندنفره و همزمان در منوی «اتاق»</span>
+                        <span>۱. پخش همزمان و چت و واکنش داخل اتاق</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        از منوی «اتاق» در پایین صفحه می‌توانید اتاق بسازید یا وارد اتاق‌های آنلاین شوید و فیلم انتخابی سازنده اتاق را همزمان با هم ببینید.
+                        وارد منوی «اتاق» شوید، یک اتاق بسازید یا به اتاق‌های فعال بپیوندید؛ فیلم همزمان پخش می‌شود و در پایین اتاق می‌توانید پیام و ری‌اکشن بفرستید.
                     </div>
                 </div>
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. ساخت لیست علاقه‌مندی‌ها روی گوشی</span>
+                        <span>۲. افزودن فیلم از پنل ادمین</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        با زدن دکمه علاقه‌مندی روی هر فیلم، آن فیلم در تب «لیست من» ذخیره می‌شود تا هر وقت خواستی سریع پیدایش کنی.
+                        از منوی «ادمین» وارد شوید و لینک فیلم‌های خود را اضافه کنید تا در لیست فیلم‌ها و انتخاب فیلم اتاق‌ها قرار بگیرند.
                     </div>
                 </div>
             </div>
@@ -825,12 +1036,12 @@
     <!-- ======================= ۲. صفحه جستجو و ژانر ======================= -->
     <section id="tab-search" class="page-view">
         <div class="glass filter-card">
-            <span class="pill-tag">🔎 جستجو و دسته‌بندی</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:10px;">جستجوی فیلم</h2>
+            <span class="pill-tag">جستجو و دسته‌بندی</span>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:10px; color:#fff;">جستجوی فیلم</h2>
 
             <div class="field-box">
                 <label for="search-movie-input">نام فیلم یا توضیح</label>
-                <input type="search" id="search-movie-input" placeholder="مثلاً: اکشن، درام، ماجراجویی..." oninput="renderFilteredMovies()">
+                <input type="search" id="search-movie-input" placeholder="نام فیلم یا ژانر را بنویسید..." oninput="renderFilteredMovies()">
             </div>
 
             <div id="genre-filter-chips" class="genre-pills"></div>
@@ -847,11 +1058,11 @@
         <div id="favorites-movies-list" class="movies-list"></div>
     </section>
 
-    <!-- ======================= ۴. صفحه اتاق (تماشای همزمان چندنفره) ======================= -->
+    <!-- ======================= ۴. صفحه اتاق (همگام + صوت + چت + ری‌اکشن) ======================= -->
     <section id="tab-room" class="page-view">
         <div class="glass room-menu-card">
-            <span class="pill-tag">🎬 تماشای همزمان چندنفره</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px;">اتاق فیلم</h2>
+            <span class="pill-tag">تماشای همزمان چندنفره</span>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:#fff;">اتاق فیلم</h2>
             <p style="font-size:12.5px; color:var(--text-muted);">
                 اتاق بسازید یا وارد اتاق‌های آنلاین شوید تا فیلم انتخابی سازنده را همزمان تماشا کنید.
             </p>
@@ -861,49 +1072,74 @@
                     + ساخت اتاق
                 </button>
                 <button type="button" id="btn-mode-join" class="btn-sec" style="padding:13px 14px;" onclick="switchRoomMode('join')">
-                    🚪 ورود به اتاق
+                    ورود به اتاق
                 </button>
             </div>
         </div>
 
         <!-- فرم ساخت اتاق (فقط اسم اتاق + انتخاب فیلم) -->
         <div id="room-create-panel" class="glass room-menu-card">
-            <h3 style="font-size:15.5px; font-weight:900; margin-bottom:10px;">ساخت اتاق جدید</h3>
+            <h3 style="font-size:15.5px; font-weight:900; margin-bottom:10px; color:#fff;">ساخت اتاق جدید</h3>
             <form onsubmit="createWatchRoom(event)">
                 <div class="field-box">
                     <label for="room-name-input">اسم اتاق</label>
-                    <input type="text" id="room-name-input" placeholder="مثلاً: سینمای شبانه" required>
+                    <input type="text" id="room-name-input" placeholder="مثلاً: اتاق زئوس" required>
                 </div>
                 <div class="field-box">
                     <label for="room-movie-select">انتخاب فیلم از لیست</label>
                     <select id="room-movie-select"></select>
                 </div>
-                <button type="submit" class="btn-main">ایجاد و شروع همزمان فیلم</button>
+                <button type="submit" class="btn-main">ایجاد اتاق و شروع پخش</button>
             </form>
         </div>
 
         <!-- لیست اتاق‌های ساخته شده و آنلاین -->
         <div id="room-join-panel" class="glass room-menu-card" style="display:none;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                <h3 style="font-size:15.5px; font-weight:900;">اتاق‌های آنلاین و فعال</h3>
+                <h3 style="font-size:15.5px; font-weight:900; color:#fff;">اتاق‌های آنلاین و فعال</h3>
                 <span class="pill-tag" id="active-rooms-badge" style="margin-bottom:0;">۰ اتاق</span>
             </div>
             <div id="rooms-list-container" class="room-list-box">
                 <div class="empty-note">در حال بارگذاری اتاق‌ها...</div>
             </div>
         </div>
+
+        <!-- چت زنده و ری‌اکشن داخل اتاق فعال -->
+        <div id="room-chat-panel" class="glass chat-box-card" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <h3 style="font-size:15px; font-weight:900; color:#fff;">چت و واکنش داخل اتاق</h3>
+                <span id="chat-room-title-badge" class="pill-tag" style="margin-bottom:0;">-</span>
+            </div>
+
+            <div class="reaction-bar">
+                <button type="button" class="reaction-btn" onclick="sendReaction('❤️')">❤️ قلب</button>
+                <button type="button" class="reaction-btn" onclick="sendReaction('😂')">😂 خنده</button>
+                <button type="button" class="reaction-btn" onclick="sendReaction('🔥')">🔥 عالی</button>
+                <button type="button" class="reaction-btn" onclick="sendReaction('😮')">😮 شگفت‌زده</button>
+                <button type="button" class="reaction-btn" onclick="sendReaction('👏')">👏 دست‌مریزاد</button>
+            </div>
+
+            <div id="room-chat-messages" class="chat-messages-area">
+                <div class="empty-note" style="padding:12px;">هنوز پیامی ارسال نشده است.</div>
+            </div>
+
+            <form class="chat-input-row" onsubmit="sendRoomChatMessage(event)">
+                <input type="text" id="room-chat-input" placeholder="پیام خود را بنویسید..." maxlength="300" required>
+                <button type="submit" class="btn-watch" style="padding:10px 15px;">ارسال</button>
+            </form>
+        </div>
     </section>
 
     <!-- ======================= ۵. صفحه ادمین ======================= -->
     <section id="tab-admin" class="page-view">
         <div id="adm-login-card" class="glass adm-panel-card">
-            <span class="pill-tag">🔐 پنل ادمین</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:8px;">ورود به مدیریت فیلم‌ها</h2>
+            <span class="pill-tag">پنل ادمین</span>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:8px; color:#fff;">ورود به مدیریت فیلم‌ها</h2>
             <form onsubmit="loginAdminPanel(event)">
                 <div class="field-box">
                     <label for="adm-pass-field">رمز عبور</label>
                     <input type="password" id="adm-pass-field" placeholder="رمز عبور را وارد کنید" required>
-                    <span id="adm-login-error" style="color:#c53030; font-size:12px; display:none;">رمز عبور اشتباه است!</span>
+                    <span id="adm-login-error" style="color:#ff6b86; font-size:12px; display:none;">رمز عبور اشتباه است!</span>
                 </div>
                 <button type="submit" class="btn-main">ورود به پنل</button>
             </form>
@@ -912,7 +1148,7 @@
         <div id="adm-dashboard" style="display:none;">
             <div class="glass adm-panel-card" style="display:flex; justify-content:space-between; align-items:center;">
                 <div>
-                    <strong style="font-size:16px; font-weight:900;">مدیریت فیلم‌های Negin Cinema</strong>
+                    <strong style="font-size:16px; font-weight:900; color:#fff;">مدیریت ZEUC MOVIE</strong>
                     <span style="display:block; font-size:11.5px; color:var(--text-muted);">افزودن یا حذف فیلم برای همه کاربران</span>
                 </div>
                 <button type="button" class="btn-sec" onclick="logoutAdminPanel()">خروج</button>
@@ -930,19 +1166,19 @@
             </div>
 
             <div class="glass adm-panel-card">
-                <h3 style="font-size:15px; font-weight:900; margin-bottom:10px;">افزودن فیلم جدید</h3>
+                <h3 style="font-size:15px; font-weight:900; margin-bottom:10px; color:#fff;">افزودن فیلم جدید</h3>
                 <form onsubmit="addNewMovie(event)">
                     <div class="field-box">
                         <label for="m-title">نام فیلم</label>
-                        <input type="text" id="m-title" placeholder="مثلاً: سفر در شب" required>
+                        <input type="text" id="m-title" placeholder="نام فیلم" required>
                     </div>
                     <div class="field-box">
                         <label for="m-genre">ژانر</label>
-                        <input type="text" id="m-genre" placeholder="مثلاً: درام / رازآلود" value="درام" required>
+                        <input type="text" id="m-genre" placeholder="مثلاً: اکشن، درام" value="درام" required>
                     </div>
                     <div class="field-box">
                         <label for="m-year">سال و مدت</label>
-                        <input type="text" id="m-year" placeholder="مثلاً: 2025 • 115 دقیقه" value="2025 • 105 دقیقه">
+                        <input type="text" id="m-year" placeholder="مثلاً: 2026 • 110 دقیقه" value="2026 • 105 دقیقه">
                     </div>
                     <div class="field-box">
                         <label for="m-poster">لینک پوستر (عکس)</label>
@@ -961,44 +1197,34 @@
             </div>
 
             <div class="glass adm-panel-card">
-                <h3 style="font-size:15px; font-weight:900; margin-bottom:8px;">فیلم‌های منتشرشده در دیتابیس</h3>
+                <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:#fff;">فیلم‌های منتشرشده</h3>
                 <div id="adm-movies-list"></div>
             </div>
         </div>
     </section>
 
-    <!-- ======================= تولبار ثابت پایین ======================= -->
+    <!-- ======================= تولبار ثابت پایین با آیکون‌های SVG اختصاصی ======================= -->
     <nav class="bottom-toolbar" aria-label="تولبار پایین">
-        <a
-            href="https://www.instagram.com/eyelash_nigino?avpt=MXJlems0cWlyZWl6Mw=="
-            target="_blank"
-            rel="noopener noreferrer"
-            class="tb-btn"
-            style="color:#d63384;"
-        >
-            <svg viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7.75 2h8.5A5.75 5.75 0 0 1 22 7.75v8.5A5.75 5.75 0 0 1 16.25 22h-8.5A5.75 5.75 0 0 1 2 16.25v-8.5A5.75 5.75 0 0 1 7.75 2zm0 1.5A4.25 4.25 0 0 0 3.5 7.75v8.5A4.25 4.25 0 0 0 7.75 20.5h8.5a4.25 4.25 0 0 0 4.25-4.25v-8.5A4.25 4.25 0 0 0 16.25 3.5h-8.5zm8.88 2.25a1.12 1.12 0 1 1 0 2.24 1.12 1.12 0 0 1 0-2.24zM12 7a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 1.5a3.5 3.5 0 1 0 0 7 3.5 3.5 0 0 0 0-7z"/>
-            </svg>
-            <span>اینستاگرام</span>
-        </a>
-
+        <!-- ۱. لیست من -->
         <button type="button" id="tb-favorites" class="tb-btn" onclick="openTab('favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
             </svg>
             <span>لیست من</span>
         </button>
 
+        <!-- ۲. اتاق -->
         <button type="button" id="tb-room" class="tb-btn" onclick="openTab('room')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
                 <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
                 <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
             </svg>
             <span>اتاق</span>
         </button>
 
+        <!-- ۳. خانه (وسط تولبار) -->
         <button type="button" id="tb-home" class="tb-btn tb-center-home active" onclick="openTab('home')">
             <div class="home-circle">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
@@ -1008,6 +1234,7 @@
             <span>خانه</span>
         </button>
 
+        <!-- ۴. جستجو -->
         <button type="button" id="tb-search" class="tb-btn" onclick="openTab('search')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="11" cy="11" r="7"/>
@@ -1016,10 +1243,11 @@
             <span>جستجو</span>
         </button>
 
+        <!-- ۵. ادمین -->
         <button type="button" id="tb-admin" class="tb-btn" onclick="openTab('admin')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="m3 8 4.5 9h9L21 8l-5 3.5L12 6l-4 5.5L3 8Z"/>
-                <path d="M7 20h10"/>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="m9 12 2 2 4-4"/>
             </svg>
             <span>ادمین</span>
         </button>
@@ -1033,66 +1261,86 @@
         const db = firebase.database();
 
         const ADMIN_PASS = "negfer8679";
-        const moviesRef = db.ref("negin_cinema_v1/movies");
-        const onlineRef = db.ref("negin_cinema_v1/online");
-        const roomsRef = db.ref("negin_cinema_v1/rooms");
+        const moviesRef = db.ref("zeuc_movie_v1/movies");
+        const onlineRef = db.ref("zeuc_movie_v1/online");
+        const roomsRef = db.ref("zeuc_movie_v1/rooms");
 
         const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="200" height="280" viewBox="0 0 200 280">
-                <rect width="200" height="280" fill="#ffe3f1"/>
-                <circle cx="100" cy="120" r="34" fill="#e55b9b"/>
+                <rect width="200" height="280" fill="#1a060c"/>
+                <circle cx="100" cy="120" r="34" fill="#ff2e55"/>
                 <polygon points="92,106 116,120 92,134" fill="#ffffff"/>
-                <text x="100" y="185" text-anchor="middle" fill="#c02d71" font-family="sans-serif" font-size="16" font-weight="bold">NEGIN FILM</text>
+                <text x="100" y="185" text-anchor="middle" fill="#ff859b" font-family="sans-serif" font-size="15" font-weight="bold">ZEUC MOVIE</text>
             </svg>
         `);
 
-        const starterMovies = [
-            {
-                id: "starter_1",
-                title: "سفر خرگوش بزرگ (Big Buck Bunny)",
-                genre: "انیمیشن",
-                year: "2008 • 10 دقیقه",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Big_buck_bunny_poster_big.jpg/440px-Big_buck_bunny_poster_big.jpg",
-                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                desc: "داستان طنز و دلنشین یک خرگوش مهربان در جنگل و ماجرای شوخی‌های سه سنجاب بازیگوش.",
-                isStarter: true
-            },
-            {
-                id: "starter_2",
-                title: "رویای فیل‌ها (Elephants Dream)",
-                genre: "علمی-تخیلی",
-                year: "2006 • 11 دقیقه",
-                poster: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/Elephants_Dream_s5_both.jpg/440px-Elephants_Dream_s5_both.jpg",
-                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                desc: "سفری سورئال و بصری در دل یک سازه ماشینی اسرارآمیز با روایت دو شخصیت متفاوت.",
-                isStarter: true
-            },
-            {
-                id: "starter_3",
-                title: "فرار از صخره (For Bigger Escapes)",
-                genre: "اکشن",
-                year: "2016 • 1 دقیقه",
-                poster: "",
-                videoUrl: "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-                desc: "کلیپ کوتاه پرهیجان با تصاویر طبیعت و حرکت سریع.",
-                isStarter: true
-            }
-        ];
+        // ثبت سریع نام کاربر هنگام ورود
+        const USER_NAME_KEY = "zeuc_movie_user_name";
+        let currentUserName = (localStorage.getItem(USER_NAME_KEY) || "").trim();
 
-        let customMovies = [];
+        function refreshUserNameHeader() {
+            const btn = document.getElementById("header-user-name-btn");
+            if (btn) {
+                btn.innerText = currentUserName ? `👤 ${currentUserName}` : "ثبت نام";
+            }
+        }
+
+        function openNameModal() {
+            const modal = document.getElementById("user-name-modal");
+            const inp = document.getElementById("modal-user-name-input");
+            if (inp) inp.value = currentUserName;
+            if (modal) modal.classList.add("show");
+            setTimeout(() => { if (inp) inp.focus(); }, 60);
+        }
+
+        function saveUserNameModal(e) {
+            e.preventDefault();
+            const inp = document.getElementById("modal-user-name-input");
+            const val = (inp ? inp.value : "").trim();
+            if (!val) return;
+            currentUserName = val;
+            localStorage.setItem(USER_NAME_KEY, currentUserName);
+            refreshUserNameHeader();
+            document.getElementById("user-name-modal").classList.remove("show");
+        }
+
+        refreshUserNameHeader();
+        if (!currentUserName) {
+            openNameModal();
+        }
+
+        let moviesList = [];
         let adminAuthed = false;
         let activeGenre = "همه";
         let roomsData = [];
         let activeRoomId = null;
+        let activeRoomName = "";
         let isRoomHost = false;
+        let latestRoomSnapshot = null;
         let activeRoomListener = null;
         let activeRoomRef = null;
         let myMemberRef = null;
+        let chatRef = null;
+        let chatListener = null;
         let suppressSyncEvents = false;
         let currentLoadedMovieId = null;
 
+        // ارتباط صوتی WebRTC داخل اتاق
+        let localAudioStream = null;
+        let micEnabled = false;
+        const peerConnections = {};
+        let signalsRef = null;
+        let signalChildAddedHandler = null;
+
+        const rtcConfig = {
+            iceServers: [
+                { urls: "stun:stun.l.google.com:19302" },
+                { urls: "stun:stun1.l.google.com:19302" }
+            ]
+        };
+
         const userSessionId = "usr_" + Math.random().toString(36).slice(2, 10);
-        const FAV_STORAGE = "negin_cinema_v1_favs";
+        const FAV_STORAGE = "zeuc_movie_v1_favs";
         let favIds = JSON.parse(localStorage.getItem(FAV_STORAGE) || "[]");
 
         const videoEl = document.getElementById("main-video-player");
@@ -1103,7 +1351,11 @@
         });
         let hlsInstance = null;
 
-        function loadVideoSource(mv, autoPlay = true) {
+        function getActiveDisplayName() {
+            return currentUserName || "کاربر";
+        }
+
+        function loadVideoSource(mv, autoPlay = true, seekToSec = null) {
             if (!mv || !mv.videoUrl) return;
             const box = document.getElementById("active-player-box");
             box.classList.add("show");
@@ -1114,8 +1366,27 @@
             videoEl.setAttribute("poster", posterUrl);
             plyrInstance.poster = posterUrl;
 
-            if (currentLoadedMovieId === mv.id && videoEl.src) {
-                if (autoPlay) videoEl.play().catch(() => {});
+            const applySeekAndPlay = () => {
+                if (typeof seekToSec === "number" && seekToSec >= 0) {
+                    suppressSyncEvents = true;
+                    try { videoEl.currentTime = seekToSec; } catch (_) {}
+                    setTimeout(() => { suppressSyncEvents = false; }, 350);
+                }
+                if (autoPlay) {
+                    const p = videoEl.play();
+                    if (p && p.catch) {
+                        p.catch(() => {
+                            // در سافاری آیفون اگر پخش خودکار با صدا مسدود شد، با صدای بی‌صدا شروع می‌شود تا فریم و زمان همگام بمانند
+                            videoEl.muted = true;
+                            videoEl.play().catch(() => {});
+                        });
+                    }
+                }
+            };
+
+            const isSameMovie = currentLoadedMovieId === mv.id && Boolean(videoEl.src);
+            if (isSameMovie) {
+                applySeekAndPlay();
                 return;
             }
             currentLoadedMovieId = mv.id;
@@ -1130,20 +1401,22 @@
                 hlsInstance = new window.Hls();
                 hlsInstance.loadSource(url);
                 hlsInstance.attachMedia(videoEl);
-                hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                    if (autoPlay) videoEl.play().catch(() => {});
-                });
+                hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, applySeekAndPlay);
             } else {
                 videoEl.src = url;
-                if (autoPlay) videoEl.play().catch(() => {});
+                if (typeof seekToSec === "number" && seekToSec > 0) {
+                    videoEl.addEventListener("loadedmetadata", applySeekAndPlay, { once: true });
+                } else {
+                    applySeekAndPlay();
+                }
             }
         }
 
         function playMovieById(id) {
             leaveActiveRoom();
-            const mv = getAllMovies().find(m => m.id === id);
+            const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
-            loadVideoSource(mv, true);
+            loadVideoSource(mv, true, null);
             document.getElementById("active-player-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
 
@@ -1165,10 +1438,10 @@
                 return;
             }
 
-            if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.enabled) {
-                plyrInstance.fullscreen.enter();
-            } else if (videoEl.webkitEnterFullscreen) {
+            if (videoEl.webkitEnterFullscreen) {
                 videoEl.webkitEnterFullscreen();
+            } else if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.enabled) {
+                plyrInstance.fullscreen.enter();
             } else if (frameWrapEl.requestFullscreen) {
                 frameWrapEl.requestFullscreen().catch(() => {});
             } else if (frameWrapEl.webkitRequestFullscreen) {
@@ -1193,14 +1466,15 @@
         }
 
         function playFeaturedMovie() {
-            const list = getAllMovies();
-            if (list.length > 0) {
-                playMovieById(list[0].id);
+            if (moviesList.length > 0) {
+                playMovieById(moviesList[0].id);
+            } else {
+                alert("هنوز فیلمی ثبت نشده است. از بخش ادمین فیلم اضافه کنید.");
             }
         }
 
         // =====================================================================
-        // بخش اتاق‌های تماشای همزمان چندنفره
+        // بخش اتاق‌های همزمان + اصلاح سافاری آیفون + حذف اتاق + صدا + چت
         // =====================================================================
         function switchRoomMode(mode) {
             const isCreate = mode === "create";
@@ -1219,19 +1493,29 @@
             const sel = document.getElementById("room-movie-select");
             if (!sel) return;
             const prevVal = sel.value;
-            const all = getAllMovies();
-            sel.innerHTML = all.map(m => `<option value="${escAttr(m.id)}">${esc(m.title)}</option>`).join("");
-            if (prevVal && all.some(m => m.id === prevVal)) {
+            if (!moviesList.length) {
+                sel.innerHTML = `<option value="">ابتدا از بخش ادمین فیلم اضافه کنید</option>`;
+                return;
+            }
+            sel.innerHTML = moviesList.map(m => `<option value="${escAttr(m.id)}">${esc(m.title)}</option>`).join("");
+            if (prevVal && moviesList.some(m => m.id === prevVal)) {
                 sel.value = prevVal;
             }
         }
 
         async function createWatchRoom(e) {
             e.preventDefault();
+            if (!currentUserName) {
+                openNameModal();
+                return;
+            }
             const roomName = document.getElementById("room-name-input").value.trim();
             const movieId = document.getElementById("room-movie-select").value;
-            const mv = getAllMovies().find(m => m.id === movieId) || getAllMovies()[0];
-            if (!roomName || !mv) return;
+            const mv = moviesList.find(m => m.id === movieId);
+            if (!roomName || !mv) {
+                alert("لطفاً اسم اتاق را وارد کنید و مطمئن شوید فیلمی انتخاب شده است.");
+                return;
+            }
 
             leaveActiveRoom();
             const newRef = roomsRef.push();
@@ -1240,6 +1524,7 @@
                 movieId: mv.id,
                 movieTitle: mv.title,
                 hostId: userSessionId,
+                hostName: getActiveDisplayName(),
                 playing: true,
                 currentTime: 0,
                 updatedAt: Date.now()
@@ -1249,37 +1534,78 @@
             enterWatchRoom(newRef.key, true);
         }
 
+        async function deleteRoomById(roomId) {
+            const rm = roomsData.find(r => r.id === roomId);
+            if (!rm || rm.hostId !== userSessionId) return;
+            if (!confirm(`آیا مطمئنید اتاق «${rm.name}» حذف شود؟`)) return;
+            if (activeRoomId === roomId) {
+                leaveActiveRoom();
+            }
+            await roomsRef.child(roomId).remove();
+        }
+
+        function deleteCurrentRoom() {
+            if (!activeRoomId || !isRoomHost) return;
+            deleteRoomById(activeRoomId);
+        }
+
+        function computeExpectedHostTime(data) {
+            const baseSec = Number(data.currentTime || 0);
+            if (!data.playing || !data.updatedAt) return baseSec;
+            const elapsedSec = Math.max(0, (Date.now() - Number(data.updatedAt)) / 1000);
+            return baseSec + elapsedSec;
+        }
+
+        function syncToHostNow() {
+            if (!latestRoomSnapshot || isRoomHost) return;
+            const targetSec = computeExpectedHostTime(latestRoomSnapshot);
+            suppressSyncEvents = true;
+            try {
+                if (videoEl.readyState >= 1) {
+                    videoEl.currentTime = targetSec;
+                }
+            } catch (_) {}
+            videoEl.muted = false;
+            if (latestRoomSnapshot.playing) {
+                videoEl.play().catch(() => {});
+            } else {
+                videoEl.pause();
+            }
+            setTimeout(() => { suppressSyncEvents = false; }, 350);
+        }
+
         function enterWatchRoom(roomId, asHost = false) {
             const rm = roomsData.find(r => r.id === roomId);
             if (!rm) return;
 
             leaveActiveRoom();
             activeRoomId = roomId;
+            activeRoomName = rm.name;
             isRoomHost = asHost || rm.hostId === userSessionId;
 
             activeRoomRef = roomsRef.child(roomId);
             myMemberRef = activeRoomRef.child("members").child(userSessionId);
             myMemberRef.onDisconnect().remove();
-            myMemberRef.set({ joinedAt: Date.now(), isHost: isRoomHost });
-
-            const mv = getAllMovies().find(m => m.id === rm.movieId) || getAllMovies()[0];
-            if (mv) {
-                loadVideoSource(mv, Boolean(rm.playing));
-                if (typeof rm.currentTime === "number" && rm.currentTime > 0) {
-                    const setPos = () => {
-                        suppressSyncEvents = true;
-                        videoEl.currentTime = rm.currentTime;
-                        setTimeout(() => { suppressSyncEvents = false; }, 350);
-                    };
-                    if (videoEl.readyState >= 1) setPos();
-                    else videoEl.addEventListener("loadedmetadata", setPos, { once: true });
-                }
-            }
+            myMemberRef.set({
+                joinedAt: Date.now(),
+                name: getActiveDisplayName(),
+                isHost: isRoomHost
+            });
 
             const syncBar = document.getElementById("room-sync-bar");
             syncBar.classList.add("show");
+            document.getElementById("btn-delete-room-bar").style.display = isRoomHost ? "inline-flex" : "none";
+            document.getElementById("btn-manual-sync").style.display = isRoomHost ? "none" : "inline-flex";
             document.getElementById("room-sync-info").innerText =
-                `اتاق «${rm.name}» (${isRoomHost ? "سازنده اتاق" : "همگام با سازنده"})`;
+                `اتاق «${rm.name}» (${isRoomHost ? "سازنده" : "مهمان"})`;
+
+            // نمایش باکس چت و ری‌اکشن اتاق
+            const chatPanel = document.getElementById("room-chat-panel");
+            chatPanel.style.display = "block";
+            document.getElementById("chat-room-title-badge").innerText = rm.name;
+
+            setupVoiceSignaling(roomId);
+            setupRoomChat(roomId);
 
             activeRoomListener = (snap) => {
                 const data = snap.val();
@@ -1287,28 +1613,259 @@
                     leaveActiveRoom();
                     return;
                 }
-                const membersCount = Object.keys(data.members || {}).length || 1;
+                latestRoomSnapshot = data;
+                const membersObj = data.members || {};
+                const membersCount = Object.keys(membersObj).length || 1;
                 document.getElementById("room-sync-info").innerText =
                     `اتاق «${data.name}» • ${membersCount} نفر آنلاین`;
 
+                const mv = moviesList.find(m => m.id === data.movieId) || moviesList[0];
+                const expectedSec = computeExpectedHostTime(data);
+
+                if (mv) {
+                    loadVideoSource(mv, Boolean(data.playing), !isRoomHost ? expectedSec : null);
+                }
+
                 if (!isRoomHost) {
                     suppressSyncEvents = true;
-                    if (typeof data.currentTime === "number" && Math.abs(videoEl.currentTime - data.currentTime) > 1.8) {
-                        videoEl.currentTime = data.currentTime;
-                    }
+                    try {
+                        if (videoEl.readyState >= 1 && Math.abs(videoEl.currentTime - expectedSec) > 2.2) {
+                            videoEl.currentTime = expectedSec;
+                        }
+                    } catch (_) {}
                     if (data.playing && videoEl.paused) {
-                        videoEl.play().catch(() => {});
+                        const p = videoEl.play();
+                        if (p && p.catch) {
+                            p.catch(() => {
+                                videoEl.muted = true;
+                                videoEl.play().catch(() => {});
+                            });
+                        }
                     } else if (!data.playing && !videoEl.paused) {
                         videoEl.pause();
                     }
-                    setTimeout(() => { suppressSyncEvents = false; }, 300);
+                    setTimeout(() => { suppressSyncEvents = false; }, 350);
+                }
+
+                if (micEnabled) {
+                    Object.keys(membersObj).forEach(peerId => {
+                        if (peerId !== userSessionId && !peerConnections[peerId]) {
+                            createPeerAndOffer(peerId);
+                        }
+                    });
                 }
             };
             activeRoomRef.on("value", activeRoomListener);
             document.getElementById("active-player-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
 
+        // چت و واکنش داخل اتاق
+        function setupRoomChat(roomId) {
+            chatRef = roomsRef.child(roomId).child("chat");
+            const area = document.getElementById("room-chat-messages");
+            area.innerHTML = `<div class="empty-note" style="padding:12px;">هنوز پیامی ارسال نشده است.</div>`;
+
+            chatListener = (snap) => {
+                const raw = snap.val() || {};
+                const msgs = Object.values(raw).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+                if (!msgs.length) {
+                    area.innerHTML = `<div class="empty-note" style="padding:12px;">هنوز پیامی ارسال نشده است.</div>`;
+                    return;
+                }
+                area.innerHTML = msgs.map(m => {
+                    const mine = m.senderId === userSessionId;
+                    return `
+                        <div class="chat-msg-bubble ${mine ? "mine" : ""}">
+                            <div class="chat-msg-sender">${esc(m.senderName || "کاربر")}</div>
+                            <div style="color:#fff;">${esc(m.text || "")}</div>
+                        </div>
+                    `;
+                }).join("");
+                area.scrollTop = area.scrollHeight;
+            };
+            chatRef.on("value", chatListener);
+        }
+
+        async function sendRoomChatMessage(e) {
+            e.preventDefault();
+            if (!activeRoomId || !chatRef) return;
+            if (!currentUserName) {
+                openNameModal();
+                return;
+            }
+            const inp = document.getElementById("room-chat-input");
+            const txt = (inp ? inp.value : "").trim();
+            if (!txt) return;
+
+            await chatRef.push({
+                senderId: userSessionId,
+                senderName: getActiveDisplayName(),
+                text: txt,
+                createdAt: Date.now()
+            });
+            if (inp) inp.value = "";
+        }
+
+        async function sendReaction(emoji) {
+            if (!activeRoomId || !chatRef) return;
+            await chatRef.push({
+                senderId: userSessionId,
+                senderName: getActiveDisplayName(),
+                text: `واکنش: ${emoji}`,
+                createdAt: Date.now()
+            });
+        }
+
+        // ارتباط صوتی WebRTC
+        function setupVoiceSignaling(roomId) {
+            signalsRef = roomsRef.child(roomId).child("voiceSignals");
+            signalChildAddedHandler = async (snap) => {
+                const sig = snap.val();
+                if (!sig || sig.to !== userSessionId || sig.from === userSessionId) return;
+
+                if (sig.type === "offer") {
+                    if (!micEnabled) {
+                        await enableLocalMic(false);
+                    }
+                    const pc = getOrCreatePeer(sig.from);
+                    await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    signalsRef.push({
+                        from: userSessionId,
+                        to: sig.from,
+                        type: "answer",
+                        sdp: pc.localDescription
+                    });
+                } else if (sig.type === "answer") {
+                    const pc = peerConnections[sig.from];
+                    if (pc && pc.signalingState !== "stable") {
+                        await pc.setRemoteDescription(new RTCSessionDescription(sig.sdp));
+                    }
+                } else if (sig.type === "candidate" && sig.candidate) {
+                    const pc = getOrCreatePeer(sig.from);
+                    try {
+                        await pc.addIceCandidate(new RTCIceCandidate(sig.candidate));
+                    } catch (_) {}
+                }
+            };
+            signalsRef.on("child_added", signalChildAddedHandler);
+        }
+
+        function getOrCreatePeer(peerId) {
+            if (peerConnections[peerId]) return peerConnections[peerId];
+            const pc = new RTCPeerConnection(rtcConfig);
+            peerConnections[peerId] = pc;
+
+            if (localAudioStream) {
+                localAudioStream.getTracks().forEach(track => pc.addTrack(track, localAudioStream));
+            }
+
+            pc.onicecandidate = (ev) => {
+                if (ev.candidate && signalsRef) {
+                    signalsRef.push({
+                        from: userSessionId,
+                        to: peerId,
+                        type: "candidate",
+                        candidate: ev.candidate.toJSON()
+                    });
+                }
+            };
+
+            pc.ontrack = (ev) => {
+                const audioContainer = document.getElementById("remote-audios-container");
+                let aud = document.getElementById("aud_" + peerId);
+                if (!aud) {
+                    aud = document.createElement("audio");
+                    aud.id = "aud_" + peerId;
+                    aud.autoplay = true;
+                    aud.playsInline = true;
+                    audioContainer.appendChild(aud);
+                }
+                aud.srcObject = ev.streams[0];
+                aud.play().catch(() => {});
+            };
+
+            return pc;
+        }
+
+        async function createPeerAndOffer(peerId) {
+            const pc = getOrCreatePeer(peerId);
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+            if (signalsRef) {
+                signalsRef.push({
+                    from: userSessionId,
+                    to: peerId,
+                    type: "offer",
+                    sdp: pc.localDescription
+                });
+            }
+        }
+
+        async function enableLocalMic(callOthers = true) {
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert("مرورگر شما از دسترسی به میکروفون پشتیبانی نمی‌کند.");
+                return false;
+            }
+            try {
+                localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+                micEnabled = true;
+                const btn = document.getElementById("btn-mic-toggle");
+                btn.classList.add("active");
+                btn.innerText = "🎤 میکروفون روشن";
+
+                if (callOthers && activeRoomId) {
+                    const rm = roomsData.find(r => r.id === activeRoomId);
+                    const members = (rm && rm.members) || {};
+                    for (const peerId of Object.keys(members)) {
+                        if (peerId !== userSessionId) {
+                            await createPeerAndOffer(peerId);
+                        }
+                    }
+                }
+                return true;
+            } catch (_) {
+                alert("دسترسی به میکروفون داده نشد یا لغو شد.");
+                return false;
+            }
+        }
+
+        function disableLocalMic() {
+            micEnabled = false;
+            if (localAudioStream) {
+                localAudioStream.getTracks().forEach(t => t.stop());
+                localAudioStream = null;
+            }
+            Object.keys(peerConnections).forEach(k => {
+                peerConnections[k].close();
+                delete peerConnections[k];
+            });
+            document.getElementById("remote-audios-container").innerHTML = "";
+            const btn = document.getElementById("btn-mic-toggle");
+            if (btn) {
+                btn.classList.remove("active");
+                btn.innerText = "🎤 میکروفون خاموش";
+            }
+        }
+
+        async function toggleRoomVoice() {
+            if (!activeRoomId) return;
+            if (micEnabled) {
+                disableLocalMic();
+            } else {
+                await enableLocalMic(true);
+            }
+        }
+
         function leaveActiveRoom() {
+            disableLocalMic();
+            if (chatRef && chatListener) {
+                chatRef.off("value", chatListener);
+            }
+            if (signalsRef && signalChildAddedHandler) {
+                signalsRef.off("child_added", signalChildAddedHandler);
+            }
             if (activeRoomRef && activeRoomListener) {
                 activeRoomRef.off("value", activeRoomListener);
             }
@@ -1317,11 +1874,19 @@
                 myMemberRef.remove();
             }
             activeRoomId = null;
+            activeRoomName = "";
             isRoomHost = false;
+            latestRoomSnapshot = null;
             activeRoomListener = null;
             activeRoomRef = null;
             myMemberRef = null;
+            chatRef = null;
+            chatListener = null;
+            signalsRef = null;
+            signalChildAddedHandler = null;
+            document.getElementById("btn-delete-room-bar").style.display = "none";
             document.getElementById("room-sync-bar").classList.remove("show");
+            document.getElementById("room-chat-panel").style.display = "none";
         }
 
         function pushRoomPlaybackState(playing) {
@@ -1333,7 +1898,13 @@
             });
         }
 
-        videoEl.addEventListener("play", () => pushRoomPlaybackState(true));
+        videoEl.addEventListener("play", () => {
+            if (activeRoomId && !isRoomHost) {
+                syncToHostNow();
+            } else {
+                pushRoomPlaybackState(true);
+            }
+        });
         videoEl.addEventListener("pause", () => pushRoomPlaybackState(false));
         videoEl.addEventListener("seeked", () => pushRoomPlaybackState(!videoEl.paused));
 
@@ -1347,6 +1918,9 @@
                 }))
                 .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
 
+            if (activeRoomId && !raw[activeRoomId]) {
+                leaveActiveRoom();
+            }
             renderRoomsList();
         });
 
@@ -1361,19 +1935,25 @@
                 return;
             }
 
-            box.innerHTML = roomsData.map(r => `
-                <button type="button" class="room-item-card" onclick="enterWatchRoom('${escAttr(r.id)}', false)">
-                    <div>
-                        <strong>${esc(r.name)}</strong>
-                        <span>فیلم: ${esc(r.movieTitle || "فیلم انتخابی")}</span>
+            box.innerHTML = roomsData.map(r => {
+                const canDelete = r.hostId === userSessionId;
+                return `
+                    <div class="room-item-row">
+                        <button type="button" class="room-item-enter" onclick="enterWatchRoom('${escAttr(r.id)}', false)">
+                            <strong>${esc(r.name)}</strong>
+                            <span>فیلم: ${esc(r.movieTitle || "فیلم انتخابی")}</span>
+                        </button>
+                        <div class="room-item-actions">
+                            <span class="room-live-pill">👥 ${r.membersCount || 1} نفر</span>
+                            ${canDelete ? `<button type="button" class="btn-room-del" onclick="deleteRoomById('${escAttr(r.id)}')">حذف</button>` : ""}
+                        </div>
                     </div>
-                    <span class="room-live-pill">👥 ${r.membersCount || 1} نفر • ورود</span>
-                </button>
-            `).join("");
+                `;
+            }).join("");
         }
 
         // =====================================================================
-        // ناوبری تب‌ها و سایر بخش‌ها
+        // ناوبری تب‌ها، فیلم‌ها و ادمین
         // =====================================================================
         function openTab(tabKey) {
             document.querySelectorAll(".page-view").forEach(p => p.classList.remove("active"));
@@ -1407,7 +1987,7 @@
             if (drawer) drawer.classList.toggle("open");
         }
 
-        const onlineUid = "cin_" + Math.random().toString(36).slice(2, 10);
+        const onlineUid = "zm_" + Math.random().toString(36).slice(2, 10);
         const onlineUserRef = onlineRef.child(onlineUid);
         db.ref(".info/connected").on("value", (snap) => {
             if (snap.val() === true) {
@@ -1423,16 +2003,12 @@
 
         moviesRef.on("value", (snap) => {
             const raw = snap.val() || {};
-            customMovies = Object.entries(raw)
-                .map(([id, val]) => ({ id, ...val, isStarter: false }))
+            moviesList = Object.entries(raw)
+                .map(([id, val]) => ({ id, ...val }))
                 .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
             renderAllMovieViews();
         });
-
-        function getAllMovies() {
-            return [...customMovies, ...starterMovies];
-        }
 
         function toggleFavorite(id) {
             if (favIds.includes(id)) {
@@ -1455,7 +2031,7 @@
                     <div class="movie-info-col">
                         <strong>${esc(mv.title)}</strong>
                         <div class="movie-sub-meta">${esc(mv.genre || "فیلم")} ${mv.year ? "• " + esc(mv.year) : ""}</div>
-                        <div class="movie-desc-short">${esc(mv.desc || "تماشای آنلاین فیلم با کیفیت مناسب")}</div>
+                        <div class="movie-desc-short">${esc(mv.desc || "تماشای آنلاین فیلم در ZEUC MOVIE")}</div>
                         <div class="movie-actions-row">
                             <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(mv.id)}')">▶ پخش فیلم</button>
                             <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">
@@ -1468,13 +2044,12 @@
         }
 
         function renderAllMovieViews() {
-            const all = getAllMovies();
-            document.getElementById("stat-movies-count").innerText = "+" + all.length;
-            document.getElementById("adm-mv-count").innerText = all.length;
+            document.getElementById("stat-movies-count").innerText = String(moviesList.length);
+            document.getElementById("adm-mv-count").innerText = String(moviesList.length);
 
-            document.getElementById("home-movies-list").innerHTML = all.length
-                ? all.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">هنوز فیلمی ثبت نشده است.</div>`;
+            document.getElementById("home-movies-list").innerHTML = moviesList.length
+                ? moviesList.map(buildMovieCardHtml).join("")
+                : `<div class="glass empty-note">هنوز فیلمی ثبت نشده است. از تب «ادمین» فیلم جدید اضافه کنید.</div>`;
 
             renderGenreChips();
             renderFilteredMovies();
@@ -1484,8 +2059,7 @@
         }
 
         function renderGenreChips() {
-            const all = getAllMovies();
-            const genres = ["همه", ...Array.from(new Set(all.map(m => (m.genre || "").trim()).filter(Boolean)))];
+            const genres = ["همه", ...Array.from(new Set(moviesList.map(m => (m.genre || "").trim()).filter(Boolean)))];
             const box = document.getElementById("genre-filter-chips");
             box.innerHTML = genres.map(g => `
                 <button type="button" class="genre-chip ${activeGenre === g ? "active" : ""}" onclick="selectGenre('${escAttr(g)}')">${esc(g)}</button>
@@ -1500,7 +2074,7 @@
 
         function renderFilteredMovies() {
             const q = (document.getElementById("search-movie-input").value || "").trim().toLowerCase();
-            const list = getAllMovies().filter(m => {
+            const list = moviesList.filter(m => {
                 const matchGenre = activeGenre === "همه" || (m.genre || "").trim() === activeGenre;
                 const matchQuery = !q ||
                     (m.title || "").toLowerCase().includes(q) ||
@@ -1512,11 +2086,11 @@
             const box = document.getElementById("search-movies-list");
             box.innerHTML = list.length
                 ? list.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">فیلمی با این مشخصات پیدا نشد.</div>`;
+                : `<div class="glass empty-note">فیلمی پیدا نشد.</div>`;
         }
 
         function renderFavoritesList() {
-            const list = getAllMovies().filter(m => favIds.includes(m.id));
+            const list = moviesList.filter(m => favIds.includes(m.id));
             const box = document.getElementById("favorites-movies-list");
             box.innerHTML = list.length
                 ? list.map(buildMovieCardHtml).join("")
@@ -1571,12 +2145,12 @@
 
         function renderAdminMovies() {
             const box = document.getElementById("adm-movies-list");
-            if (!customMovies.length) {
-                box.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">فیلم جدیدی توسط ادمین اضافه نشده است (فیلم‌های نمونه پیش‌فرض فعال هستند).</p>`;
+            if (!moviesList.length) {
+                box.innerHTML = `<p style="font-size:12px; color:var(--text-muted);">هنوز فیلمی ثبت نشده است.</p>`;
                 return;
             }
-            box.innerHTML = customMovies.map(m => `
-                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid #f7e4ee; font-size:12.5px;">
+            box.innerHTML = moviesList.map(m => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid rgba(255,59,92,0.16); font-size:12.5px;">
                     <span><strong>${esc(m.title)}</strong> — ${esc(m.genre || "")}</span>
                     <button type="button" class="btn-del" onclick="moviesRef.child('${m.id}').remove()">حذف</button>
                 </div>
