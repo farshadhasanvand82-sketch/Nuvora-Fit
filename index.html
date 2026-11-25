@@ -23,13 +23,13 @@
             --bg-grad-1: rgba(255, 34, 72, 0.28);
             --bg-grad-2: rgba(185, 14, 48, 0.25);
             --bg-grad-3: rgba(255, 46, 85, 0.18);
-            --glass-bg: linear-gradient(155deg, rgba(42, 12, 23, 0.72), rgba(16, 5, 9, 0.78));
-            --glass-highlight: inset 0 1px 0 rgba(255, 165, 182, 0.22);
-            --glass-border: rgba(255, 59, 92, 0.28);
+            --glass-bg: linear-gradient(155deg, rgba(42, 12, 23, 0.74), rgba(16, 5, 9, 0.8));
+            --glass-highlight: inset 0 1px 0 rgba(255, 165, 182, 0.24);
+            --glass-border: rgba(255, 59, 92, 0.3);
             --surface-sub: rgba(14, 4, 8, 0.72);
-            --input-bg: rgba(12, 4, 7, 0.82);
-            --header-bar-bg: rgba(20, 6, 11, 0.74);
-            --toolbar-bg: rgba(22, 7, 12, 0.76);
+            --input-bg: rgba(12, 4, 7, 0.84);
+            --header-bar-bg: rgba(20, 6, 11, 0.76);
+            --toolbar-bg: rgba(22, 7, 12, 0.78);
             --red-primary: #ff2e55;
             --red-dark: #b80f30;
             --red-soft: rgba(255, 46, 85, 0.16);
@@ -47,13 +47,13 @@
             --bg-grad-1: rgba(255, 255, 255, 0.92);
             --bg-grad-2: rgba(226, 235, 250, 0.85);
             --bg-grad-3: rgba(255, 228, 236, 0.65);
-            --glass-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.78), rgba(246, 248, 253, 0.68));
+            --glass-bg: linear-gradient(155deg, rgba(255, 255, 255, 0.8), rgba(246, 248, 253, 0.7));
             --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.95);
-            --glass-border: rgba(255, 255, 255, 0.9);
-            --surface-sub: rgba(255, 255, 255, 0.68);
-            --input-bg: rgba(255, 255, 255, 0.85);
-            --header-bar-bg: rgba(255, 255, 255, 0.74);
-            --toolbar-bg: rgba(255, 255, 255, 0.76);
+            --glass-border: rgba(255, 255, 255, 0.92);
+            --surface-sub: rgba(255, 255, 255, 0.72);
+            --input-bg: rgba(255, 255, 255, 0.88);
+            --header-bar-bg: rgba(255, 255, 255, 0.76);
+            --toolbar-bg: rgba(255, 255, 255, 0.78);
             --red-primary: #e6294d;
             --red-dark: #b80f30;
             --red-soft: rgba(230, 41, 77, 0.12);
@@ -74,21 +74,31 @@
             -webkit-touch-callout: none;
         }
 
-        html, body {
+        html {
+            overflow-y: auto;
+            overflow-x: hidden;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        body {
             background:
                 radial-gradient(circle at 12% 8%, var(--bg-grad-1), transparent 44%),
                 radial-gradient(circle at 88% 16%, var(--bg-grad-2), transparent 46%),
                 radial-gradient(circle at 50% 92%, var(--bg-grad-3), transparent 55%),
                 var(--bg-main);
             color: var(--text-light);
-            min-height: 100vh;
+            min-height: 100dvh;
             line-height: 1.65;
+            overflow-y: auto;
             overflow-x: hidden;
-            overscroll-behavior-y: contain;
+            touch-action: pan-y;
+            -webkit-overflow-scrolling: touch;
+            overscroll-behavior-y: auto;
             user-select: none;
             -webkit-user-select: none;
-            padding-top: calc(72px + env(safe-area-inset-top, 0px));
-            padding-bottom: calc(104px + env(safe-area-inset-bottom, 0px));
+            padding-top: calc(74px + env(safe-area-inset-top, 0px));
+            padding-bottom: calc(108px + env(safe-area-inset-bottom, 0px));
             transition: background 0.3s ease, color 0.3s ease;
         }
 
@@ -99,15 +109,76 @@
 
         body.app-boot-locked,
         body.livetv-active {
-            overflow: hidden;
+            overflow: hidden !important;
+            height: 100dvh;
             padding-top: 0;
             padding-bottom: 0;
         }
 
         body.livetv-active .top-header,
+        body.livetv-active .explore-top-toolbar,
         body.livetv-active .player-wrapper-outer,
         body.livetv-active .bottom-toolbar {
             display: none !important;
+        }
+
+        /* وقتی در حالت اکسپلور هستیم، تولبار بالا محو و تولبار اکسپلور ظاهر می‌شود؛ تولبار پایین سر جای خودش می‌ماند */
+        body.explore-mode-active .top-header {
+            display: none !important;
+        }
+
+        body.explore-mode-active {
+            padding-top: calc(78px + env(safe-area-inset-top, 0px));
+        }
+
+        .explore-top-toolbar {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 210;
+            padding: calc(9px + env(safe-area-inset-top, 0px)) 12px 9px;
+            background: var(--header-bar-bg);
+            backdrop-filter: blur(22px);
+            -webkit-backdrop-filter: blur(22px);
+            border-bottom: 1.5px solid var(--glass-border);
+            border-bottom-left-radius: 22px;
+            border-bottom-right-radius: 22px;
+            box-shadow: var(--glass-highlight), 0 8px 24px rgba(0, 0, 0, 0.14);
+        }
+
+        body.explore-mode-active .explore-top-toolbar {
+            display: block;
+            animation: fadePage 0.2s ease;
+        }
+
+        .explore-subnav-grid {
+            max-width: 560px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .explore-subtab-btn {
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.32);
+            color: var(--text-light);
+            border-radius: 14px;
+            padding: 8px 6px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            text-align: center;
+            white-space: nowrap;
+        }
+
+        .explore-subtab-btn.active {
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 14px var(--red-glow);
         }
 
         /* ==================== صفحه لودینگ گرافیکی و اتصال ==================== */
@@ -253,9 +324,9 @@
 
         .pill-tag {
             display: inline-block;
-            background: linear-gradient(135deg, rgba(255, 46, 85, 0.2), rgba(184, 15, 48, 0.14));
+            background: linear-gradient(135deg, rgba(255, 46, 85, 0.22), rgba(184, 15, 48, 0.14));
             color: var(--chip-text);
-            border: 1px solid rgba(255, 77, 109, 0.34);
+            border: 1px solid rgba(255, 77, 109, 0.36);
             font-size: 11px;
             font-weight: 800;
             padding: 4px 12px;
@@ -263,6 +334,51 @@
             margin-bottom: 8px;
             box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18);
         }
+
+        /* نشان‌های رنگی اختصاصی دوبله (سبز)، زیرنویس (قرمز)، زبان اصلی (مشکی) */
+        .lang-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10.5px;
+            font-weight: 900;
+            padding: 3px 9px;
+            border-radius: 999px;
+            line-height: 1.3;
+            vertical-align: middle;
+        }
+
+        .lang-badge-dub {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            border: 1px solid rgba(16, 185, 129, 0.55);
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.22);
+        }
+
+        .lang-badge-sub {
+            background: rgba(239, 68, 68, 0.22);
+            color: #ff4d6d;
+            border: 1px solid rgba(239, 68, 68, 0.6);
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.24);
+        }
+
+        .lang-badge-orig {
+            background: rgba(10, 10, 12, 0.88);
+            color: #f4f4f6;
+            border: 1px solid rgba(255, 255, 255, 0.24);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+        }
+
+        .lang-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .lang-badge-dub .lang-dot { background: #10b981; }
+        .lang-badge-sub .lang-dot { background: #ef4444; }
+        .lang-badge-orig .lang-dot { background: #111111; box-shadow: 0 0 0 1px rgba(255,255,255,0.45); }
 
         /* مودال‌ها */
         .modal-backdrop {
@@ -276,6 +392,7 @@
             align-items: center;
             justify-content: center;
             padding: 18px;
+            overflow-y: auto;
         }
 
         .modal-backdrop.show {
@@ -285,7 +402,9 @@
 
         .modal-card {
             width: 100%;
-            max-width: 420px;
+            max-width: 440px;
+            max-height: 90dvh;
+            overflow-y: auto;
             border-radius: 26px;
             padding: 22px;
         }
@@ -399,10 +518,10 @@
             color: var(--text-light);
             font-size: 10.5px;
             font-weight: 800;
-            padding: 5px 8px;
+            padding: 5px 9px;
             border-radius: 999px;
             cursor: pointer;
-            max-width: 72px;
+            max-width: 92px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
@@ -422,7 +541,7 @@
         /* کانتینر صفحات */
         .page-view {
             display: none;
-            padding: 14px 16px 16px;
+            padding: 14px 16px 24px;
             max-width: 560px;
             margin: 0 auto;
             animation: fadePage 0.2s ease;
@@ -435,6 +554,67 @@
         @keyframes fadePage {
             from { opacity: 0; transform: translateY(6px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ==================== اسکرول افقی چپ و راست اینستاگرامی در اکسپلور ==================== */
+        .explore-horizontal-track {
+            display: flex;
+            flex-direction: row;
+            gap: 12px;
+            overflow-x: auto;
+            overflow-y: hidden;
+            scroll-snap-type: x mandatory;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 10px;
+            margin-bottom: 14px;
+        }
+
+        .explore-story-card {
+            flex: 0 0 250px;
+            scroll-snap-align: start;
+            border-radius: 24px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            cursor: pointer;
+        }
+
+        .explore-story-cover {
+            width: 100%;
+            height: 155px;
+            border-radius: 16px;
+            object-fit: cover;
+            background: rgba(255, 46, 85, 0.14);
+            border: 1px solid rgba(255, 77, 109, 0.28);
+        }
+
+        .creator-page-card {
+            border-radius: 22px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        .creator-page-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+
+        .creator-avatar-sm {
+            width: 46px;
+            height: 46px;
+            border-radius: 15px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 1.5px solid var(--red-primary);
+            background: var(--red-soft);
         }
 
         /* ==================== فضای مستقل LIVE TV ==================== */
@@ -530,6 +710,7 @@
             flex: 1;
             min-height: 0;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -834,6 +1015,7 @@
         .chat-messages-area {
             max-height: 210px;
             overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             display: flex;
             flex-direction: column;
             gap: 8px;
@@ -1000,7 +1182,7 @@
             gap: 5px;
         }
 
-        /* سکشن لیست فیلم‌ها */
+        /* سکشن لیست فیلم‌ها و پست‌ها */
         .sec-title-row {
             display: flex;
             align-items: center;
@@ -1065,6 +1247,10 @@
             font-size: 11.5px;
             color: var(--text-muted);
             margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 5px;
         }
 
         .movie-desc-short {
@@ -1257,6 +1443,136 @@
             color: var(--text-muted);
         }
 
+        /* ==================== صفحه پیج اختصاصی کاربر ==================== */
+        .page-profile-header {
+            border-radius: 26px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .page-user-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .page-avatar-lg {
+            width: 68px;
+            height: 68px;
+            border-radius: 22px;
+            object-fit: cover;
+            flex-shrink: 0;
+            border: 2px solid var(--red-primary);
+            background: var(--red-soft);
+        }
+
+        .page-follow-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        .follow-stat-box {
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.32);
+            border-radius: 18px;
+            padding: 11px 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+
+        .follow-stat-box strong {
+            display: block;
+            font-size: 17px;
+            font-weight: 900;
+            color: var(--red-primary);
+        }
+
+        .follow-stat-box span {
+            font-size: 11.5px;
+            font-weight: 800;
+            color: var(--text-muted);
+        }
+
+        .page-add-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .composer-glass-card {
+            border-radius: 26px;
+            padding: 18px;
+            margin-bottom: 14px;
+        }
+
+        .multi-genre-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .multi-genre-btn {
+            background: var(--surface-sub);
+            border: 1.5px solid rgba(255, 77, 109, 0.3);
+            color: var(--text-light);
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .multi-genre-btn.selected {
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
+            color: #fff;
+            border-color: transparent;
+            box-shadow: 0 4px 14px var(--red-glow);
+        }
+
+        .lang-choice-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 4px;
+        }
+
+        .lang-choice-btn {
+            background: var(--surface-sub);
+            border: 1.5px solid rgba(255, 77, 109, 0.28);
+            color: var(--text-light);
+            padding: 9px 8px;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .lang-choice-btn.active-dub {
+            border-color: #10b981;
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        .lang-choice-btn.active-sub {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.22);
+            color: #ff5c77;
+        }
+
+        .lang-choice-btn.active-orig {
+            border-color: rgba(255, 255, 255, 0.45);
+            background: rgba(12, 12, 14, 0.92);
+            color: #ffffff;
+        }
+
         /* استایل‌های صفحه اتاق */
         .room-menu-card {
             border-radius: 26px;
@@ -1373,7 +1689,7 @@
             cursor: pointer;
         }
 
-        /* تولبار ثابت شفاف شیشه‌ای در پایین (۵ آیتم) */
+        /* تولبار ثابت شفاف شیشه‌ای در پایین */
         .bottom-toolbar {
             position: fixed;
             bottom: calc(10px + env(safe-area-inset-bottom, 0px));
@@ -1389,11 +1705,15 @@
             border: 1.5px solid rgba(255, 77, 109, 0.34);
             box-shadow: inset 0 1px 0 rgba(255,255,255,0.22), 0 10px 28px rgba(0, 0, 0, 0.16);
             display: grid;
-            grid-template-columns: repeat(5, 1fr);
+            grid-template-columns: repeat(6, 1fr);
             align-items: center;
             z-index: 200;
             padding: 0 4px;
             transform: translateZ(0);
+        }
+
+        .bottom-toolbar.has-page-tab {
+            grid-template-columns: repeat(7, 1fr);
         }
 
         .tb-btn {
@@ -1405,15 +1725,15 @@
             justify-content: center;
             gap: 3px;
             color: var(--text-muted);
-            font-size: 10px;
+            font-size: 9.5px;
             font-weight: 700;
             cursor: pointer;
             position: relative;
         }
 
         .tb-btn svg {
-            width: 21px;
-            height: 21px;
+            width: 20px;
+            height: 20px;
         }
 
         .tb-btn.active {
@@ -1425,9 +1745,9 @@
         }
 
         .tb-center-home .home-circle {
-            width: 44px;
-            height: 44px;
-            border-radius: 16px;
+            width: 42px;
+            height: 42px;
+            border-radius: 15px;
             background: linear-gradient(135deg, #ff3b5c, #b80f30);
             color: #fff;
             border: 1px solid rgba(255, 165, 182, 0.28);
@@ -1449,6 +1769,21 @@
     <button type="button" id="floating-exit-fs-btn" class="floating-exit-fs-btn" onclick="exitFullscreenNow()">
         ✕ خروج از تمام‌صفحه
     </button>
+
+    <!-- تولبار بالایی اختصاصی اکسپلور (هنگام ورود به اکسپلور جایگزین هدر اصلی می‌شود) -->
+    <header id="explore-top-toolbar" class="explore-top-toolbar" aria-label="منوی اکسپلور">
+        <div class="explore-subnav-grid">
+            <button type="button" id="ex-sub-pages" class="explore-subtab-btn" onclick="switchExploreSubtab('pages')">
+                پیج ها
+            </button>
+            <button type="button" id="ex-sub-feed" class="explore-subtab-btn active" onclick="switchExploreSubtab('feed')">
+                اکسپلور
+            </button>
+            <button type="button" id="ex-sub-following" class="explore-subtab-btn" onclick="switchExploreSubtab('following')">
+                فالو شده ها
+            </button>
+        </div>
+    </header>
 
     <!-- فضای مستقل پخش زنده شبکه‌ها (LIVE TV) -->
     <div id="livetv-overlay-screen" class="livetv-overlay-screen">
@@ -1531,20 +1866,37 @@
         </div>
     </div>
 
-    <!-- مودال پرسش سریع نام کاربر (فقط در اولین ورود) -->
+    <!-- مودال تکمیل و ویرایش حساب کاربری (پروفایل + آیدی شخصی + رمز اختصاصی) -->
     <div id="user-name-modal" class="modal-backdrop">
         <div class="glass modal-card">
-            <span class="pill-tag">خوش آمدید به ZEUC MOVIE</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--text-strong);">اسمت چیه؟</h2>
+            <span class="pill-tag">امنیت و حساب کاربری ZEUC MOVIE</span>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--text-strong);">ساخت پروفایل، آیدی و رمز اختصاصی</h2>
             <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
-                نامت برای همیشه ذخیره میشه و توی ورودهای بعدی نیازی به وارد کردن مجدد نیست.
+                برای افزایش امنیت آیدی شخصی خود، یک رمز اختصاصی تعیین کنید تا تب «پیج» برایتان فعال شود.
             </p>
-            <form onsubmit="saveUserNameModal(event)">
+            <form onsubmit="saveUserProfileModal(event)">
                 <div class="field-box">
                     <label for="modal-user-name-input">نام نمایشی شما</label>
                     <input type="text" id="modal-user-name-input" placeholder="مثلاً: زئوس یا نگین" maxlength="28" required>
                 </div>
-                <button type="submit" class="btn-main">ثبت نام و ورود</button>
+                <div class="field-box">
+                    <label for="modal-user-handle-input">آیدی شخصی (بدون یا با @)</label>
+                    <input type="text" id="modal-user-handle-input" placeholder="مثلاً: zeuc_cinema" maxlength="24" required>
+                </div>
+                <div class="field-box">
+                    <label for="modal-user-pin-input">رمز اختصاصی آیدی (حداقل ۴ کاراکتر)</label>
+                    <input type="password" id="modal-user-pin-input" placeholder="رمز اختصاصی برای امنیت آیدی" minlength="4" maxlength="32" required>
+                    <span id="modal-pin-error" style="color:#ff6b86; font-size:12px; display:none;">رمز اختصاصی این آیدی اشتباه است!</span>
+                </div>
+                <div class="field-box">
+                    <label for="modal-user-avatar-input">لینک عکس پروفایل (اختیاری)</label>
+                    <input type="url" id="modal-user-avatar-input" placeholder="https://... لینک عکس پروفایل">
+                </div>
+                <div class="field-box">
+                    <label for="modal-user-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
+                    <input type="file" id="modal-user-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event)">
+                </div>
+                <button type="submit" class="btn-main">ثبت امن حساب و فعال‌سازی پیج</button>
             </form>
         </div>
     </div>
@@ -1570,7 +1922,7 @@
         </div>
     </div>
 
-    <!-- هدر -->
+    <!-- هدر اصلی -->
     <header class="top-header">
         <div class="brand-row">
             <div class="brand-logo-box" aria-hidden="true">
@@ -1589,7 +1941,7 @@
                 <span>LIVE TV</span>
             </button>
             <button type="button" id="theme-toggle-btn" class="theme-toggle-btn" onclick="toggleDayNightTheme()">☀️ روز</button>
-            <button type="button" id="header-user-name-btn" class="user-chip-btn" onclick="openNameModal()">نام من</button>
+            <button type="button" id="header-user-name-btn" class="user-chip-btn" onclick="openNameModal()">پروفایل</button>
             <div class="online-tag" id="top-online-tag">آنلاین: ۰</div>
         </div>
     </header>
@@ -1650,27 +2002,28 @@
         </div>
     </div>
 
-    <!-- ======================= صفحه اختصاصی فیلم ======================= -->
+    <!-- ======================= صفحه اختصاصی فیلم / پست ======================= -->
     <section id="tab-movie-detail" class="page-view">
         <div class="glass movie-detail-card">
             <div class="detail-top-bar">
                 <button type="button" class="btn-sec" onclick="goBackFromMovieDetail()">← بازگشت</button>
-                <span class="pill-tag" style="margin-bottom:0;">صفحه فیلم</span>
+                <span id="detail-item-kind-badge" class="pill-tag" style="margin-bottom:0;">صفحه فیلم</span>
             </div>
 
             <div class="detail-hero-row">
-                <img id="detail-poster-img" class="detail-poster" src="" alt="پوستر فیلم">
+                <img id="detail-poster-img" class="detail-poster" src="" alt="کاور">
                 <div style="flex:1; min-width:0;">
-                    <h1 id="detail-movie-title" class="detail-title">عنوان فیلم</h1>
+                    <h1 id="detail-movie-title" class="detail-title">عنوان</h1>
                     <div class="detail-badges">
+                        <span id="detail-movie-lang-badge"></span>
                         <span id="detail-movie-genre" class="detail-stat-chip">ژانر</span>
-                        <span id="detail-movie-year" class="detail-stat-chip">سال</span>
+                        <span id="detail-movie-year" class="detail-stat-chip">تاریخ انتشار</span>
                         <span id="detail-movie-views" class="detail-stat-chip">👁 ۰ بازدید</span>
                     </div>
                 </div>
             </div>
 
-            <div style="font-size:12.5px; font-weight:800; color:var(--text-strong); margin-bottom:6px;">توضیحات و خلاصه داستان</div>
+            <div style="font-size:12.5px; font-weight:800; color:var(--text-strong); margin-bottom:6px;">توضیحات</div>
             <div id="detail-movie-desc" class="detail-desc-box">توضیحی ثبت نشده است.</div>
 
             <div class="detail-action-grid">
@@ -1687,7 +2040,7 @@
                     ♡ ذخیره در لیست من
                 </button>
                 <button type="button" class="btn-share-movie" style="padding:11px 12px; font-size:12px;" onclick="shareMovieLink(selectedDetailMovieId)">
-                    🔗 اشتراک‌گذاری فیلم
+                    🔗 اشتراک‌گذاری
                 </button>
             </div>
         </div>
@@ -1701,7 +2054,7 @@
             <div class="stats-two-grid">
                 <div class="stat-highlight">
                     <strong id="stat-movies-count">۰</strong>
-                    <span>فیلم ثبت‌شده</span>
+                    <span>فیلم و پست</span>
                 </div>
                 <div class="stat-highlight">
                     <strong id="stat-rooms-count">۰</strong>
@@ -1719,33 +2072,33 @@
 
         <section>
             <div class="sec-title-row">
-                <h2>فیلم‌های موجود</h2>
+                <h2>فیلم‌ها و پست‌های موجود</h2>
             </div>
             <div id="home-movies-list" class="movies-list"></div>
         </section>
 
         <section>
             <div class="sec-title-row">
-                <h2>راهنمای تماشا</h2>
+                <h2>راهنمای تماشا و اکسپلور</h2>
             </div>
             <div class="secrets-list">
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۱. پخش در کل صفحه و خروج آسان از تمام‌صفحه</span>
+                        <span>۱. نشان رنگی دوبله (سبز)، زیرنویس (قرمز) و زبان اصلی (مشکی)</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        با زدن پخش، ویدیو تمام‌صفحه می‌شود و در هر لحظه با دکمه «✕ خروج از تمام‌صفحه» یا دکمه تمام‌صفحه پخش‌کننده می‌توانید خارج شوید.
+                        در کنار هر فیلم یا پست، وضعیت زبان با نشان رنگی مشخص می‌شود: سبز برای دوبله، قرمز برای زیرنویس و مشکی برای زبان اصلی.
                     </div>
                 </div>
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. اشتراک‌گذاری مستقیم فیلم و پخش زنده LIVE TV</span>
+                        <span>۲. اکسپلور اسکرولی چپ و راست، پیج‌ها و فالو شده‌هـا</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        با دکمه «🔗 اشتراک‌گذاری» لینک اختصاصی هر فیلم کپی یا ارسال می‌شود تا با زدن روی آن مستقیماً همان فیلم باز شود؛ همچنین از دکمه «LIVE TV» می‌توانید شبکه‌های زنده را ببینید.
+                        با زدن «اکسپلور» در تولبار پایین، می‌توانید بین پیج‌ها سرچ و فالو کنید، پست‌ها و فیلم‌ها را به صورت رندوم چپ و راست اسکرول کنید و جدیدترین محتوای فالو شده‌هـا را ببینید.
                     </div>
                 </div>
             </div>
@@ -1756,11 +2109,11 @@
     <section id="tab-search" class="page-view">
         <div class="glass filter-card">
             <span class="pill-tag">جستجو و دسته‌بندی</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:10px; color:var(--text-strong);">جستجوی فیلم</h2>
+            <h2 style="font-size:18px; font-weight:900; margin-bottom:10px; color:var(--text-strong);">جستجوی فیلم و پست</h2>
 
             <div class="field-box">
-                <label for="search-movie-input">نام فیلم یا توضیح</label>
-                <input type="search" id="search-movie-input" placeholder="نام فیلم یا ژانر را بنویسید..." oninput="renderFilteredMovies()">
+                <label for="search-movie-input">نام فیلم، پست یا ژانر</label>
+                <input type="search" id="search-movie-input" placeholder="نام فیلم، پست یا ژانر را بنویسید..." oninput="renderFilteredMovies()">
             </div>
 
             <div id="genre-filter-chips" class="genre-pills"></div>
@@ -1908,8 +2261,166 @@
         </div>
     </section>
 
-    <!-- ======================= تولبار ثابت پایین (۵ آیتم) ======================= -->
-    <nav class="bottom-toolbar" aria-label="تولبار پایین">
+    <!-- ======================= ۶. صفحه اختصاصی پیج کاربر ======================= -->
+    <section id="tab-page" class="page-view">
+        <div class="glass page-profile-header">
+            <div class="page-user-top">
+                <img id="page-avatar-img" class="page-avatar-lg" src="" alt="پروفایل">
+                <div style="flex:1; min-width:0;">
+                    <h2 id="page-display-name" style="font-size:18px; font-weight:900; color:var(--text-strong);">نام کاربر</h2>
+                    <div id="page-handle-text" style="font-size:12.5px; font-weight:800; color:var(--chip-text); margin-bottom:6px;">@handle</div>
+                    <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openNameModal()">✏️ ویرایش پروفایل، آیدی و رمز</button>
+                </div>
+            </div>
+
+            <div class="page-follow-grid">
+                <div class="follow-stat-box" onclick="toggleFollowSummary('followers')">
+                    <strong id="page-followers-count">۰</strong>
+                    <span>دنبال‌کنندگان (Followers)</span>
+                </div>
+                <div class="follow-stat-box" onclick="toggleFollowSummary('following')">
+                    <strong id="page-following-count">۰</strong>
+                    <span>دنبال‌شونده‌ها (Following)</span>
+                </div>
+            </div>
+
+            <div id="page-follow-detail-box" class="empty-note" style="display:none; margin-bottom:12px; text-align:right;"></div>
+
+            <div class="page-add-actions">
+                <button type="button" class="btn-main" onclick="openPageComposer('post')">
+                    ＋ اضافه کردن پست
+                </button>
+                <button type="button" class="btn-sec" style="padding:13px 14px;" onclick="openPageComposer('movie')">
+                    ＋ اضافه کردن فیلم
+                </button>
+            </div>
+        </div>
+
+        <!-- فرم شیشه‌ای افزودن پست یا فیلم -->
+        <div id="page-composer-card" class="glass composer-glass-card" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+                <div>
+                    <span id="composer-kind-pill" class="pill-tag" style="margin-bottom:4px;">انتشار محتوا</span>
+                    <h3 id="composer-form-title" style="font-size:16px; font-weight:900; color:var(--text-strong);">افزودن</h3>
+                </div>
+                <button type="button" class="btn-sec" onclick="closePageComposer()">✕ بستن</button>
+            </div>
+
+            <form onsubmit="submitPageItem(event)">
+                <div class="field-box">
+                    <label for="page-item-title">اسم فیلم / عنوان پست</label>
+                    <input type="text" id="page-item-title" placeholder="نام فیلم یا عنوان پست را وارد کنید..." required>
+                </div>
+
+                <div class="field-box">
+                    <label for="page-item-cover">کاور فیلم / تصویر پست (لینک عکس)</label>
+                    <input type="url" id="page-item-cover" placeholder="https://... لینک کاور">
+                </div>
+
+                <div class="field-box">
+                    <label for="page-item-cover-file">یا انتخاب کاور از گالری گوشی</label>
+                    <input type="file" id="page-item-cover-file" accept="image/*" onchange="handleCoverFilePicked(event)">
+                </div>
+
+                <div class="field-box">
+                    <label for="page-item-url">لینک مستقیم دائمی (فیلم / مدیا / محتوا)</label>
+                    <input type="url" id="page-item-url" placeholder="https://.../direct-link.mp4" required>
+                </div>
+
+                <div class="field-box">
+                    <label for="page-item-date">تاریخ انتشار</label>
+                    <input type="text" id="page-item-date" placeholder="مثلاً: 1405/09/04 یا 2026-11-25" required>
+                </div>
+
+                <div class="field-box">
+                    <label>ژانر (امکان انتخاب چند ژانر همزمان)</label>
+                    <div id="page-multi-genres" class="multi-genre-grid"></div>
+                </div>
+
+                <div class="field-box">
+                    <label>نوع زبان / نسخه</label>
+                    <div class="lang-choice-row">
+                        <button type="button" id="lang-btn-dub" class="lang-choice-btn active-dub" onclick="selectPageItemLang('dub')">
+                            <span class="lang-dot"></span>
+                            <span>دوبله</span>
+                        </button>
+                        <button type="button" id="lang-btn-sub" class="lang-choice-btn" onclick="selectPageItemLang('sub')">
+                            <span class="lang-dot"></span>
+                            <span>زیرنویس</span>
+                        </button>
+                        <button type="button" id="lang-btn-orig" class="lang-choice-btn" onclick="selectPageItemLang('orig')">
+                            <span class="lang-dot"></span>
+                            <span>زبان اصلی</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field-box">
+                    <label for="page-item-desc">توضیحات (اختیاری)</label>
+                    <textarea id="page-item-desc" rows="2" placeholder="توضیحات کوتاه..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-main">🚀 انتشار در پیج و اپ</button>
+            </form>
+        </div>
+
+        <div class="sec-title-row">
+            <h2>پست‌ها و فیلم‌های منتشرشده در پیج من</h2>
+        </div>
+        <div id="page-my-items-list" class="movies-list"></div>
+    </section>
+
+    <!-- ======================= ۷. صفحه اکسپلور (پیج ها | اکسپلور | فالو شده ها) ======================= -->
+    <section id="tab-explore" class="page-view">
+        <!-- زیرتب ۱: پیج ها + سرچ + فالو + مشاهده پست‌ها و فیلم‌های پیج انتخاب‌شده -->
+        <div id="explore-panel-pages">
+            <div class="glass filter-card">
+                <span class="pill-tag">پیج های کاربران</span>
+                <h2 style="font-size:17px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">جستجو و دنبال کردن پیج‌ها</h2>
+                <div class="field-box" style="margin-bottom:0;">
+                    <input type="search" id="explore-pages-search-input" placeholder="جستجوی نام یا @آیدی پیج..." oninput="renderExplorePagesSection()">
+                </div>
+            </div>
+
+            <div id="inspected-creator-panel" class="glass filter-card" style="display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                    <div>
+                        <strong id="inspected-creator-title" style="display:block; font-size:15.5px; font-weight:900; color:var(--text-strong);">پست‌ها و فیلم‌های پیج</strong>
+                        <span id="inspected-creator-handle" style="font-size:12px; color:var(--chip-text);">@handle</span>
+                    </div>
+                    <button type="button" class="btn-sec" onclick="closeInspectedCreator()">✕ بستن پیج</button>
+                </div>
+                <div id="inspected-creator-items" class="movies-list" style="margin-bottom:0;"></div>
+            </div>
+
+            <div id="explore-pages-list" class="movies-list"></div>
+        </div>
+
+        <!-- زیرتب ۲: اکسپلور رندوم اسکرولی چپ و راست با تفکیک پست و فیلم -->
+        <div id="explore-panel-feed">
+            <div class="sec-title-row">
+                <h2>پست‌های رندوم (اسکرول چپ و راست)</h2>
+                <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 رندوم جدید</button>
+            </div>
+            <div id="explore-random-posts-track" class="explore-horizontal-track"></div>
+
+            <div class="sec-title-row">
+                <h2>فیلم‌های رندوم (اسکرول چپ و راست)</h2>
+            </div>
+            <div id="explore-random-movies-track" class="explore-horizontal-track"></div>
+        </div>
+
+        <!-- زیرتب ۳: فالو شده ها (پست‌ها و فیلم‌های جدید به قدیم افراد فالو شده) -->
+        <div id="explore-panel-following" style="display:none;">
+            <div class="sec-title-row">
+                <h2>جدیدترین‌های فالو شده‌ها</h2>
+            </div>
+            <div id="explore-following-list" class="movies-list"></div>
+        </div>
+    </section>
+
+    <!-- ======================= تولبار ثابت شیشه‌ای در پایین ======================= -->
+    <nav id="main-bottom-toolbar" class="bottom-toolbar" aria-label="تولبار پایین">
         <button type="button" id="tb-favorites" class="tb-btn" onclick="openTab('favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
@@ -1944,6 +2455,14 @@
             <span>جستجو</span>
         </button>
 
+        <button type="button" id="tb-explore" class="tb-btn" onclick="openTab('explore')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="9"/>
+                <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/>
+            </svg>
+            <span>اکسپلور</span>
+        </button>
+
         <button type="button" id="tb-admin" class="tb-btn" onclick="openTab('admin')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -1951,11 +2470,20 @@
             </svg>
             <span>ادمین</span>
         </button>
+
+        <button type="button" id="tb-page" class="tb-btn" style="display:none;" onclick="openTab('page')">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="4"/>
+                <circle cx="12" cy="10" r="3"/>
+                <path d="M7 19c1.2-2.2 3-3.5 5-3.5s3.8 1.3 5 3.5"/>
+            </svg>
+            <span>پیج</span>
+        </button>
     </nav>
 
     <script>
         // =====================================================================
-        // حالت کاملاً اپ‌مانند (Standalone PWA Manifest + غیرفعال کردن منوی راست‌کلیک)
+        // حالت کاملاً اپ‌مانند (Standalone PWA Manifest + اسکرول روان)
         // =====================================================================
         (function setupStandaloneAppMeta() {
             try {
@@ -2016,7 +2544,7 @@
         applyThemeMode(currentThemeMode);
 
         // =====================================================================
-        // تنظیمات Firebase و صفحه لودینگ اتصال (تشخیص نیاز به فیلترشکن)
+        // تنظیمات Firebase و صفحه لودینگ اتصال
         // =====================================================================
         const firebaseConfig = {
             databaseURL: "https://crazyapp-9663a-default-rtdb.firebaseio.com"
@@ -2062,7 +2590,7 @@
             if (!movieId) return;
             const mv = moviesList.find(m => m.id === movieId);
             const shareUrl = buildMovieShareUrl(movieId);
-            const shareTitle = mv ? `تماشای فیلم ${mv.title} در ZEUC MOVIE` : "تماشای فیلم در ZEUC MOVIE";
+            const shareTitle = mv ? `تماشای ${mv.title} در ZEUC MOVIE` : "ZEUC MOVIE";
 
             if (navigator.share) {
                 try {
@@ -2080,12 +2608,12 @@
             try {
                 if (navigator.clipboard && navigator.clipboard.writeText) {
                     await navigator.clipboard.writeText(shareUrl);
-                    alert("لینک اختصاصی فیلم کپی شد:\n" + shareUrl);
+                    alert("لینک اختصاصی کپی شد:\n" + shareUrl);
                     return;
                 }
             } catch (_) {}
 
-            prompt("لینک اختصاصی فیلم را کپی کنید:", shareUrl);
+            prompt("لینک اختصاصی را کپی کنید:", shareUrl);
         }
 
         function tryOpenDeepLinkedMovie() {
@@ -2139,9 +2667,6 @@
 
             if (!appBootedOnce) {
                 appBootedOnce = true;
-                if (!currentUserName && !pendingDeepLinkMovieId) {
-                    openNameModal();
-                }
             }
             tryOpenDeepLinkedMovie();
         }
@@ -2149,10 +2674,13 @@
         startBootTimeoutCheck();
 
         // =====================================================================
-        // شناسه دائمی کاربر + ذخیره همیشگی نام و لیست علاقه‌مندی‌ها
+        // حساب کاربری امن (نام + آیدی شخصی + رمز اختصاصی + عکس پروفایل) و پیج
         // =====================================================================
         const USER_ID_KEY = "zeuc_movie_persistent_uid";
         const USER_NAME_KEY = "zeuc_movie_user_name";
+        const USER_HANDLE_KEY = "zeuc_movie_user_handle";
+        const USER_PIN_KEY = "zeuc_movie_user_pin";
+        const USER_AVATAR_KEY = "zeuc_movie_user_avatar";
         const FAV_STORAGE = "zeuc_movie_v1_favs";
 
         let persistentUserId = localStorage.getItem(USER_ID_KEY);
@@ -2163,6 +2691,13 @@
 
         const userProfileRef = db.ref("zeuc_movie_v1/users/" + persistentUserId);
         let currentUserName = (localStorage.getItem(USER_NAME_KEY) || "").trim();
+        let currentUserHandle = (localStorage.getItem(USER_HANDLE_KEY) || "").trim();
+        let currentUserPin = (localStorage.getItem(USER_PIN_KEY) || "").trim();
+        let currentUserAvatar = (localStorage.getItem(USER_AVATAR_KEY) || "").trim();
+        let followersList = [];
+        let followingList = [];
+        let allUsersMap = {};
+
         let favIds = [];
         try {
             const parsedFavs = JSON.parse(localStorage.getItem(FAV_STORAGE) || "[]");
@@ -2171,54 +2706,574 @@
             favIds = [];
         }
 
-        function refreshUserNameHeader() {
+        const DEFAULT_AVATAR = "data:image/svg+xml;utf8," + encodeURIComponent(`
+            <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">
+                <rect width="120" height="120" rx="32" fill="#2a0c17"/>
+                <circle cx="60" cy="46" r="20" fill="#ff2e55"/>
+                <path d="M24 102c5-20 20-30 36-30s31 10 36 30" fill="#ff2e55"/>
+            </svg>
+        `);
+
+        function normalizeHandle(raw) {
+            const cleaned = String(raw || "").trim().replace(/^@+/, "").replace(/\s+/g, "_").toLowerCase();
+            return cleaned ? "@" + cleaned : "";
+        }
+
+        function isAccountCompleted() {
+            return Boolean(currentUserName && currentUserHandle && currentUserPin.length >= 4);
+        }
+
+        function syncPageTabAndHeader() {
             const btn = document.getElementById("header-user-name-btn");
             if (btn) {
-                btn.innerText = currentUserName ? `👤 ${currentUserName}` : "ثبت نام";
+                btn.innerText = isAccountCompleted() ? `👤 ${currentUserName}` : "پروفایل";
             }
+
+            const pageTabBtn = document.getElementById("tb-page");
+            const toolbarEl = document.getElementById("main-bottom-toolbar");
+            const completed = isAccountCompleted();
+            if (pageTabBtn) {
+                pageTabBtn.style.display = completed ? "flex" : "none";
+            }
+            if (toolbarEl) {
+                toolbarEl.classList.toggle("has-page-tab", completed);
+            }
+
+            const avatarImg = document.getElementById("page-avatar-img");
+            if (avatarImg) {
+                avatarImg.src = currentUserAvatar || DEFAULT_AVATAR;
+                avatarImg.onerror = () => { avatarImg.src = DEFAULT_AVATAR; };
+            }
+            const nameEl = document.getElementById("page-display-name");
+            if (nameEl) nameEl.innerText = currentUserName || "کاربر";
+            const handleEl = document.getElementById("page-handle-text");
+            if (handleEl) handleEl.innerText = currentUserHandle || "@user";
+
+            const followersCountEl = document.getElementById("page-followers-count");
+            if (followersCountEl) followersCountEl.innerText = String(followersList.length);
+            const followingCountEl = document.getElementById("page-following-count");
+            if (followingCountEl) followingCountEl.innerText = String(followingList.length);
         }
 
         function openNameModal() {
             const modal = document.getElementById("user-name-modal");
-            const inp = document.getElementById("modal-user-name-input");
-            if (inp) inp.value = currentUserName;
+            const nameInp = document.getElementById("modal-user-name-input");
+            const handleInp = document.getElementById("modal-user-handle-input");
+            const pinInp = document.getElementById("modal-user-pin-input");
+            const avatarInp = document.getElementById("modal-user-avatar-input");
+            const errEl = document.getElementById("modal-pin-error");
+            if (errEl) errEl.style.display = "none";
+            if (nameInp) nameInp.value = currentUserName;
+            if (handleInp) handleInp.value = currentUserHandle.replace(/^@+/, "");
+            if (pinInp) pinInp.value = currentUserPin;
+            if (avatarInp) avatarInp.value = currentUserAvatar.startsWith("data:") ? "" : currentUserAvatar;
             if (modal) modal.classList.add("show");
-            setTimeout(() => { if (inp) inp.focus(); }, 60);
+            setTimeout(() => { if (nameInp) nameInp.focus(); }, 60);
         }
 
-        function saveUserNameModal(e) {
+        function handleAvatarFilePicked(e) {
+            const file = e.target && e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === "string") {
+                    currentUserAvatar = reader.result;
+                    const urlInp = document.getElementById("modal-user-avatar-input");
+                    if (urlInp) urlInp.value = "";
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function saveUserProfileModal(e) {
             e.preventDefault();
-            const inp = document.getElementById("modal-user-name-input");
-            const val = (inp ? inp.value : "").trim();
-            if (!val) return;
-            currentUserName = val;
-            localStorage.setItem(USER_NAME_KEY, currentUserName);
-            userProfileRef.update({ name: currentUserName, updatedAt: Date.now() }).catch(() => {});
-            refreshUserNameHeader();
-            document.getElementById("user-name-modal").classList.remove("show");
-        }
+            const nameInp = document.getElementById("modal-user-name-input");
+            const handleInp = document.getElementById("modal-user-handle-input");
+            const pinInp = document.getElementById("modal-user-pin-input");
+            const avatarInp = document.getElementById("modal-user-avatar-input");
+            const errEl = document.getElementById("modal-pin-error");
 
-        refreshUserNameHeader();
+            const valName = (nameInp ? nameInp.value : "").trim();
+            const valHandle = normalizeHandle(handleInp ? handleInp.value : "");
+            const valPin = (pinInp ? pinInp.value : "").trim();
+            const valAvatarUrl = (avatarInp ? avatarInp.value : "").trim();
 
-        userProfileRef.on("value", (snap) => {
-            const data = snap.val();
-            if (!data) return;
-            if (data.name && !currentUserName) {
-                currentUserName = String(data.name).trim();
-                localStorage.setItem(USER_NAME_KEY, currentUserName);
-                refreshUserNameHeader();
-                document.getElementById("user-name-modal").classList.remove("show");
-            }
-            if (Array.isArray(data.favorites)) {
-                const merged = Array.from(new Set([...favIds, ...data.favorites]));
-                if (merged.length !== favIds.length) {
-                    favIds = merged;
-                    localStorage.setItem(FAV_STORAGE, JSON.stringify(favIds));
-                    renderAllMovieViews();
-                    if (selectedDetailMovieId) renderMovieDetailContent();
+            if (!valName || !valHandle || valPin.length < 4) return;
+
+            const existingOwnerEntry = Object.entries(allUsersMap).find(([uid, u]) =>
+                uid !== persistentUserId && u && normalizeHandle(u.handle) === valHandle
+            );
+            if (existingOwnerEntry) {
+                const ownerData = existingOwnerEntry[1];
+                if (ownerData.pin && String(ownerData.pin) !== valPin) {
+                    if (errEl) errEl.style.display = "block";
+                    return;
                 }
             }
+            if (errEl) errEl.style.display = "none";
+
+            if (valAvatarUrl) {
+                currentUserAvatar = valAvatarUrl;
+            }
+
+            currentUserName = valName;
+            currentUserHandle = valHandle;
+            currentUserPin = valPin;
+
+            localStorage.setItem(USER_NAME_KEY, currentUserName);
+            localStorage.setItem(USER_HANDLE_KEY, currentUserHandle);
+            localStorage.setItem(USER_PIN_KEY, currentUserPin);
+            localStorage.setItem(USER_AVATAR_KEY, currentUserAvatar);
+
+            userProfileRef.update({
+                name: currentUserName,
+                handle: currentUserHandle,
+                pin: currentUserPin,
+                avatar: currentUserAvatar,
+                updatedAt: Date.now()
+            }).catch(() => {});
+
+            syncPageTabAndHeader();
+            renderPageMyItems();
+            renderExploreSections();
+            document.getElementById("user-name-modal").classList.remove("show");
+            openTab("page");
+        }
+
+        syncPageTabAndHeader();
+
+        db.ref("zeuc_movie_v1/users").on("value", (snap) => {
+            allUsersMap = snap.val() || {};
+            const myData = allUsersMap[persistentUserId];
+            if (myData) {
+                if (myData.name && !currentUserName) {
+                    currentUserName = String(myData.name).trim();
+                    localStorage.setItem(USER_NAME_KEY, currentUserName);
+                }
+                if (myData.handle && !currentUserHandle) {
+                    currentUserHandle = normalizeHandle(myData.handle);
+                    localStorage.setItem(USER_HANDLE_KEY, currentUserHandle);
+                }
+                if (myData.pin && !currentUserPin) {
+                    currentUserPin = String(myData.pin).trim();
+                    localStorage.setItem(USER_PIN_KEY, currentUserPin);
+                }
+                if (myData.avatar && !currentUserAvatar) {
+                    currentUserAvatar = String(myData.avatar).trim();
+                    localStorage.setItem(USER_AVATAR_KEY, currentUserAvatar);
+                }
+                if (Array.isArray(myData.favorites)) {
+                    const merged = Array.from(new Set([...favIds, ...myData.favorites]));
+                    if (merged.length !== favIds.length) {
+                        favIds = merged;
+                        localStorage.setItem(FAV_STORAGE, JSON.stringify(favIds));
+                        renderAllMovieViews();
+                        if (selectedDetailMovieId) renderMovieDetailContent();
+                    }
+                }
+                followingList = Array.isArray(myData.following) ? myData.following : [];
+            }
+
+            followersList = Object.entries(allUsersMap)
+                .filter(([uid, u]) => uid !== persistentUserId && Array.isArray(u && u.following) && u.following.includes(persistentUserId))
+                .map(([uid, u]) => ({
+                    uid,
+                    name: (u && u.name) || "کاربر",
+                    handle: (u && u.handle) || "@user"
+                }));
+
+            syncPageTabAndHeader();
+            renderExploreSections();
         });
+
+        async function toggleFollowUser(targetUid) {
+            if (!targetUid || targetUid === persistentUserId) return;
+            if (!isAccountCompleted()) {
+                openNameModal();
+                return;
+            }
+            const nextFollowing = followingList.includes(targetUid)
+                ? followingList.filter(id => id !== targetUid)
+                : [...followingList, targetUid];
+            followingList = nextFollowing;
+            syncPageTabAndHeader();
+            await userProfileRef.update({
+                name: currentUserName,
+                handle: currentUserHandle,
+                pin: currentUserPin,
+                avatar: currentUserAvatar,
+                following: followingList,
+                updatedAt: Date.now()
+            }).catch(() => {});
+            renderExploreSections();
+        }
+
+        function toggleFollowSummary(kind) {
+            const box = document.getElementById("page-follow-detail-box");
+            if (!box) return;
+            if (box.dataset.openKind === kind && box.style.display === "block") {
+                box.style.display = "none";
+                box.dataset.openKind = "";
+                return;
+            }
+            box.dataset.openKind = kind;
+            box.style.display = "block";
+            if (kind === "followers") {
+                if (!followersList.length) {
+                    box.innerText = "هنوز کاربری شما را دنبال نکرده است.";
+                } else {
+                    box.innerHTML = `<strong style="display:block; margin-bottom:6px; color:var(--text-strong);">دنبال‌کنندگان:</strong>` +
+                        followersList.map(f => `<div>• ${esc(f.name)} (${esc(f.handle)})</div>`).join("");
+                }
+            } else {
+                if (!followingList.length) {
+                    box.innerText = "شما هنوز فردی را دنبال نکرده‌اید.";
+                } else {
+                    box.innerHTML = `<strong style="display:block; margin-bottom:6px; color:var(--text-strong);">دنبال‌شونده‌ها:</strong>` +
+                        followingList.map(uid => {
+                            const u = allUsersMap[uid] || {};
+                            return `<div>• ${esc(u.name || "کاربر")} (${esc(u.handle || "@user")})</div>`;
+                        }).join("");
+                }
+            }
+        }
+
+        // =====================================================================
+        // بخش اکسپلور: پیج ها (با سرچ و فالو) | اکسپلور رندوم چپ و راست | فالو شده ها
+        // =====================================================================
+        let activeExploreSubtab = "feed";
+        let inspectedCreatorId = null;
+        let shuffledPostsCache = [];
+        let shuffledMoviesCache = [];
+
+        function switchExploreSubtab(subKey) {
+            activeExploreSubtab = subKey;
+            ["pages", "feed", "following"].forEach(k => {
+                const btn = document.getElementById("ex-sub-" + k);
+                const panel = document.getElementById("explore-panel-" + k);
+                if (btn) btn.classList.toggle("active", k === subKey);
+                if (panel) panel.style.display = k === subKey ? "block" : "none";
+            });
+            renderExploreSections();
+        }
+
+        function shuffleArray(arr) {
+            const copy = arr.slice();
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        function reshuffleExploreRandom() {
+            const posts = moviesList.filter(m => m.itemType === "post");
+            const films = moviesList.filter(m => m.itemType !== "post");
+            shuffledPostsCache = shuffleArray(posts);
+            shuffledMoviesCache = shuffleArray(films);
+            renderExploreRandomTracks();
+        }
+
+        function inspectCreatorPage(creatorId) {
+            inspectedCreatorId = creatorId;
+            renderExplorePagesSection();
+            const panel = document.getElementById("inspected-creator-panel");
+            if (panel) panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function closeInspectedCreator() {
+            inspectedCreatorId = null;
+            renderExplorePagesSection();
+        }
+
+        function renderExplorePagesSection() {
+            const listBox = document.getElementById("explore-pages-list");
+            const searchInp = document.getElementById("explore-pages-search-input");
+            if (!listBox) return;
+
+            const q = (searchInp ? searchInp.value : "").trim().toLowerCase();
+            const pagesFromUsers = Object.entries(allUsersMap)
+                .filter(([uid, u]) => u && (u.name || u.handle))
+                .map(([uid, u]) => ({
+                    uid,
+                    name: String(u.name || "کاربر").trim(),
+                    handle: normalizeHandle(u.handle) || "@user",
+                    avatar: u.avatar || DEFAULT_AVATAR
+                }));
+
+            const filteredPages = pagesFromUsers.filter(p =>
+                !q || p.name.toLowerCase().includes(q) || p.handle.toLowerCase().includes(q)
+            );
+
+            const inspPanel = document.getElementById("inspected-creator-panel");
+            const inspItemsBox = document.getElementById("inspected-creator-items");
+            if (inspectedCreatorId && inspPanel && inspItemsBox) {
+                const targetPage = pagesFromUsers.find(p => p.uid === inspectedCreatorId);
+                const creatorItems = moviesList.filter(m => m.authorId === inspectedCreatorId);
+                inspPanel.style.display = "block";
+                document.getElementById("inspected-creator-title").innerText =
+                    targetPage ? `محتوای پیج ${targetPage.name}` : "محتوای پیج";
+                document.getElementById("inspected-creator-handle").innerText =
+                    targetPage ? targetPage.handle : "";
+                inspItemsBox.innerHTML = creatorItems.length
+                    ? creatorItems.map(buildMovieCardHtml).join("")
+                    : `<div class="empty-note">این پیج هنوز پست یا فیلمی منتشر نکرده است.</div>`;
+            } else if (inspPanel) {
+                inspPanel.style.display = "none";
+            }
+
+            if (!filteredPages.length) {
+                listBox.innerHTML = `<div class="glass empty-note">پیجی با این مشخصات پیدا نشد.</div>`;
+                return;
+            }
+
+            listBox.innerHTML = filteredPages.map(p => {
+                const isMe = p.uid === persistentUserId;
+                const isFollowed = followingList.includes(p.uid);
+                const itemsCount = moviesList.filter(m => m.authorId === p.uid).length;
+                return `
+                    <div class="glass creator-page-card">
+                        <div class="creator-page-info" onclick="inspectCreatorPage('${escAttr(p.uid)}')">
+                            <img class="creator-avatar-sm" src="${escAttr(p.avatar)}" alt="${escAttr(p.name)}" onerror="this.src='${DEFAULT_AVATAR}'">
+                            <div style="min-width:0; flex:1;">
+                                <strong style="display:block; font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(p.name)}</strong>
+                                <span style="display:block; font-size:11.5px; color:var(--chip-text);">${esc(p.handle)} • ${itemsCount} آیتم</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <button type="button" class="btn-sec" style="padding:7px 10px; font-size:11px;" onclick="inspectCreatorPage('${escAttr(p.uid)}')">مشاهده</button>
+                            ${!isMe ? `
+                                <button type="button" class="${isFollowed ? "btn-sec" : "btn-watch"}" style="padding:7px 11px; font-size:11px;" onclick="toggleFollowUser('${escAttr(p.uid)}')">
+                                    ${isFollowed ? "✓ دنبال‌شده" : "+ فالو"}
+                                </button>
+                            ` : `<span class="pill-tag" style="margin-bottom:0;">پیج شما</span>`}
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function buildHorizontalExploreCard(item) {
+            const coverSrc = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
+            const kindLabel = item.itemType === "post" ? "پست" : "فیلم";
+            return `
+                <div class="glass explore-story-card" onclick="openMovieDetail('${escAttr(item.id)}', 'explore')">
+                    <img class="explore-story-cover" src="${escAttr(coverSrc)}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                        <span class="pill-tag" style="margin-bottom:0;">${esc(kindLabel)}</span>
+                        ${renderLangBadgeHtml(item.langType || "dub")}
+                    </div>
+                    <strong style="font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.title)}</strong>
+                    <span style="font-size:11px; color:var(--text-muted);">${esc(item.genre || "درام")} ${item.year ? "• " + esc(item.year) : ""}</span>
+                    <div style="display:flex; gap:6px; margin-top:auto;" onclick="event.stopPropagation()">
+                        <button type="button" class="btn-watch" style="flex:1;" onclick="playMovieById('${escAttr(item.id)}', true)">▶ پخش</button>
+                        <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(item.id)}')">🔗</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderExploreRandomTracks() {
+            const postsTrack = document.getElementById("explore-random-posts-track");
+            const moviesTrack = document.getElementById("explore-random-movies-track");
+            if (!postsTrack || !moviesTrack) return;
+
+            const currentPosts = moviesList.filter(m => m.itemType === "post");
+            const currentFilms = moviesList.filter(m => m.itemType !== "post");
+
+            if (!shuffledPostsCache.length && currentPosts.length) shuffledPostsCache = shuffleArray(currentPosts);
+            if (!shuffledMoviesCache.length && currentFilms.length) shuffledMoviesCache = shuffleArray(currentFilms);
+
+            const orderedPosts = shuffledPostsCache.length ? shuffledPostsCache : currentPosts;
+            const orderedFilms = shuffledMoviesCache.length ? shuffledMoviesCache : currentFilms;
+
+            postsTrack.innerHTML = orderedPosts.length
+                ? orderedPosts.map(buildHorizontalExploreCard).join("")
+                : `<div class="glass empty-note">هنوز پستی ثبت نشده است.</div>`;
+
+            moviesTrack.innerHTML = orderedFilms.length
+                ? orderedFilms.map(buildHorizontalExploreCard).join("")
+                : `<div class="glass empty-note">هنوز فیلمی ثبت نشده است.</div>`;
+        }
+
+        function renderExploreFollowingSection() {
+            const box = document.getElementById("explore-following-list");
+            if (!box) return;
+
+            if (!followingList.length) {
+                box.innerHTML = `<div class="glass empty-note">شما هنوز پیجی را فالو نکرده‌اید. از تب «پیج ها» افراد را دنبال کنید.</div>`;
+                return;
+            }
+
+            const followedItems = moviesList
+                .filter(m => m.authorId && followingList.includes(m.authorId))
+                .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+            box.innerHTML = followedItems.length
+                ? followedItems.map(buildMovieCardHtml).join("")
+                : `<div class="glass empty-note">افرادی که فالو کرده‌اید هنوز محتوای جدیدی منتشر نکرده‌اند.</div>`;
+        }
+
+        function renderExploreSections() {
+            renderExplorePagesSection();
+            renderExploreRandomTracks();
+            renderExploreFollowingSection();
+        }
+
+        // =====================================================================
+        // فرم شیشه‌ای افزودن پست یا فیلم با چند ژانر و نشان زبان رنگی
+        // =====================================================================
+        const AVAILABLE_GENRES = ["اکشن", "ترسناک", "کمدی", "ایرانی", "عاشقانه", "درام"];
+        let composerKind = "post";
+        let selectedComposerGenres = ["درام"];
+        let selectedComposerLang = "dub";
+        let uploadedCoverDataUrl = "";
+
+        function getLangMeta(langKey) {
+            if (langKey === "sub") {
+                return { label: "زیرنویس", cls: "lang-badge lang-badge-sub" };
+            }
+            if (langKey === "orig") {
+                return { label: "زبان اصلی", cls: "lang-badge lang-badge-orig" };
+            }
+            return { label: "دوبله", cls: "lang-badge lang-badge-dub" };
+        }
+
+        function renderLangBadgeHtml(langKey) {
+            const meta = getLangMeta(langKey);
+            return `<span class="${meta.cls}"><span class="lang-dot"></span>${esc(meta.label)}</span>`;
+        }
+
+        function renderComposerGenres() {
+            const box = document.getElementById("page-multi-genres");
+            if (!box) return;
+            box.innerHTML = AVAILABLE_GENRES.map(g => {
+                const active = selectedComposerGenres.includes(g);
+                return `
+                    <button type="button" class="multi-genre-btn ${active ? "selected" : ""}" onclick="toggleComposerGenre('${escAttr(g)}')">
+                        ${active ? "✓ " : ""}${esc(g)}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function toggleComposerGenre(genreName) {
+            if (selectedComposerGenres.includes(genreName)) {
+                if (selectedComposerGenres.length > 1) {
+                    selectedComposerGenres = selectedComposerGenres.filter(x => x !== genreName);
+                }
+            } else {
+                selectedComposerGenres.push(genreName);
+            }
+            renderComposerGenres();
+        }
+
+        function selectPageItemLang(langKey) {
+            selectedComposerLang = langKey;
+            const dubBtn = document.getElementById("lang-btn-dub");
+            const subBtn = document.getElementById("lang-btn-sub");
+            const origBtn = document.getElementById("lang-btn-orig");
+            if (dubBtn) dubBtn.className = "lang-choice-btn" + (langKey === "dub" ? " active-dub" : "");
+            if (subBtn) subBtn.className = "lang-choice-btn" + (langKey === "sub" ? " active-sub" : "");
+            if (origBtn) origBtn.className = "lang-choice-btn" + (langKey === "orig" ? " active-orig" : "");
+        }
+
+        function handleCoverFilePicked(e) {
+            const file = e.target && e.target.files && e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                if (typeof reader.result === "string") {
+                    uploadedCoverDataUrl = reader.result;
+                    const inp = document.getElementById("page-item-cover");
+                    if (inp) inp.value = "";
+                }
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openPageComposer(kind) {
+            if (!isAccountCompleted()) {
+                openNameModal();
+                return;
+            }
+            composerKind = kind === "movie" ? "movie" : "post";
+            uploadedCoverDataUrl = "";
+            selectedComposerGenres = [AVAILABLE_GENRES[0]];
+            selectedComposerLang = "dub";
+
+            document.getElementById("composer-kind-pill").innerText =
+                composerKind === "movie" ? "بخش اختصاصی فیلم" : "بخش اختصاصی پست";
+            document.getElementById("composer-form-title").innerText =
+                composerKind === "movie" ? "افزودن فیلم جدید" : "افزودن پست جدید";
+            document.getElementById("page-item-title").value = "";
+            document.getElementById("page-item-cover").value = "";
+            document.getElementById("page-item-url").value = "";
+            document.getElementById("page-item-date").value = new Date().toLocaleDateString("fa-IR");
+            document.getElementById("page-item-desc").value = "";
+
+            renderComposerGenres();
+            selectPageItemLang("dub");
+
+            const card = document.getElementById("page-composer-card");
+            card.style.display = "block";
+            card.scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function closePageComposer() {
+            const card = document.getElementById("page-composer-card");
+            if (card) card.style.display = "none";
+        }
+
+        async function submitPageItem(e) {
+            e.preventDefault();
+            if (!isAccountCompleted()) {
+                openNameModal();
+                return;
+            }
+
+            const title = (document.getElementById("page-item-title").value || "").trim();
+            const coverUrlInp = (document.getElementById("page-item-cover").value || "").trim();
+            const directUrl = (document.getElementById("page-item-url").value || "").trim();
+            const releaseDate = (document.getElementById("page-item-date").value || "").trim();
+            const desc = (document.getElementById("page-item-desc").value || "").trim();
+
+            if (!title || !directUrl) return;
+            const genresToSave = selectedComposerGenres.length ? selectedComposerGenres : ["درام"];
+            const posterFinal = coverUrlInp || uploadedCoverDataUrl || "";
+
+            await moviesRef.push({
+                title,
+                itemType: composerKind,
+                genres: genresToSave,
+                genre: genresToSave.join("، "),
+                year: releaseDate,
+                langType: selectedComposerLang,
+                poster: posterFinal,
+                videoUrl: directUrl,
+                desc,
+                authorId: persistentUserId,
+                authorName: currentUserName,
+                authorHandle: currentUserHandle,
+                views: 0,
+                createdAt: Date.now()
+            });
+
+            closePageComposer();
+            renderPageMyItems();
+            alert(composerKind === "movie" ? "فیلم با موفقیت منتشر شد." : "پست با موفقیت منتشر شد.");
+        }
+
+        function renderPageMyItems() {
+            const box = document.getElementById("page-my-items-list");
+            if (!box) return;
+            const mine = moviesList.filter(m => m.authorId === persistentUserId);
+            if (!mine.length) {
+                box.innerHTML = `<div class="glass empty-note">هنوز پست یا فیلمی در پیج خود منتشر نکرده‌اید.</div>`;
+                return;
+            }
+            box.innerHTML = mine.map(buildMovieCardHtml).join("");
+        }
 
         const FALLBACK_POSTER = "data:image/svg+xml;utf8," + encodeURIComponent(`
             <svg xmlns="http://www.w3.org/2000/svg" width="200" height="280" viewBox="0 0 200 280">
@@ -2230,7 +3285,7 @@
         `);
 
         // =====================================================================
-        // فضای مستقل LIVE TV با علامت‌گذاری استریم‌های غیرفعال روی لیست
+        // فضای مستقل LIVE TV
         // =====================================================================
         const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
         const liveTvVideoEl = document.getElementById("livetv-video-el");
@@ -2534,7 +3589,7 @@
         }
 
         // =====================================================================
-        // مدیریت کامل و بی‌باگ تمام‌صفحه (ورود و خروج از تمام‌صفحه)
+        // مدیریت کامل و بی‌باگ تمام‌صفحه
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -2883,15 +3938,24 @@
             const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const posterEl = document.getElementById("detail-poster-img");
             posterEl.src = posterSrc;
-            posterEl.alt = mv.title || "پوستر فیلم";
+            posterEl.alt = mv.title || "کاور";
             posterEl.onerror = () => { posterEl.src = FALLBACK_POSTER; };
 
+            const kindBadge = document.getElementById("detail-item-kind-badge");
+            if (kindBadge) {
+                kindBadge.innerText = mv.itemType === "post" ? "صفحه پست" : "صفحه فیلم";
+            }
+
             document.getElementById("detail-movie-title").innerText = mv.title || "بدون عنوان";
-            document.getElementById("detail-movie-genre").innerText = `ژانر: ${mv.genre || "فیلم"}`;
+            const langContainer = document.getElementById("detail-movie-lang-badge");
+            if (langContainer) {
+                langContainer.innerHTML = renderLangBadgeHtml(mv.langType || "dub");
+            }
+            document.getElementById("detail-movie-genre").innerText = `ژانر: ${mv.genre || "درام"}`;
             document.getElementById("detail-movie-year").innerText = mv.year || "نامشخص";
             document.getElementById("detail-movie-views").innerText = `👁 ${Number(mv.views) || 0} بازدید`;
             document.getElementById("detail-movie-desc").innerText =
-                (mv.desc && mv.desc.trim()) ? mv.desc.trim() : "توضیحات بیشتری برای این فیلم ثبت نشده است.";
+                (mv.desc && mv.desc.trim()) ? mv.desc.trim() : "توضیحات بیشتری ثبت نشده است.";
 
             const favBtn = document.getElementById("detail-fav-btn");
             const isFav = favIds.includes(mv.id);
@@ -2941,7 +4005,7 @@
             if (moviesList.length > 0) {
                 playMovieById(moviesList[0].id, true);
             } else {
-                alert("هنوز فیلمی ثبت نشده است. از بخش ادمین فیلم اضافه کنید.");
+                alert("هنوز فیلم یا پستی ثبت نشده است.");
             }
         }
 
@@ -2954,7 +4018,7 @@
             if (!mv) return;
             quickRoomMovieId = mv.id;
             document.getElementById("quick-room-movie-subtitle").innerText =
-                `فیلم «${mv.title}» را وارد یک اتاق با اسم دلخواه کنید.`;
+                `«${mv.title}» را وارد یک اتاق با اسم دلخواه کنید.`;
             const inp = document.getElementById("quick-room-name-input");
             if (inp) inp.value = "";
             document.getElementById("quick-room-modal").classList.add("show");
@@ -3025,11 +4089,11 @@
             );
 
             if (!moviesList.length) {
-                sel.innerHTML = `<option value="">ابتدا از بخش ادمین فیلم اضافه کنید</option>`;
+                sel.innerHTML = `<option value="">ابتدا فیلم یا پست اضافه کنید</option>`;
                 return;
             }
             if (!filtered.length) {
-                sel.innerHTML = `<option value="">فیلمی با این نام پیدا نشد</option>`;
+                sel.innerHTML = `<option value="">موردی با این نام پیدا نشد</option>`;
                 return;
             }
             sel.innerHTML = filtered.map(m => `<option value="${escAttr(m.id)}">${esc(m.title)}</option>`).join("");
@@ -3045,7 +4109,7 @@
             const movieId = document.getElementById("room-movie-select").value;
             const mv = moviesList.find(m => m.id === movieId);
             if (!roomName || !mv) {
-                alert("لطفاً اسم اتاق را وارد کنید و یک فیلم از لیست انتخاب نمایید.");
+                alert("لطفاً اسم اتاق را وارد کنید و یک مورد از لیست انتخاب نمایید.");
                 return;
             }
 
@@ -3330,6 +4394,13 @@
         }
 
         function openTab(tabKey) {
+            if (tabKey === "page" && !isAccountCompleted()) {
+                openNameModal();
+                return;
+            }
+
+            document.body.classList.toggle("explore-mode-active", tabKey === "explore");
+
             document.querySelectorAll(".page-view").forEach(p => p.classList.remove("active"));
             const el = document.getElementById("tab-" + tabKey);
             if (el) el.classList.add("active");
@@ -3351,6 +4422,13 @@
             }
             if (tabKey === "movie-detail") {
                 renderMovieDetailContent();
+            }
+            if (tabKey === "page") {
+                syncPageTabAndHeader();
+                renderPageMyItems();
+            }
+            if (tabKey === "explore") {
+                switchExploreSubtab(activeExploreSubtab);
             }
             window.scrollTo({ top: 0, behavior: "smooth" });
         }
@@ -3388,6 +4466,9 @@
                 .map(([id, val]) => ({ id, ...val }))
                 .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 
+            shuffledPostsCache = [];
+            shuffledMoviesCache = [];
+
             renderAllMovieViews();
             if (selectedDetailMovieId) {
                 renderMovieDetailContent();
@@ -3413,6 +4494,7 @@
             const isFav = favIds.includes(mv.id);
             const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
             const viewsCount = Number(mv.views) || 0;
+            const kindTag = mv.itemType === "post" ? "پست" : "فیلم";
             return `
                 <div class="glass movie-card" onclick="openMovieDetail('${escAttr(mv.id)}')">
                     <div class="movie-poster-box">
@@ -3420,7 +4502,12 @@
                     </div>
                     <div class="movie-info-col">
                         <strong>${esc(mv.title)}</strong>
-                        <div class="movie-sub-meta">${esc(mv.genre || "فیلم")} ${mv.year ? "• " + esc(mv.year) : ""} • 👁 ${viewsCount} بازدید</div>
+                        <div class="movie-sub-meta">
+                            ${renderLangBadgeHtml(mv.langType || "dub")}
+                            <span>${esc(kindTag)} • ${esc(mv.genre || "درام")}</span>
+                            ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
+                            <span>• 👁 ${viewsCount}</span>
+                        </div>
                         <div class="movie-desc-short">${esc(mv.desc || "برای مشاهده توضیحات و پخش ضربه بزنید")}</div>
                         <div class="movie-actions-row" onclick="event.stopPropagation()">
                             <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(mv.id)}', true)">▶ پخش</button>
@@ -3441,17 +4528,23 @@
 
             document.getElementById("home-movies-list").innerHTML = moviesList.length
                 ? moviesList.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">هنوز فیلمی ثبت نشده است. از تب «ادمین» فیلم جدید اضافه کنید.</div>`;
+                : `<div class="glass empty-note">هنوز فیلم یا پستی ثبت نشده است.</div>`;
 
             renderGenreChips();
             renderFilteredMovies();
             renderFavoritesList();
             renderAdminMovies();
+            renderPageMyItems();
+            renderExploreSections();
             populateRoomMovieSelect();
         }
 
         function renderGenreChips() {
-            const genres = ["همه", ...Array.from(new Set(moviesList.map(m => (m.genre || "").trim()).filter(Boolean)))];
+            const dynamicGenres = moviesList.flatMap(m => {
+                if (Array.isArray(m.genres) && m.genres.length) return m.genres.map(x => String(x).trim());
+                return String(m.genre || "").split(/[،,]/).map(x => x.trim());
+            });
+            const genres = ["همه", ...Array.from(new Set([...AVAILABLE_GENRES, ...dynamicGenres].filter(Boolean)))];
             const box = document.getElementById("genre-filter-chips");
             box.innerHTML = genres.map(g => `
                 <button type="button" class="genre-chip ${activeGenre === g ? "active" : ""}" onclick="selectGenre('${escAttr(g)}')">${esc(g)}</button>
@@ -3467,7 +4560,10 @@
         function renderFilteredMovies() {
             const q = (document.getElementById("search-movie-input").value || "").trim().toLowerCase();
             const list = moviesList.filter(m => {
-                const matchGenre = activeGenre === "همه" || (m.genre || "").trim() === activeGenre;
+                const itemGenres = Array.isArray(m.genres) && m.genres.length
+                    ? m.genres.map(x => String(x).trim())
+                    : String(m.genre || "").split(/[،,]/).map(x => x.trim());
+                const matchGenre = activeGenre === "همه" || itemGenres.includes(activeGenre);
                 const matchQuery = !q ||
                     (m.title || "").toLowerCase().includes(q) ||
                     (m.desc || "").toLowerCase().includes(q) ||
@@ -3478,7 +4574,7 @@
             const box = document.getElementById("search-movies-list");
             box.innerHTML = list.length
                 ? list.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">فیلمی پیدا نشد.</div>`;
+                : `<div class="glass empty-note">موردی پیدا نشد.</div>`;
         }
 
         function renderFavoritesList() {
@@ -3510,7 +4606,7 @@
         async function addNewMovie(e) {
             e.preventDefault();
             const title = document.getElementById("m-title").value.trim();
-            const genre = document.getElementById("m-genre").value.trim() || "فیلم";
+            const genre = document.getElementById("m-genre").value.trim() || "درام";
             const year = document.getElementById("m-year").value.trim();
             const poster = document.getElementById("m-poster").value.trim();
             const videoUrl = document.getElementById("m-video").value.trim();
@@ -3520,8 +4616,11 @@
 
             await moviesRef.push({
                 title,
+                itemType: "movie",
+                genres: genre.split(/[،,]/).map(x => x.trim()).filter(Boolean),
                 genre,
                 year,
+                langType: "dub",
                 poster,
                 videoUrl,
                 desc,
