@@ -180,7 +180,6 @@
             box-shadow: 0 4px 14px var(--red-glow);
         }
 
-        /* ==================== صفحه لودینگ گرافیکی و اتصال ==================== */
         .boot-splash-screen {
             position: fixed;
             inset: 0;
@@ -403,7 +402,41 @@
             max-height: 90dvh;
             overflow-y: auto;
             border-radius: 26px;
-            padding: 22px;
+            padding: 20px;
+        }
+
+        .auth-mode-tabs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 6px;
+            margin-bottom: 14px;
+            padding: 4px;
+            border-radius: 16px;
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.28);
+        }
+
+        .auth-mode-tab {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px 6px;
+            border-radius: 12px;
+            font-size: 11.5px;
+            font-weight: 900;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .auth-mode-tab.active {
+            background: linear-gradient(135deg, #ff3b5c, #b80f30);
+            color: #fff;
+            box-shadow: 0 4px 12px var(--red-glow);
+        }
+
+        .auth-mode-tab:disabled {
+            opacity: 0.42;
+            cursor: not-allowed;
         }
 
         .top-header {
@@ -551,7 +584,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* ==================== اسکرول افقی چپ و راست در اکسپلور ==================== */
         .explore-horizontal-track {
             display: flex;
             flex-direction: row;
@@ -565,7 +597,7 @@
         }
 
         .explore-story-card {
-            flex: 0 0 265px;
+            flex: 0 0 280px;
             scroll-snap-align: start;
             border-radius: 24px;
             padding: 12px;
@@ -596,23 +628,26 @@
             background: var(--red-soft);
         }
 
-        /* قاب واحد پست که هم پوستر/فریم اول است و هم مستقیماً روی خودش پخش می‌شود */
+        /* قاب واحد پست با Plyr یکپارچه و بدون تداخل backdrop-filter در اندروید */
         .single-post-media-stage {
             width: 100%;
-            height: 170px;
+            height: 175px;
             border-radius: 16px;
             overflow: hidden;
-            background: #050203;
+            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.3);
             position: relative;
+            isolation: isolate;
         }
 
         .single-post-media-stage img,
-        .single-post-media-stage video {
+        .single-post-media-stage video,
+        .single-post-media-stage .plyr,
+        .single-post-media-stage .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
-            background: #000;
+            background: #000000;
         }
 
         .single-post-media-stage img {
@@ -621,7 +656,6 @@
 
         .single-post-media-stage video {
             object-fit: contain;
-            transform: translateZ(0);
         }
 
         .creator-page-card {
@@ -652,7 +686,7 @@
             background: var(--red-soft);
         }
 
-        /* ==================== فضای مستقل LIVE TV ==================== */
+        /* ==================== فضای مستقل پخش ماهواره / LIVE TV با Plyr ==================== */
         .livetv-overlay-screen {
             position: fixed;
             inset: 0;
@@ -695,18 +729,25 @@
         .livetv-player-box {
             border-radius: 18px;
             overflow: hidden;
-            background: #040102;
+            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.28);
             aspect-ratio: 16 / 9;
             width: 100%;
             position: relative;
             flex-shrink: 0;
+            isolation: isolate;
         }
 
-        .livetv-player-box video {
+        .livetv-player-box video,
+        .livetv-player-box .plyr,
+        .livetv-player-box .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
+            background: #000000;
+        }
+
+        .livetv-player-box video {
             object-fit: contain;
         }
 
@@ -921,12 +962,13 @@
         .player-frame-wrap {
             border-radius: 18px;
             overflow: hidden;
-            background: #050203;
+            background: #000000;
             margin-bottom: 10px;
             position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
             border: 1px solid rgba(255, 77, 109, 0.22);
+            isolation: isolate;
         }
 
         .player-frame-wrap .plyr,
@@ -934,6 +976,7 @@
         .player-frame-wrap video {
             width: 100%;
             height: 100%;
+            background: #000000;
         }
 
         .player-frame-wrap:fullscreen,
@@ -1254,21 +1297,24 @@
             border-radius: 16px;
             overflow: hidden;
             flex-shrink: 0;
-            background: #090305;
+            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.25);
+            isolation: isolate;
         }
 
         .movie-poster-box.playing-post-box {
-            width: 145px;
-            height: 112px;
+            width: 165px;
+            height: 118px;
         }
 
         .movie-poster-box img,
-        .movie-poster-box video {
+        .movie-poster-box video,
+        .movie-poster-box .plyr,
+        .movie-poster-box .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
-            background: #000;
+            background: #000000;
         }
 
         .movie-poster-box img {
@@ -1828,13 +1874,13 @@
         </div>
     </header>
 
-    <!-- فضای مستقل پخش زنده شبکه‌ها (LIVE TV) -->
+    <!-- فضای مستقل پخش ماهواره / LIVE TV با پلیر Plyr -->
     <div id="livetv-overlay-screen" class="livetv-overlay-screen">
         <div class="glass livetv-shell">
             <div class="livetv-top-header">
                 <div style="display:flex; align-items:center; gap:8px;">
                     <span class="live-dot" style="background:var(--red-primary); width:8px; height:8px;"></span>
-                    <strong style="font-size:15.5px; font-weight:900; color:var(--text-strong);">LIVE TV</strong>
+                    <strong style="font-size:15.5px; font-weight:900; color:var(--text-strong);">پخش ماهواره (LIVE TV)</strong>
                     <span id="livetv-count-badge" class="pill-tag" style="margin-bottom:0;">در حال بارگذاری...</span>
                 </div>
                 <button type="button" class="btn-main" style="width:auto; padding:8px 14px; font-size:12px;" onclick="closeLiveTvScreen()">
@@ -1843,7 +1889,7 @@
             </div>
 
             <div id="livetv-player-box" class="livetv-player-box">
-                <video id="livetv-video-el" playsinline webkit-playsinline controls autoplay preload="metadata"></video>
+                <video id="livetv-video-el" playsinline webkit-playsinline controls autoplay preload="auto"></video>
             </div>
 
             <div class="livetv-now-bar">
@@ -1851,7 +1897,7 @@
                     <strong id="livetv-current-title" style="display:block; font-size:13.5px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">
                         یک شبکه را انتخاب کنید یا پخش سریع بزنید
                     </strong>
-                    <span id="livetv-status-text" style="font-size:11px; color:var(--text-muted);">منبع: IPTV-ORG</span>
+                    <span id="livetv-status-text" style="font-size:11px; color:var(--text-muted);">پلیر Plyr • منبع: IPTV-ORG</span>
                 </div>
                 <div style="display:flex; gap:6px;">
                     <button type="button" class="btn-sync-now" onclick="quickPlayLiveTv()">⚡ پخش سریع</button>
@@ -1909,37 +1955,99 @@
         </div>
     </div>
 
-    <!-- مودال تکمیل و ویرایش حساب کاربری -->
+    <!-- مودال حساب کاربری تفکیک‌شده: ورود / ثبت‌نام / ویرایش پروفایل -->
     <div id="user-name-modal" class="modal-backdrop">
         <div class="glass modal-card">
-            <span class="pill-tag">امنیت و حساب کاربری ZEUC MOVIE</span>
-            <h2 style="font-size:18px; font-weight:900; margin-bottom:6px; color:var(--text-strong);">ساخت پروفایل، آیدی و رمز اختصاصی</h2>
-            <p style="font-size:12.5px; color:var(--text-muted); margin-bottom:14px;">
-                پس از تکمیل حساب کاربری، منوهای «پیج» و «اکسپلور» برایتان فعال می‌شوند.
-            </p>
-            <form onsubmit="saveUserProfileModal(event)">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                <span class="pill-tag" style="margin-bottom:0;">حساب کاربری ZEUC MOVIE</span>
+                <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="closeProfileModal()">✕ بستن</button>
+            </div>
+
+            <div class="auth-mode-tabs">
+                <button type="button" id="auth-tab-login" class="auth-mode-tab active" onclick="switchAuthModalTab('login')">
+                    ورود
+                </button>
+                <button type="button" id="auth-tab-register" class="auth-mode-tab" onclick="switchAuthModalTab('register')">
+                    ثبت‌نام
+                </button>
+                <button type="button" id="auth-tab-edit" class="auth-mode-tab" onclick="switchAuthModalTab('edit')">
+                    ویرایش پروفایل
+                </button>
+            </div>
+
+            <!-- ۱. فرم ورود -->
+            <form id="auth-form-login" onsubmit="submitLoginAccount(event)">
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+                    با آیدی و رمز اختصاصی خود وارد حساب شوید.
+                </p>
                 <div class="field-box">
-                    <label for="modal-user-name-input">نام نمایشی شما</label>
-                    <input type="text" id="modal-user-name-input" placeholder="مثلاً: زئوس یا نگین" maxlength="28" required>
+                    <label for="login-handle-input">آیدی شخصی</label>
+                    <input type="text" id="login-handle-input" placeholder="مثلاً: zeuc_cinema" maxlength="24" required>
                 </div>
                 <div class="field-box">
-                    <label for="modal-user-handle-input">آیدی شخصی (بدون یا با @)</label>
-                    <input type="text" id="modal-user-handle-input" placeholder="مثلاً: zeuc_cinema" maxlength="24" required>
+                    <label for="login-pin-input">رمز اختصاصی</label>
+                    <input type="password" id="login-pin-input" placeholder="رمز خود را وارد کنید" minlength="4" maxlength="32" required>
+                    <span id="login-error-msg" style="color:#ff6b86; font-size:12px; display:none;">آیدی یا رمز عبور اشتباه است!</span>
+                </div>
+                <button type="submit" class="btn-main">ورود به حساب</button>
+            </form>
+
+            <!-- ۲. فرم ثبت‌نام -->
+            <form id="auth-form-register" style="display:none;" onsubmit="submitRegisterAccount(event)">
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+                    یک حساب جدید با آیدی یکتا بسازید. آیدی تکراری پذیرفته نمی‌شود.
+                </p>
+                <div class="field-box">
+                    <label for="reg-name-input">نام نمایشی</label>
+                    <input type="text" id="reg-name-input" placeholder="مثلاً: زئوس یا نگین" maxlength="28" required>
                 </div>
                 <div class="field-box">
-                    <label for="modal-user-pin-input">رمز اختصاصی آیدی (حداقل ۴ کاراکتر)</label>
-                    <input type="password" id="modal-user-pin-input" placeholder="رمز اختصاصی برای امنیت آیدی" minlength="4" maxlength="32" required>
-                    <span id="modal-pin-error" style="color:#ff6b86; font-size:12px; display:none;">رمز اختصاصی این آیدی اشتباه است!</span>
+                    <label for="reg-handle-input">آیدی یکتا (بدون یا با @)</label>
+                    <input type="text" id="reg-handle-input" placeholder="مثلاً: zeuc_cinema" maxlength="24" oninput="checkHandleAvailability('reg')" required>
+                    <span id="reg-handle-status" style="font-size:11.5px; display:none;"></span>
                 </div>
                 <div class="field-box">
-                    <label for="modal-user-avatar-input">لینک عکس پروفایل (اختیاری)</label>
-                    <input type="url" id="modal-user-avatar-input" placeholder="https://... لینک عکس پروفایل">
+                    <label for="reg-pin-input">رمز اختصاصی (حداقل ۴ کاراکتر)</label>
+                    <input type="password" id="reg-pin-input" placeholder="رمز اختصاصی برای حساب" minlength="4" maxlength="32" required>
                 </div>
                 <div class="field-box">
-                    <label for="modal-user-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
-                    <input type="file" id="modal-user-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event)">
+                    <label for="reg-avatar-input">لینک عکس پروفایل (اختیاری)</label>
+                    <input type="url" id="reg-avatar-input" placeholder="https://... لینک عکس پروفایل">
                 </div>
-                <button type="submit" class="btn-main">ثبت امن حساب و فعال‌سازی پیج و اکسپلور</button>
+                <div class="field-box">
+                    <label for="reg-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
+                    <input type="file" id="reg-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event, 'reg')">
+                </div>
+                <button type="submit" class="btn-main">ثبت‌نام و ساخت حساب</button>
+            </form>
+
+            <!-- ۳. فرم ویرایش پروفایل -->
+            <form id="auth-form-edit" style="display:none;" onsubmit="submitEditProfile(event)">
+                <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
+                    اطلاعات پروفایل خود را ویرایش کنید. آیدی جدید نباید با آیدی کاربران دیگر تکراری باشد.
+                </p>
+                <div class="field-box">
+                    <label for="edit-name-input">نام نمایشی</label>
+                    <input type="text" id="edit-name-input" placeholder="نام نمایشی" maxlength="28" required>
+                </div>
+                <div class="field-box">
+                    <label for="edit-handle-input">آیدی شخصی</label>
+                    <input type="text" id="edit-handle-input" placeholder="آیدی شخصی" maxlength="24" oninput="checkHandleAvailability('edit')" required>
+                    <span id="edit-handle-status" style="font-size:11.5px; display:none;"></span>
+                </div>
+                <div class="field-box">
+                    <label for="edit-pin-input">رمز اختصاصی</label>
+                    <input type="password" id="edit-pin-input" placeholder="رمز اختصاصی" minlength="4" maxlength="32" required>
+                </div>
+                <div class="field-box">
+                    <label for="edit-avatar-input">لینک عکس پروفایل (اختیاری)</label>
+                    <input type="url" id="edit-avatar-input" placeholder="https://... لینک عکس پروفایل">
+                </div>
+                <div class="field-box">
+                    <label for="edit-avatar-file">یا انتخاب عکس جدید از گوشی</label>
+                    <input type="file" id="edit-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event, 'edit')">
+                </div>
+                <button type="submit" class="btn-main">ذخیره تغییرات پروفایل</button>
             </form>
         </div>
     </div>
@@ -1979,7 +2087,7 @@
             </div>
         </div>
         <div class="header-right-group">
-            <button type="button" class="live-tv-icon-btn" onclick="openLiveTvScreen()" title="پخش زنده شبکه‌ها">
+            <button type="button" class="live-tv-icon-btn" onclick="openLiveTvScreen()" title="پخش ماهواره">
                 <span class="live-dot"></span>
                 <span>LIVE TV</span>
             </button>
@@ -2018,7 +2126,6 @@
                 </div>
             </div>
 
-            <!-- چت و واکنش زیر فیلم در اتاق فعال -->
             <div id="under-player-chat" class="under-player-chat-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
                     <strong style="font-size:13.5px; font-weight:900; color:var(--text-strong);">چت و واکنش اتاق</strong>
@@ -2137,11 +2244,11 @@
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. پست‌ها و فیلم‌های کاربران در پیج و اکسپلور</span>
+                        <span>۲. پخش پست‌ها و ماهواره با پلیر Plyr</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم مستقیماً روی قاب خودشان پخش می‌شوند.
+                        پست‌ها و شبکه‌های ماهواره روی همان یک کادر با پلیر Plyr اجرا می‌شوند تا تصویر و صدا بدون دوگانگی پخش شوند.
                     </div>
                 </div>
             </div>
@@ -2312,7 +2419,7 @@
                 <div style="flex:1; min-width:0;">
                     <h2 id="page-display-name" style="font-size:18px; font-weight:900; color:var(--text-strong);">نام کاربر</h2>
                     <div id="page-handle-text" style="font-size:12.5px; font-weight:800; color:var(--chip-text); margin-bottom:6px;">@handle</div>
-                    <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openNameModal()">✏️ ویرایش پروفایل، آیدی و رمز</button>
+                    <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openNameModal('edit')">✏️ ویرایش پروفایل</button>
                 </div>
             </div>
 
@@ -2443,10 +2550,9 @@
             <div id="explore-pages-list" class="movies-list"></div>
         </div>
 
-        <!-- زیرتب ۲: اکسپلور با تفکیک پست‌ها و فیلم‌ها و اسکرول افقی چپ و راست -->
         <div id="explore-panel-feed">
             <div class="sec-title-row">
-                <h2>پست‌ها (اسکرول چپ و راست)</h2>
+                <h2>پست‌ها (پلیر Plyr • اسکرول چپ و راست)</h2>
                 <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 ترتیب جدید</button>
             </div>
             <div id="explore-random-posts-track" class="explore-horizontal-track"></div>
@@ -2593,6 +2699,31 @@
         const moviesRef = db.ref("zeuc_movie_v1/movies");
         const onlineRef = db.ref("zeuc_movie_v1/online");
         const roomsRef = db.ref("zeuc_movie_v1/rooms");
+        const handlesRegistryRef = db.ref("zeuc_movie_v1/handles");
+
+        let handlesRegistryMap = {};
+        handlesRegistryRef.on("value", (snap) => {
+            handlesRegistryMap = snap.val() || {};
+            const activeAuthTab = document.querySelector(".auth-mode-tab.active");
+            if (activeAuthTab && activeAuthTab.id === "auth-tab-register") checkHandleAvailability("reg");
+            if (activeAuthTab && activeAuthTab.id === "auth-tab-edit") checkHandleAvailability("edit");
+        });
+
+        function handleKeyFromNormalized(normHandle) {
+            return String(normHandle || "").replace(/^@+/, "").trim().toLowerCase();
+        }
+
+        function isHandleTakenByOther(normHandle, ownerUid) {
+            const key = handleKeyFromNormalized(normHandle);
+            if (!key) return false;
+            const regEntry = handlesRegistryMap[key];
+            if (regEntry && regEntry.uid && regEntry.uid !== ownerUid) {
+                return true;
+            }
+            return Object.entries(allUsersMap).some(([uid, u]) =>
+                uid !== ownerUid && u && normalizeHandle(u.handle) === "@" + key
+            );
+        }
 
         let appBootedOnce = false;
         let bootTimeoutTimer = null;
@@ -2736,11 +2867,12 @@
             localStorage.setItem(USER_ID_KEY, persistentUserId);
         }
 
-        const userProfileRef = db.ref("zeuc_movie_v1/users/" + persistentUserId);
+        let userProfileRef = db.ref("zeuc_movie_v1/users/" + persistentUserId);
         let currentUserName = (localStorage.getItem(USER_NAME_KEY) || "").trim();
         let currentUserHandle = (localStorage.getItem(USER_HANDLE_KEY) || "").trim();
         let currentUserPin = (localStorage.getItem(USER_PIN_KEY) || "").trim();
         let currentUserAvatar = (localStorage.getItem(USER_AVATAR_KEY) || "").trim();
+        let pendingAvatarUpload = "";
         let followersList = [];
         let followingList = [];
         let allUsersMap = {};
@@ -2818,20 +2950,68 @@
             if (followingCountEl) followingCountEl.innerText = String(followingList.length);
         }
 
-        function openNameModal() {
+        function switchAuthModalTab(mode) {
+            const hasAcc = isAccountCompleted();
+            const targetMode = (mode === "edit" && !hasAcc) ? "register" : mode;
+
+            const loginTab = document.getElementById("auth-tab-login");
+            const regTab = document.getElementById("auth-tab-register");
+            const editTab = document.getElementById("auth-tab-edit");
+
+            if (loginTab) loginTab.classList.toggle("active", targetMode === "login");
+            if (regTab) regTab.classList.toggle("active", targetMode === "register");
+            if (editTab) {
+                editTab.disabled = !hasAcc;
+                editTab.classList.toggle("active", targetMode === "edit");
+            }
+
+            const fLogin = document.getElementById("auth-form-login");
+            const fReg = document.getElementById("auth-form-register");
+            const fEdit = document.getElementById("auth-form-edit");
+
+            if (fLogin) fLogin.style.display = targetMode === "login" ? "block" : "none";
+            if (fReg) fReg.style.display = targetMode === "register" ? "block" : "none";
+            if (fEdit) fEdit.style.display = targetMode === "edit" ? "block" : "none";
+
+            if (targetMode === "edit" && hasAcc) {
+                document.getElementById("edit-name-input").value = currentUserName;
+                document.getElementById("edit-handle-input").value = currentUserHandle.replace(/^@+/, "");
+                document.getElementById("edit-pin-input").value = currentUserPin;
+                document.getElementById("edit-avatar-input").value = currentUserAvatar.startsWith("data:") ? "" : currentUserAvatar;
+                checkHandleAvailability("edit");
+            } else if (targetMode === "register") {
+                checkHandleAvailability("reg");
+            }
+        }
+
+        function openNameModal(preferredMode = null) {
+            pendingAvatarUpload = "";
             const modal = document.getElementById("user-name-modal");
-            const nameInp = document.getElementById("modal-user-name-input");
-            const handleInp = document.getElementById("modal-user-handle-input");
-            const pinInp = document.getElementById("modal-user-pin-input");
-            const avatarInp = document.getElementById("modal-user-avatar-input");
-            const errEl = document.getElementById("modal-pin-error");
-            if (errEl) errEl.style.display = "none";
-            if (nameInp) nameInp.value = currentUserName;
-            if (handleInp) handleInp.value = currentUserHandle.replace(/^@+/, "");
-            if (pinInp) pinInp.value = currentUserPin;
-            if (avatarInp) avatarInp.value = currentUserAvatar.startsWith("data:") ? "" : currentUserAvatar;
+            const loginErr = document.getElementById("login-error-msg");
+            if (loginErr) loginErr.style.display = "none";
+
+            const modeToUse = preferredMode || (isAccountCompleted() ? "edit" : "login");
+            switchAuthModalTab(modeToUse);
+
             if (modal) modal.classList.add("show");
-            setTimeout(() => { if (nameInp) nameInp.focus(); }, 60);
+            setTimeout(() => {
+                if (modeToUse === "login") {
+                    const el = document.getElementById("login-handle-input");
+                    if (el) el.focus();
+                } else if (modeToUse === "register") {
+                    const el = document.getElementById("reg-name-input");
+                    if (el) el.focus();
+                } else {
+                    const el = document.getElementById("edit-name-input");
+                    if (el) el.focus();
+                }
+            }, 60);
+        }
+
+        function closeProfileModal() {
+            pendingAvatarUpload = "";
+            const modal = document.getElementById("user-name-modal");
+            if (modal) modal.classList.remove("show");
         }
 
         function handleAvatarFilePicked(e) {
@@ -2840,66 +3020,189 @@
             const reader = new FileReader();
             reader.onload = () => {
                 if (typeof reader.result === "string") {
-                    currentUserAvatar = reader.result;
-                    const urlInp = document.getElementById("modal-user-avatar-input");
-                    if (urlInp) urlInp.value = "";
+                    pendingAvatarUpload = reader.result;
                 }
             };
             reader.readAsDataURL(file);
         }
 
-        function saveUserProfileModal(e) {
-            e.preventDefault();
-            const nameInp = document.getElementById("modal-user-name-input");
-            const handleInp = document.getElementById("modal-user-handle-input");
-            const pinInp = document.getElementById("modal-user-pin-input");
-            const avatarInp = document.getElementById("modal-user-avatar-input");
-            const errEl = document.getElementById("modal-pin-error");
+        function checkHandleAvailability(formPrefix) {
+            const inp = document.getElementById(formPrefix + "-handle-input");
+            const statusEl = document.getElementById(formPrefix + "-handle-status");
+            if (!inp || !statusEl) return false;
 
-            const valName = (nameInp ? nameInp.value : "").trim();
-            const valHandle = normalizeHandle(handleInp ? handleInp.value : "");
-            const valPin = (pinInp ? pinInp.value : "").trim();
-            const valAvatarUrl = (avatarInp ? avatarInp.value : "").trim();
+            const norm = normalizeHandle(inp.value);
+            if (!norm) {
+                statusEl.style.display = "none";
+                return false;
+            }
+            const taken = isHandleTakenByOther(norm, persistentUserId);
+            statusEl.style.display = "block";
+            if (taken) {
+                statusEl.style.color = "#ff6b86";
+                statusEl.innerText = `آیدی ${norm} قبلاً توسط کاربر دیگری ثبت شده است!`;
+                return false;
+            } else {
+                statusEl.style.color = "#10b981";
+                statusEl.innerText = `آیدی ${norm} آزاد است.`;
+                return true;
+            }
+        }
 
-            if (!valName || !valHandle || valPin.length < 4) return;
-
-            const existingOwnerEntry = Object.entries(allUsersMap).find(([uid, u]) =>
-                uid !== persistentUserId && u && normalizeHandle(u.handle) === valHandle
-            );
-            if (existingOwnerEntry) {
-                const ownerData = existingOwnerEntry[1];
-                if (ownerData.pin && String(ownerData.pin) !== valPin) {
-                    if (errEl) errEl.style.display = "block";
-                    return;
+        async function claimUniqueHandleTx(normHandle, uid) {
+            const key = handleKeyFromNormalized(normHandle);
+            if (!key) return false;
+            const ref = handlesRegistryRef.child(key);
+            const txRes = await ref.transaction((curr) => {
+                if (!curr || curr.uid === uid) {
+                    return { uid, handle: "@" + key, updatedAt: Date.now() };
                 }
-            }
-            if (errEl) errEl.style.display = "none";
+                return;
+            });
+            return Boolean(txRes && txRes.committed);
+        }
 
-            if (valAvatarUrl) {
-                currentUserAvatar = valAvatarUrl;
-            }
+        function applyLocalAccountSession(uid, profileObj) {
+            persistentUserId = uid;
+            localStorage.setItem(USER_ID_KEY, uid);
+            userProfileRef = db.ref("zeuc_movie_v1/users/" + uid);
 
-            currentUserName = valName;
-            currentUserHandle = valHandle;
-            currentUserPin = valPin;
+            currentUserName = String(profileObj.name || "").trim();
+            currentUserHandle = normalizeHandle(profileObj.handle || "");
+            currentUserPin = String(profileObj.pin || "").trim();
+            currentUserAvatar = String(profileObj.avatar || "").trim();
+            followingList = Array.isArray(profileObj.following) ? profileObj.following : [];
 
             localStorage.setItem(USER_NAME_KEY, currentUserName);
             localStorage.setItem(USER_HANDLE_KEY, currentUserHandle);
             localStorage.setItem(USER_PIN_KEY, currentUserPin);
             localStorage.setItem(USER_AVATAR_KEY, currentUserAvatar);
+        }
 
-            userProfileRef.update({
-                name: currentUserName,
-                handle: currentUserHandle,
-                pin: currentUserPin,
-                avatar: currentUserAvatar,
-                updatedAt: Date.now()
-            }).catch(() => {});
+        async function submitLoginAccount(e) {
+            e.preventDefault();
+            const hInp = document.getElementById("login-handle-input");
+            const pInp = document.getElementById("login-pin-input");
+            const errEl = document.getElementById("login-error-msg");
+
+            const targetHandle = normalizeHandle(hInp ? hInp.value : "");
+            const targetPin = (pInp ? pInp.value : "").trim();
+            if (!targetHandle || targetPin.length < 4) return;
+
+            const matchedEntry = Object.entries(allUsersMap).find(([_, u]) =>
+                u && normalizeHandle(u.handle) === targetHandle && String(u.pin || "").trim() === targetPin
+            );
+
+            if (!matchedEntry) {
+                if (errEl) errEl.style.display = "block";
+                return;
+            }
+            if (errEl) errEl.style.display = "none";
+
+            const [matchedUid, matchedData] = matchedEntry;
+            applyLocalAccountSession(matchedUid, matchedData);
+            await claimUniqueHandleTx(targetHandle, matchedUid).catch(() => {});
 
             syncPageTabAndHeader();
             renderPageMyItems();
             renderExploreSections();
-            document.getElementById("user-name-modal").classList.remove("show");
+            closeProfileModal();
+            openTab("page");
+        }
+
+        async function submitRegisterAccount(e) {
+            e.preventDefault();
+            const nameVal = (document.getElementById("reg-name-input").value || "").trim();
+            const handleVal = normalizeHandle(document.getElementById("reg-handle-input").value || "");
+            const pinVal = (document.getElementById("reg-pin-input").value || "").trim();
+            const avatarUrlVal = (document.getElementById("reg-avatar-input").value || "").trim();
+
+            if (!nameVal || !handleVal || pinVal.length < 4) return;
+
+            if (isHandleTakenByOther(handleVal, persistentUserId)) {
+                checkHandleAvailability("reg");
+                alert("این آیدی قبلاً ثبت شده است؛ لطفاً یک آیدی دیگر انتخاب کنید.");
+                return;
+            }
+
+            const claimed = await claimUniqueHandleTx(handleVal, persistentUserId).catch(() => false);
+            if (!claimed) {
+                checkHandleAvailability("reg");
+                alert("این آیدی همین الان توسط کاربر دیگری ثبت شد؛ یک آیدی دیگر وارد کنید.");
+                return;
+            }
+
+            const avatarFinal = avatarUrlVal || pendingAvatarUpload || "";
+            const newProfile = {
+                name: nameVal,
+                handle: handleVal,
+                pin: pinVal,
+                avatar: avatarFinal,
+                favorites: favIds,
+                following: followingList,
+                updatedAt: Date.now()
+            };
+
+            await userProfileRef.update(newProfile);
+            pendingAvatarUpload = "";
+            applyLocalAccountSession(persistentUserId, newProfile);
+
+            syncPageTabAndHeader();
+            renderPageMyItems();
+            renderExploreSections();
+            closeProfileModal();
+            openTab("page");
+        }
+
+        async function submitEditProfile(e) {
+            e.preventDefault();
+            const nameVal = (document.getElementById("edit-name-input").value || "").trim();
+            const handleVal = normalizeHandle(document.getElementById("edit-handle-input").value || "");
+            const pinVal = (document.getElementById("edit-pin-input").value || "").trim();
+            const avatarUrlVal = (document.getElementById("edit-avatar-input").value || "").trim();
+
+            if (!nameVal || !handleVal || pinVal.length < 4) return;
+
+            if (isHandleTakenByOther(handleVal, persistentUserId)) {
+                checkHandleAvailability("edit");
+                alert("این آیدی متعلق به کاربر دیگری است و تکراری است!");
+                return;
+            }
+
+            const oldHandleKey = handleKeyFromNormalized(currentUserHandle);
+            const newHandleKey = handleKeyFromNormalized(handleVal);
+
+            const claimed = await claimUniqueHandleTx(handleVal, persistentUserId).catch(() => false);
+            if (!claimed) {
+                checkHandleAvailability("edit");
+                alert("این آیدی قبلاً ثبت شده است و امکان استفاده مجدد از آن وجود ندارد.");
+                return;
+            }
+
+            if (oldHandleKey && oldHandleKey !== newHandleKey) {
+                handlesRegistryRef.child(oldHandleKey).remove().catch(() => {});
+            }
+
+            const avatarFinal = avatarUrlVal || pendingAvatarUpload || currentUserAvatar || "";
+            const updatedProfile = {
+                name: nameVal,
+                handle: handleVal,
+                pin: pinVal,
+                avatar: avatarFinal,
+                updatedAt: Date.now()
+            };
+
+            await userProfileRef.update(updatedProfile);
+            pendingAvatarUpload = "";
+            applyLocalAccountSession(persistentUserId, {
+                ...(allUsersMap[persistentUserId] || {}),
+                ...updatedProfile
+            });
+
+            syncPageTabAndHeader();
+            renderPageMyItems();
+            renderExploreSections();
+            closeProfileModal();
             openTab("page");
         }
 
@@ -2952,7 +3255,7 @@
         async function toggleFollowUser(targetUid) {
             if (!targetUid || targetUid === persistentUserId) return;
             if (!isAccountCompleted()) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
             const nextFollowing = followingList.includes(targetUid)
@@ -3002,20 +3305,25 @@
         }
 
         // =====================================================================
-        // پخش درون همان یک کادر اصلی پست (بدون دوتا شدن و با رندر صحیح تصویر و صدا)
+        // پخش پست روی همان یک کادر با پلیر Plyr + تصویر و صدا در WebView
         // =====================================================================
         let activeInlinePostId = null;
+        let inlinePostPlyr = null;
         let inlinePostHls = null;
 
-        function destroyInlinePostHls() {
+        function destroyInlinePostPlayer() {
             if (inlinePostHls) {
                 try { inlinePostHls.destroy(); } catch (_) {}
                 inlinePostHls = null;
             }
+            if (inlinePostPlyr) {
+                try { inlinePostPlyr.destroy(); } catch (_) {}
+                inlinePostPlyr = null;
+            }
         }
 
         function stopAllInlinePostPlayers(exceptId = null) {
-            destroyInlinePostHls();
+            destroyInlinePostPlayer();
             document.querySelectorAll(".post-media-slot").forEach(slot => {
                 const slotPostId = slot.dataset.postId;
                 if (exceptId && slotPostId === exceptId) return;
@@ -3055,6 +3363,7 @@
             moviesRef.child(itemId).child("views").transaction(v => (Number(v) || 0) + 1);
 
             const cleanUrl = String(item.videoUrl || "").trim();
+            const posterUrl = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
             const slots = document.querySelectorAll(`.post-media-slot[data-post-id="${CSS.escape(itemId)}"]`);
             const btns = document.querySelectorAll(`.post-play-toggle-btn[data-post-id="${CSS.escape(itemId)}"]`);
 
@@ -3062,31 +3371,45 @@
 
             slots.forEach((slot, idx) => {
                 slot.classList.add("playing-post-box");
-                slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000; display:block;"></video>`;
+                slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
                 const vid = slot.querySelector("video");
                 if (!vid) return;
 
                 if (idx === 0) {
+                    const pInstance = new Plyr(vid, {
+                        controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
+                        fullscreen: { enabled: true, fallback: true, iosNative: true }
+                    });
+                    inlinePostPlyr = pInstance;
+
+                    const startPlayback = () => {
+                        vid.muted = false;
+                        pInstance.muted = false;
+                        const pr = pInstance.play();
+                        if (pr && pr.catch) {
+                            pr.catch(() => {
+                                vid.muted = true;
+                                pInstance.muted = true;
+                                pInstance.play().catch(() => {});
+                            });
+                        }
+                    };
+
                     if (/\.m3u8(\?|$)/i.test(cleanUrl) && window.Hls && window.Hls.isSupported()) {
                         inlinePostHls = new window.Hls({ enableWorker: true });
                         inlinePostHls.loadSource(cleanUrl);
                         inlinePostHls.attachMedia(vid);
-                        inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                            vid.muted = false;
-                            vid.play().catch(() => {
-                                vid.muted = true;
-                                vid.play().catch(() => {});
-                            });
-                        });
+                        inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
                     } else {
                         vid.src = cleanUrl;
                         vid.load();
-                        vid.muted = false;
-                        vid.play().catch(() => {
-                            vid.muted = true;
-                            vid.play().catch(() => {});
-                        });
+                        vid.addEventListener("canplay", startPlayback, { once: true });
+                        setTimeout(startPlayback, 150);
                     }
+                } else {
+                    vid.src = cleanUrl;
+                    vid.preload = "metadata";
+                    vid.muted = true;
                 }
             });
         }
@@ -3103,7 +3426,7 @@
         }
 
         // =====================================================================
-        // بخش اکسپلور: پیج ها | پست‌ها و فیلم‌های تفکیک‌شده اسکرولی چپ و راست | فالو شده ها
+        // بخش اکسپلور
         // =====================================================================
         let activeExploreSubtab = "feed";
         let inspectedCreatorId = null;
@@ -3427,7 +3750,7 @@
 
         function openPageComposer(kind) {
             if (!isAccountCompleted()) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
             composerKind = kind === "movie" ? "movie" : "post";
@@ -3461,7 +3784,7 @@
         async function submitPageItem(e) {
             e.preventDefault();
             if (!isAccountCompleted()) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
 
@@ -3518,11 +3841,16 @@
         `);
 
         // =====================================================================
-        // فضای مستقل LIVE TV
+        // پخش ماهواره (LIVE TV) با پلیر Plyr اختصاصی
         // =====================================================================
         const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
         const liveTvVideoEl = document.getElementById("livetv-video-el");
         const liveTvPlayerBox = document.getElementById("livetv-player-box");
+        const liveTvPlyr = new Plyr(liveTvVideoEl, {
+            controls: ["play-large", "play", "mute", "volume", "settings", "fullscreen"],
+            fullscreen: { enabled: true, fallback: true, iosNative: true }
+        });
+
         let liveTvChannels = [];
         let liveTvFiltered = [];
         let liveTvLoadedOnce = false;
@@ -3569,6 +3897,7 @@
                 liveTvHls.destroy();
                 liveTvHls = null;
             }
+            try { liveTvPlyr.pause(); } catch (_) {}
             liveTvVideoEl.pause();
             liveTvVideoEl.removeAttribute("src");
             liveTvVideoEl.load();
@@ -3758,7 +4087,20 @@
                     deadLiveTvUrls.delete(url);
                     renderLiveTvChannels();
                 }
-                document.getElementById("livetv-status-text").innerText = `پخش زنده فعال • ${group}`;
+                document.getElementById("livetv-status-text").innerText = `پخش زنده فعال (Plyr) • ${group}`;
+            };
+
+            const startLivePlay = () => {
+                liveTvVideoEl.muted = false;
+                liveTvPlyr.muted = false;
+                const p = liveTvPlyr.play();
+                if (p && p.catch) {
+                    p.catch(() => {
+                        liveTvVideoEl.muted = true;
+                        liveTvPlyr.muted = true;
+                        liveTvPlyr.play().catch(() => {});
+                    });
+                }
             };
 
             if (/\.m3u8(\?|$)/i.test(url) && window.Hls && window.Hls.isSupported()) {
@@ -3770,12 +4112,7 @@
                 });
                 liveTvHls.loadSource(url);
                 liveTvHls.attachMedia(liveTvVideoEl);
-                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
-                    liveTvVideoEl.play().catch(() => {
-                        liveTvVideoEl.muted = true;
-                        liveTvVideoEl.play().catch(() => {});
-                    });
-                });
+                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, startLivePlay);
                 liveTvHls.on(window.Hls.Events.ERROR, (_, errData) => {
                     if (errData && errData.fatal) {
                         handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
@@ -3786,10 +4123,7 @@
                 liveTvVideoEl.onerror = () => {
                     handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
                 };
-                liveTvVideoEl.play().catch(() => {
-                    liveTvVideoEl.muted = true;
-                    liveTvVideoEl.play().catch(() => {});
-                });
+                startLivePlay();
             }
         }
 
@@ -3804,7 +4138,6 @@
         }
 
         function enterLiveTvFullscreen() {
-            const target = liveTvPlayerBox;
             try {
                 if (liveTvVideoEl.webkitEnterFullscreen) {
                     liveTvVideoEl.webkitEnterFullscreen();
@@ -3813,17 +4146,24 @@
                 }
             } catch (_) {}
             try {
-                if (target.requestFullscreen) {
-                    target.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
-                } else if (target.webkitRequestFullscreen) {
-                    target.webkitRequestFullscreen();
+                if (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.enabled) {
+                    liveTvPlyr.fullscreen.enter();
+                    setTimeout(syncFloatingExitButton, 120);
+                    return;
+                }
+            } catch (_) {}
+            try {
+                if (liveTvPlayerBox.requestFullscreen) {
+                    liveTvPlayerBox.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
+                } else if (liveTvPlayerBox.webkitRequestFullscreen) {
+                    liveTvPlayerBox.webkitRequestFullscreen();
                     syncFloatingExitButton();
                 }
             } catch (_) {}
         }
 
         // =====================================================================
-        // پخش‌کننده اصلی فیلم‌ها + قطع کامل هنگام بستن
+        // پخش‌کننده اصلی فیلم‌ها
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -3866,7 +4206,9 @@
                 document.msFullscreenElement ||
                 videoEl.webkitDisplayingFullscreen ||
                 liveTvVideoEl.webkitDisplayingFullscreen ||
-                (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active)
+                (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active) ||
+                (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.active) ||
+                (inlinePostPlyr && inlinePostPlyr.fullscreen && inlinePostPlyr.fullscreen.active)
             );
         }
 
@@ -3876,6 +4218,16 @@
         }
 
         function exitFullscreenNow() {
+            try {
+                if (inlinePostPlyr && inlinePostPlyr.fullscreen && inlinePostPlyr.fullscreen.active) {
+                    inlinePostPlyr.fullscreen.exit();
+                }
+            } catch (_) {}
+            try {
+                if (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.active) {
+                    liveTvPlyr.fullscreen.exit();
+                }
+            } catch (_) {}
             try {
                 if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.active) {
                     plyrInstance.fullscreen.exit();
@@ -3953,6 +4305,8 @@
         liveTvVideoEl.addEventListener("webkitendfullscreen", () => setTimeout(syncFloatingExitButton, 60));
         plyrInstance.on("enterfullscreen", syncFloatingExitButton);
         plyrInstance.on("exitfullscreen", () => setTimeout(syncFloatingExitButton, 60));
+        liveTvPlyr.on("enterfullscreen", syncFloatingExitButton);
+        liveTvPlyr.on("exitfullscreen", () => setTimeout(syncFloatingExitButton, 60));
 
         function getActiveDisplayName() {
             return currentUserName || "کاربر";
@@ -4292,7 +4646,7 @@
 
         function openQuickRoomModalForMovie(movieId) {
             if (!currentUserName) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
             const mv = moviesList.find(m => m.id === movieId);
@@ -4383,7 +4737,7 @@
         async function createWatchRoom(e) {
             e.preventDefault();
             if (!currentUserName) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
             const roomName = document.getElementById("room-name-input").value.trim();
@@ -4558,7 +4912,7 @@
             e.preventDefault();
             if (!activeRoomId || !chatRef) return;
             if (!currentUserName) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
             const inp = document.getElementById("room-chat-input");
@@ -4681,7 +5035,7 @@
 
         function openTab(tabKey) {
             if ((tabKey === "page" || tabKey === "explore") && !isAccountCompleted()) {
-                openNameModal();
+                openNameModal("login");
                 return;
             }
 
@@ -4803,7 +5157,7 @@
                                 ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
                                 <span>• 👁 ${viewsCount}</span>
                             </div>
-                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش مستقیم روی همین قاب ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
+                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش با پلیر Plyr روی همین قاب ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
                             <div class="movie-actions-row" onclick="event.stopPropagation()">
                                 <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${onPlayClick}">▶ پخش</button>
                                 ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>` : ``}
