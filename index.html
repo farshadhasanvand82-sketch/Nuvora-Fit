@@ -596,37 +596,32 @@
             background: var(--red-soft);
         }
 
-        .explore-story-cover {
+        /* قاب واحد پست که هم پوستر/فریم اول است و هم مستقیماً روی خودش پخش می‌شود */
+        .single-post-media-stage {
             width: 100%;
-            height: 155px;
-            border-radius: 16px;
-            object-fit: cover;
-            background: #090305;
-            border: 1px solid rgba(255, 77, 109, 0.28);
-        }
-
-        .inline-post-player-box {
-            margin-top: 8px;
+            height: 170px;
             border-radius: 16px;
             overflow: hidden;
             background: #050203;
-            border: 1px solid rgba(255, 77, 109, 0.36);
-            display: none;
-            flex-direction: column;
-            gap: 6px;
-            padding: 6px;
+            border: 1px solid rgba(255, 77, 109, 0.3);
+            position: relative;
         }
 
-        .inline-post-player-box.active {
-            display: flex;
-        }
-
-        .inline-post-player-box video {
+        .single-post-media-stage img,
+        .single-post-media-stage video {
             width: 100%;
-            max-height: 220px;
-            border-radius: 12px;
-            background: #000;
+            height: 100%;
             display: block;
+            background: #000;
+        }
+
+        .single-post-media-stage img {
+            object-fit: cover;
+        }
+
+        .single-post-media-stage video {
+            object-fit: contain;
+            transform: translateZ(0);
         }
 
         .creator-page-card {
@@ -1263,12 +1258,25 @@
             border: 1px solid rgba(255, 77, 109, 0.25);
         }
 
+        .movie-poster-box.playing-post-box {
+            width: 145px;
+            height: 112px;
+        }
+
         .movie-poster-box img,
         .movie-poster-box video {
             width: 100%;
             height: 100%;
-            object-fit: cover;
             display: block;
+            background: #000;
+        }
+
+        .movie-poster-box img {
+            object-fit: cover;
+        }
+
+        .movie-poster-box video {
+            object-fit: contain;
         }
 
         .movie-info-col {
@@ -2133,7 +2141,7 @@
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم روی خودشان پخش می‌شوند.
+                        پست‌ها و فیلم‌هایی که کاربران در پیج خود قرار می‌دهند در صفحه اصلی ثبت نمی‌شوند و فقط در پیج خودشان و اکسپلور قابل مشاهده هستند؛ پست‌ها هم مستقیماً روی قاب خودشان پخش می‌شوند.
                     </div>
                 </div>
             </div>
@@ -2458,7 +2466,6 @@
     </section>
 
     <!-- ======================= تولبار ثابت شیشه‌ای در پایین ======================= -->
-    <!-- ترتیب RTL: راست (لیست من، اتاق، جستجو) | وسط (خانه) | چپ (پیج، اکسپلور، ادمین) -->
     <nav id="main-bottom-toolbar" class="bottom-toolbar" aria-label="تولبار پایین">
         <button type="button" id="tb-favorites" class="tb-btn" onclick="openTab('favorites')">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -2995,23 +3002,33 @@
         }
 
         // =====================================================================
-        // پخش درون‌کارت برای پست‌ها (روی خود پست بدون صفحه یا باکس مجزا)
+        // پخش درون همان یک کادر اصلی پست (بدون دوتا شدن و با رندر صحیح تصویر و صدا)
         // =====================================================================
         let activeInlinePostId = null;
+        let inlinePostHls = null;
+
+        function destroyInlinePostHls() {
+            if (inlinePostHls) {
+                try { inlinePostHls.destroy(); } catch (_) {}
+                inlinePostHls = null;
+            }
+        }
 
         function stopAllInlinePostPlayers(exceptId = null) {
-            document.querySelectorAll(".inline-post-player-box").forEach(box => {
-                const boxItemId = box.dataset.postId;
-                const vid = box.querySelector("video");
-                if (vid) {
-                    try { vid.pause(); } catch (_) {}
+            destroyInlinePostHls();
+            document.querySelectorAll(".post-media-slot").forEach(slot => {
+                const slotPostId = slot.dataset.postId;
+                if (exceptId && slotPostId === exceptId) return;
+                const item = moviesList.find(m => m.id === slotPostId);
+                slot.classList.remove("playing-post-box");
+                if (item) {
+                    slot.innerHTML = getIdlePostMediaHtml(item);
                 }
-                if (!exceptId || boxItemId !== exceptId) {
-                    box.classList.remove("active");
-                    if (vid) {
-                        vid.removeAttribute("src");
-                        vid.load();
-                    }
+            });
+            document.querySelectorAll(".post-play-toggle-btn").forEach(btn => {
+                const btnPostId = btn.dataset.postId;
+                if (!exceptId || btnPostId !== exceptId) {
+                    btn.innerText = "▶ پخش";
                 }
             });
             if (!exceptId) {
@@ -3019,45 +3036,70 @@
             }
         }
 
-        function closeInlinePostPlayer(itemId) {
-            const box = document.querySelector(`.inline-post-player-box[data-post-id="${CSS.escape(itemId)}"]`);
-            if (box) {
-                const vid = box.querySelector("video");
-                if (vid) {
-                    try { vid.pause(); } catch (_) {}
-                    vid.removeAttribute("src");
-                    vid.load();
-                }
-                box.classList.remove("active");
-            }
+        function togglePostInlinePlayback(itemId) {
             if (activeInlinePostId === itemId) {
-                activeInlinePostId = null;
+                stopAllInlinePostPlayers(null);
+                return;
             }
+            playPostInlineOnCard(itemId);
         }
 
         function playPostInlineOnCard(itemId) {
             const item = moviesList.find(m => m.id === itemId);
             if (!item || !item.videoUrl) return;
 
-            // توقف پخش‌کننده بالایی فیلم‌ها در صورت باز بودن
             closePlayer();
             stopAllInlinePostPlayers(itemId);
             activeInlinePostId = itemId;
 
             moviesRef.child(itemId).child("views").transaction(v => (Number(v) || 0) + 1);
 
-            const box = document.querySelector(`.inline-post-player-box[data-post-id="${CSS.escape(itemId)}"]`);
-            if (!box) return;
-            const vid = box.querySelector("video");
-            box.classList.add("active");
-            if (vid) {
-                vid.src = item.videoUrl;
-                vid.muted = false;
-                vid.play().catch(() => {
-                    vid.muted = true;
-                    vid.play().catch(() => {});
-                });
+            const cleanUrl = String(item.videoUrl || "").trim();
+            const slots = document.querySelectorAll(`.post-media-slot[data-post-id="${CSS.escape(itemId)}"]`);
+            const btns = document.querySelectorAll(`.post-play-toggle-btn[data-post-id="${CSS.escape(itemId)}"]`);
+
+            btns.forEach(b => { b.innerText = "⏹ توقف پخش"; });
+
+            slots.forEach((slot, idx) => {
+                slot.classList.add("playing-post-box");
+                slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" style="width:100%; height:100%; object-fit:contain; background:#000; display:block;"></video>`;
+                const vid = slot.querySelector("video");
+                if (!vid) return;
+
+                if (idx === 0) {
+                    if (/\.m3u8(\?|$)/i.test(cleanUrl) && window.Hls && window.Hls.isSupported()) {
+                        inlinePostHls = new window.Hls({ enableWorker: true });
+                        inlinePostHls.loadSource(cleanUrl);
+                        inlinePostHls.attachMedia(vid);
+                        inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, () => {
+                            vid.muted = false;
+                            vid.play().catch(() => {
+                                vid.muted = true;
+                                vid.play().catch(() => {});
+                            });
+                        });
+                    } else {
+                        vid.src = cleanUrl;
+                        vid.load();
+                        vid.muted = false;
+                        vid.play().catch(() => {
+                            vid.muted = true;
+                            vid.play().catch(() => {});
+                        });
+                    }
+                }
+            });
+        }
+
+        function getIdlePostMediaHtml(item) {
+            const hasCustomCover = Boolean(item.poster && item.poster.trim());
+            if (hasCustomCover) {
+                return `<img src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
             }
+            if (item.itemType === "post" && item.videoUrl) {
+                return `<video src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover; background:#000; display:block;"></video>`;
+            }
+            return `<img src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
         }
 
         // =====================================================================
@@ -3213,17 +3255,6 @@
             }).join("");
         }
 
-        function renderCardCoverHtml(item, cssClass) {
-            const hasCustomCover = Boolean(item.poster && item.poster.trim());
-            if (hasCustomCover) {
-                return `<img class="${cssClass}" src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
-            }
-            if (item.itemType === "post" && item.videoUrl) {
-                return `<video class="${cssClass}" src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline></video>`;
-            }
-            return `<img class="${cssClass}" src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
-        }
-
         function buildHorizontalExploreCard(item) {
             const isPost = item.itemType === "post";
             const kindLabel = isPost ? "پست" : "فیلم";
@@ -3233,11 +3264,11 @@
             const isFollowed = cInfo.uid ? followingList.includes(cInfo.uid) : false;
 
             const onCardClick = isPost
-                ? `playPostInlineOnCard('${escAttr(item.id)}')`
+                ? `togglePostInlinePlayback('${escAttr(item.id)}')`
                 : `openMovieDetail('${escAttr(item.id)}', 'explore')`;
 
             const onPlayClick = isPost
-                ? `playPostInlineOnCard('${escAttr(item.id)}')`
+                ? `togglePostInlinePlayback('${escAttr(item.id)}')`
                 : `playMovieById('${escAttr(item.id)}', true)`;
 
             return `
@@ -3259,7 +3290,9 @@
                         </div>
                     ` : ``}
 
-                    ${renderCardCoverHtml(item, "explore-story-cover")}
+                    <div class="single-post-media-stage ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(item.id)}" onclick="event.stopPropagation()">
+                        ${getIdlePostMediaHtml(item)}
+                    </div>
 
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
                         <span class="pill-tag" style="margin-bottom:0;">${esc(kindLabel)}</span>
@@ -3268,15 +3301,8 @@
                     <strong style="font-size:14px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(item.title)}</strong>
                     <span style="font-size:11px; color:var(--text-muted);">${esc(item.genre || "درام")} ${item.year ? "• " + esc(item.year) : ""}</span>
 
-                    ${isPost ? `
-                        <div class="inline-post-player-box ${activeInlinePostId === item.id ? "active" : ""}" data-post-id="${escAttr(item.id)}" onclick="event.stopPropagation()">
-                            <video controls playsinline webkit-playsinline preload="none"></video>
-                            <button type="button" class="btn-sec" style="padding:5px 8px; font-size:11px;" onclick="closeInlinePostPlayer('${escAttr(item.id)}')">✕ بستن پست</button>
-                        </div>
-                    ` : ``}
-
                     <div style="display:flex; gap:6px; margin-top:auto;" onclick="event.stopPropagation()">
-                        <button type="button" class="btn-watch" style="flex:1;" onclick="${onPlayClick}">▶ پخش</button>
+                        <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(item.id)}" style="flex:1;" onclick="${onPlayClick}">▶ پخش</button>
                         <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(item.id)}')">🔗</button>
                     </div>
                 </div>
@@ -4158,9 +4184,8 @@
             const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
 
-            // پست‌ها روی خودشان پخش می‌شوند و صفحه جداگانه باز نمی‌کنند
             if (mv.itemType === "post") {
-                playPostInlineOnCard(id);
+                togglePostInlinePlayback(id);
                 return;
             }
 
@@ -4228,7 +4253,7 @@
             const mv = moviesList.find(m => m.id === id);
             if (!mv) return;
             if (mv.itemType === "post") {
-                playPostInlineOnCard(id);
+                togglePostInlinePlayback(id);
                 return;
             }
             leaveActiveRoom();
@@ -4758,17 +4783,17 @@
             const isPost = mv.itemType === "post";
             const kindTag = isPost ? "پست" : "فیلم";
             const onCardClick = isPost
-                ? `playPostInlineOnCard('${escAttr(mv.id)}')`
+                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
                 : `openMovieDetail('${escAttr(mv.id)}')`;
             const onPlayClick = isPost
-                ? `playPostInlineOnCard('${escAttr(mv.id)}')`
+                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
                 : `playMovieById('${escAttr(mv.id)}', true)`;
 
             return `
                 <div class="glass movie-card" onclick="${onCardClick}">
                     <div class="movie-card-top-row">
-                        <div class="movie-poster-box">
-                            ${renderCardCoverHtml(mv, "")}
+                        <div class="movie-poster-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${isPost ? "event.stopPropagation()" : ""}">
+                            ${getIdlePostMediaHtml(mv)}
                         </div>
                         <div class="movie-info-col">
                             <strong>${esc(mv.title)}</strong>
@@ -4778,9 +4803,9 @@
                                 ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
                                 <span>• 👁 ${viewsCount}</span>
                             </div>
-                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش مستقیم روی همین پست ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
+                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش مستقیم روی همین قاب ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
                             <div class="movie-actions-row" onclick="event.stopPropagation()">
-                                <button type="button" class="btn-watch" onclick="${onPlayClick}">▶ پخش</button>
+                                <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${onPlayClick}">▶ پخش</button>
                                 ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>` : ``}
                                 <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 اشتراک</button>
                                 <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">
@@ -4789,12 +4814,6 @@
                             </div>
                         </div>
                     </div>
-                    ${isPost ? `
-                        <div class="inline-post-player-box ${activeInlinePostId === mv.id ? "active" : ""}" data-post-id="${escAttr(mv.id)}" onclick="event.stopPropagation()">
-                            <video controls playsinline webkit-playsinline preload="none"></video>
-                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="closeInlinePostPlayer('${escAttr(mv.id)}')">✕ بستن پخش پست</button>
-                        </div>
-                    ` : ``}
                 </div>
             `;
         }
