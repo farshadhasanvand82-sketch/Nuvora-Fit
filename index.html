@@ -628,27 +628,33 @@
             background: var(--red-soft);
         }
 
+        /* قاب واحد پلیر در اندروید و آیفون بدون تداخل backdrop-filter */
+        .single-post-media-stage,
+        .livetv-player-box,
+        .player-frame-wrap,
+        .movie-poster-box {
+            background: #000000;
+            position: relative;
+            isolation: isolate;
+            transform: translateZ(0);
+        }
+
         .single-post-media-stage {
             width: 100%;
             height: 175px;
             border-radius: 16px;
             overflow: hidden;
-            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.3);
-            position: relative;
-            isolation: isolate;
         }
 
         .single-post-media-stage img,
         .single-post-media-stage video,
-        .single-post-media-stage iframe,
         .single-post-media-stage .plyr,
         .single-post-media-stage .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
             background: #000000;
-            border: 0;
         }
 
         .single-post-media-stage img {
@@ -729,13 +735,10 @@
         .livetv-player-box {
             border-radius: 18px;
             overflow: hidden;
-            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.28);
             aspect-ratio: 16 / 9;
             width: 100%;
-            position: relative;
             flex-shrink: 0;
-            isolation: isolate;
         }
 
         .livetv-player-box video,
@@ -962,24 +965,18 @@
         .player-frame-wrap {
             border-radius: 18px;
             overflow: hidden;
-            background: #000000;
             margin-bottom: 10px;
-            position: relative;
             width: 100%;
             aspect-ratio: 16 / 9;
             border: 1px solid rgba(255, 77, 109, 0.22);
-            isolation: isolate;
         }
 
         .player-frame-wrap .plyr,
         .player-frame-wrap .plyr__video-wrapper,
-        .player-frame-wrap video,
-        .player-frame-wrap iframe {
+        .player-frame-wrap video {
             width: 100%;
             height: 100%;
             background: #000000;
-            border: 0;
-            display: block;
         }
 
         .player-frame-wrap:fullscreen,
@@ -1300,9 +1297,7 @@
             border-radius: 16px;
             overflow: hidden;
             flex-shrink: 0;
-            background: #000000;
             border: 1px solid rgba(255, 77, 109, 0.25);
-            isolation: isolate;
         }
 
         .movie-poster-box.playing-post-box {
@@ -1312,14 +1307,12 @@
 
         .movie-poster-box img,
         .movie-poster-box video,
-        .movie-poster-box iframe,
         .movie-poster-box .plyr,
         .movie-poster-box .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
             background: #000000;
-            border: 0;
         }
 
         .movie-poster-box img {
@@ -2015,11 +2008,11 @@
                 </div>
                 <div class="field-box">
                     <label for="reg-avatar-input">لینک عکس پروفایل (اختیاری)</label>
-                    <input type="url" id="reg-avatar-input" placeholder="لینک را وارد کنید">
+                    <input type="url" id="reg-avatar-input" placeholder="https://... لینک عکس پروفایل">
                 </div>
                 <div class="field-box">
                     <label for="reg-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
-                    <input type="file" id="reg-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event, 'reg')">
+                    <input type="file" id="reg-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event)">
                 </div>
                 <button type="submit" class="btn-main">ثبت‌نام و ساخت حساب</button>
             </form>
@@ -2043,11 +2036,11 @@
                 </div>
                 <div class="field-box">
                     <label for="edit-avatar-input">لینک عکس پروفایل (اختیاری)</label>
-                    <input type="url" id="edit-avatar-input" placeholder="لینک را وارد کنید">
+                    <input type="url" id="edit-avatar-input" placeholder="https://... لینک عکس پروفایل">
                 </div>
                 <div class="field-box">
                     <label for="edit-avatar-file">یا انتخاب عکس جدید از گوشی</label>
-                    <input type="file" id="edit-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event, 'edit')">
+                    <input type="file" id="edit-avatar-file" accept="image/*" onchange="handleAvatarFilePicked(event)">
                 </div>
                 <button type="submit" class="btn-main">ذخیره تغییرات پروفایل</button>
             </form>
@@ -2246,11 +2239,11 @@
 
                 <div class="glass secret-drawer">
                     <button type="button" class="secret-trigger" onclick="toggleSecretDrawer(this)">
-                        <span>۲. پخش پست‌ها و ماهواره با پلیر Plyr</span>
+                        <span>۲. پخش یکسان در اندروید و آیفون با Plyr</span>
                         <span class="secret-arrow">⌄</span>
                     </button>
                     <div class="secret-body">
-                        پست‌ها و شبکه‌های ماهواره روی همان یک کادر با پلیر Plyr اجرا می‌شوند تا تصویر و صدا بدون دوگانگی پخش شوند.
+                        پست‌ها، فیلم‌ها و شبکه‌های ماهواره با پلیر Plyr و مدیریت یکپارچه HLS/MP4 روی اندروید و آیفون به‌صورت هماهنگ پخش می‌شوند.
                     </div>
                 </div>
             </div>
@@ -2392,11 +2385,11 @@
                     </div>
                     <div class="field-box">
                         <label for="m-poster">لینک پوستر (عکس)</label>
-                        <input type="url" id="m-poster" placeholder="لینک را وارد کنید">
+                        <input type="url" id="m-poster" placeholder="https://... (اختیاری)">
                     </div>
                     <div class="field-box">
-                        <label for="m-video">لینک پخش فیلم</label>
-                        <input type="url" id="m-video" placeholder="لینک را وارد کنید" required>
+                        <label for="m-video">لینک مستقیم پخش فیلم (MP4 یا m3u8)</label>
+                        <input type="url" id="m-video" placeholder="https://.../movie.mp4" required>
                     </div>
                     <div class="field-box">
                         <label for="m-desc">خلاصه داستان</label>
@@ -2465,7 +2458,7 @@
 
                 <div class="field-box">
                     <label for="page-item-cover">کاور فیلم / تصویر پست (لینک عکس)</label>
-                    <input type="url" id="page-item-cover" placeholder="لینک را وارد کنید">
+                    <input type="url" id="page-item-cover" placeholder="https://... لینک کاور (اختیاری؛ در صورت خالی بودن از خود ویدئو استفاده می‌شود)">
                 </div>
 
                 <div class="field-box">
@@ -2474,8 +2467,8 @@
                 </div>
 
                 <div class="field-box">
-                    <label for="page-item-url">لینک فیلم / پست / مدیا</label>
-                    <input type="url" id="page-item-url" placeholder="لینک را وارد کنید" required>
+                    <label for="page-item-url">لینک مستقیم دائمی (فیلم / مدیا / محتوا)</label>
+                    <input type="url" id="page-item-url" placeholder="https://.../direct-link.mp4" required>
                 </div>
 
                 <div class="field-box">
@@ -2554,7 +2547,7 @@
 
         <div id="explore-panel-feed">
             <div class="sec-title-row">
-                <h2>پست‌ها (اسکرول چپ و راست)</h2>
+                <h2>پست‌ها (پلیر Plyr • اسکرول چپ و راست)</h2>
                 <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 ترتیب جدید</button>
             </div>
             <div id="explore-random-posts-track" class="explore-horizontal-track"></div>
@@ -2669,130 +2662,128 @@
             }
         });
 
-        // =====================================================================
-        // تشخیص و تبدیل لینک‌های آپارات، یوتوب و پست تلگرام به پخش داخلی شفاف
-        // =====================================================================
-        function extractYouTubeId(url) {
-            const s = String(url || "").trim();
-            const m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
-            return m ? m[1] : "";
-        }
+        // تشخیص یکپارچه iOS/آیفون در مقابل اندروید برای رفتار هماهنگ پخش و تمام‌صفحه
+        const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+        const isHlsManifestUrl = (url) => /\.m3u8(\?|$)/i.test(String(url || "").trim());
 
-        function extractAparatId(url) {
-            const s = String(url || "").trim();
-            const m = s.match(/aparat\.com\/v\/([A-Za-z0-9_-]+)/i) ||
-                      s.match(/aparat\.com\/video\/video\/embed\/videohash\/([A-Za-z0-9_-]+)/i);
-            return m ? m[1] : "";
-        }
+        function bindCrossPlatformMedia(videoElement, plyrInst, rawUrl, options = {}) {
+            const {
+                posterUrl = "",
+                seekToSec = null,
+                autoPlay = true,
+                onReadyPlay = null,
+                onError = null,
+                onPlaying = null,
+                hlsConfig = {},
+                existingHls = null
+            } = options;
 
-        function extractTelegramPostInfo(url) {
-            const s = String(url || "").trim();
-            // پشتیبانی از t.me/channel/123 و telegram.me/channel/123 و t.me/s/channel/123 و t.me/c/123456/789
-            let m = s.match(/(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/(?:s\/)?([A-Za-z0-9_]+)\/(\d+)/i);
-            if (m && m[1].toLowerCase() !== "c") {
-                return { channel: m[1], postId: m[2], isPrivateChannel: false };
-            }
-            m = s.match(/(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/c\/(\d+)\/(\d+)/i);
-            if (m) {
-                return { channel: "c/" + m[1], postId: m[2], isPrivateChannel: true };
-            }
-            return null;
-        }
-
-        function isTelegramDirectFileUrl(url) {
-            const s = String(url || "").trim();
-            return /api\.telegram\.org\/file\/bot/i.test(s) ||
-                   /t\.me\/.*(\.mp4|\.mkv|\.webm|\.mov|\.m3u8)(\?|$)/i.test(s);
-        }
-
-        function detectMediaSourceType(rawUrl) {
-            const url = String(rawUrl || "").trim();
-            if (!url) return { kind: "empty", url: "" };
-
-            const ytId = extractYouTubeId(url);
-            if (ytId) {
-                return {
-                    kind: "youtube",
-                    url,
-                    id: ytId,
-                    embedUrl: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
-                };
+            if (existingHls) {
+                try { existingHls.destroy(); } catch (_) {}
             }
 
-            const apId = extractAparatId(url);
-            if (apId) {
-                return {
-                    kind: "aparat",
-                    url,
-                    id: apId,
-                    embedUrl: `https://www.aparat.com/video/video/embed/videohash/${apId}/vt/frame`
-                };
+            if (posterUrl) {
+                videoElement.setAttribute("poster", posterUrl);
+                if (plyrInst) plyrInst.poster = posterUrl;
             }
 
-            if (isTelegramDirectFileUrl(url)) {
-                return { kind: "file", url };
-            }
+            videoElement.setAttribute("playsinline", "");
+            videoElement.setAttribute("webkit-playsinline", "");
+            videoElement.setAttribute("x5-playsinline", "");
+            videoElement.setAttribute("x5-video-player-type", "h5");
+            videoElement.setAttribute("x5-video-player-fullscreen", "false");
 
-            const tgInfo = extractTelegramPostInfo(url);
-            if (tgInfo) {
-                return {
-                    kind: "telegram",
-                    url,
-                    ...tgInfo
-                };
-            }
+            const cleanUrl = String(rawUrl || "").trim();
+            let activeHls = null;
+            let playedOnce = false;
 
-            if (/\.m3u8(\?|$)/i.test(url)) {
-                return { kind: "hls", url };
-            }
-
-            return { kind: "file", url };
-        }
-
-        function buildTelegramCleanEmbedHtml(tgInfo) {
-            const postPath = `${tgInfo.channel}/${tgInfo.postId}`;
-            const embedSrc = `https://t.me/${postPath}?embed=1&userpic=false`;
-            return `
-                <div style="width:100%; height:100%; background:#000; position:relative; overflow:hidden;">
-                    <iframe
-                        src="${escAttr(embedSrc)}"
-                        style="width:100%; height:100%; border:0; display:block; background:#000;"
-                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                        allowfullscreen
-                        scrolling="no"
-                        referrerpolicy="no-referrer-when-downgrade"
-                    ></iframe>
-                </div>
-            `;
-        }
-
-        async function resolveTelegramVideoUrlIfPossible(tgInfo) {
-            if (!tgInfo || tgInfo.isPrivateChannel) return null;
-            const previewUrl = `https://t.me/s/${tgInfo.channel}/${tgInfo.postId}`;
-            try {
-                const resp = await fetch(previewUrl, { cache: "no-store" });
-                if (!resp.ok) return null;
-                const html = await resp.text();
-                const match = html.match(/<video[^>]+src=["']([^"']+)["']/i) ||
-                              html.match(/data-video-src=["']([^"']+)["']/i);
-                if (match && match[1]) {
-                    return match[1].replace(/&amp;/g, "&");
+            const seekIfNeeded = () => {
+                if (typeof seekToSec === "number" && seekToSec >= 0) {
+                    if (typeof options.onBeforeSeek === "function") options.onBeforeSeek();
+                    try { videoElement.currentTime = seekToSec; } catch (_) {}
+                    if (typeof options.onAfterSeek === "function") {
+                        setTimeout(options.onAfterSeek, 350);
+                    }
                 }
-            } catch (_) {}
-            return null;
-        }
+            };
 
-        function renderIframeIntoContainer(containerEl, srcUrl) {
-            if (!containerEl) return;
-            containerEl.innerHTML = `
-                <iframe
-                    src="${escAttr(srcUrl)}"
-                    style="width:100%; height:100%; border:0; display:block; background:#000;"
-                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
-                    allowfullscreen
-                    referrerpolicy="no-referrer-when-downgrade"
-                ></iframe>
-            `;
+            const attemptPlay = () => {
+                if (!autoPlay || playedOnce) return;
+                playedOnce = true;
+                videoElement.muted = false;
+                if (plyrInst) plyrInst.muted = false;
+                const targetPlayer = plyrInst || videoElement;
+                const pr = targetPlayer.play();
+                if (pr && pr.then) {
+                    pr.then(() => {
+                        if (typeof onPlaying === "function") onPlaying(false);
+                        if (typeof onReadyPlay === "function") onReadyPlay();
+                    }).catch(() => {
+                        videoElement.muted = true;
+                        if (plyrInst) plyrInst.muted = true;
+                        const prMuted = targetPlayer.play();
+                        if (prMuted && prMuted.then) {
+                            prMuted.then(() => {
+                                if (typeof onPlaying === "function") onPlaying(true);
+                                if (typeof onReadyPlay === "function") onReadyPlay();
+                            }).catch(() => {
+                                if (typeof onError === "function") onError("fallback_blocked");
+                            });
+                        } else {
+                            if (typeof onPlaying === "function") onPlaying(true);
+                            if (typeof onReadyPlay === "function") onReadyPlay();
+                        }
+                    });
+                } else {
+                    if (typeof onReadyPlay === "function") onReadyPlay();
+                }
+            };
+
+            const handleLoaded = () => {
+                seekIfNeeded();
+                attemptPlay();
+            };
+
+            videoElement.onplaying = () => {
+                if (typeof onPlaying === "function") onPlaying(Boolean(videoElement.muted));
+            };
+
+            videoElement.onerror = () => {
+                if (typeof onError === "function") onError("native_error");
+            };
+
+            // در آیفون/iOS برای HLS از پخش بومی WebKit استفاده می‌کنیم تا تصویر در Safari/iOS بدون خطا بیاید
+            if (isHlsManifestUrl(cleanUrl) && !isIosDevice && window.Hls && window.Hls.isSupported()) {
+                activeHls = new window.Hls(Object.assign({
+                    enableWorker: true,
+                    lowLatencyMode: false
+                }, hlsConfig));
+                activeHls.loadSource(cleanUrl);
+                activeHls.attachMedia(videoElement);
+                activeHls.on(window.Hls.Events.MANIFEST_PARSED, handleLoaded);
+                activeHls.on(window.Hls.Events.ERROR, (_, errData) => {
+                    if (errData && errData.fatal) {
+                        if (activeHls) {
+                            try { activeHls.destroy(); } catch (_) {}
+                            activeHls = null;
+                        }
+                        if (typeof onError === "function") onError("hls_fatal");
+                    }
+                });
+            } else {
+                videoElement.removeAttribute("src");
+                videoElement.src = cleanUrl;
+                videoElement.load();
+                if (typeof seekToSec === "number" && seekToSec > 0) {
+                    videoElement.addEventListener("loadedmetadata", handleLoaded, { once: true });
+                } else {
+                    videoElement.addEventListener("canplay", handleLoaded, { once: true });
+                    setTimeout(handleLoaded, 120);
+                }
+            }
+
+            return activeHls;
         }
 
         const THEME_STORAGE_KEY = "zeuc_movie_theme_mode";
@@ -3433,7 +3424,7 @@
         }
 
         // =====================================================================
-        // پخش پست درون‌خطی با پشتیبانی کامل از فایل مستقیم، آپارات، یوتوب و تلگرام
+        // پخش پست روی همان یک کادر با پلیر Plyr یکسان در اندروید و آیفون
         // =====================================================================
         let activeInlinePostId = null;
         let inlinePostPlyr = null;
@@ -3480,7 +3471,7 @@
             playPostInlineOnCard(itemId);
         }
 
-        async function playPostInlineOnCard(itemId) {
+        function playPostInlineOnCard(itemId) {
             const item = moviesList.find(m => m.id === itemId);
             if (!item || !item.videoUrl) return;
 
@@ -3490,85 +3481,46 @@
 
             moviesRef.child(itemId).child("views").transaction(v => (Number(v) || 0) + 1);
 
+            const cleanUrl = String(item.videoUrl || "").trim();
             const posterUrl = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
             const slots = document.querySelectorAll(`.post-media-slot[data-post-id="${CSS.escape(itemId)}"]`);
             const btns = document.querySelectorAll(`.post-play-toggle-btn[data-post-id="${CSS.escape(itemId)}"]`);
+
             btns.forEach(b => { b.innerText = "⏹ توقف پخش"; });
 
-            const primarySlot = slots[0];
-            if (!primarySlot) return;
+            slots.forEach((slot, idx) => {
+                slot.classList.add("playing-post-box");
+                slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
+                const vid = slot.querySelector("video");
+                if (!vid) return;
 
-            primarySlot.classList.add("playing-post-box");
-            const sourceInfo = detectMediaSourceType(item.videoUrl);
-
-            if (sourceInfo.kind === "youtube" || sourceInfo.kind === "aparat") {
-                renderIframeIntoContainer(primarySlot, sourceInfo.embedUrl);
-                return;
-            }
-
-            if (sourceInfo.kind === "telegram") {
-                const directMp4 = await resolveTelegramVideoUrlIfPossible(sourceInfo);
-                if (activeInlinePostId !== itemId) return;
-
-                if (directMp4) {
-                    primarySlot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
-                    const vid = primarySlot.querySelector("video");
-                    if (vid) {
-                        const pInst = new Plyr(vid, {
-                            controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
-                            fullscreen: { enabled: true, fallback: true, iosNative: true }
-                        });
-                        inlinePostPlyr = pInst;
-                        vid.src = directMp4;
-                        vid.load();
-                        pInst.play().catch(() => {
-                            vid.muted = true;
-                            pInst.muted = true;
-                            pInst.play().catch(() => {});
-                        });
-                    }
-                    return;
-                }
-
-                primarySlot.innerHTML = buildTelegramCleanEmbedHtml(sourceInfo);
-                return;
-            }
-
-            const cleanUrl = sourceInfo.url;
-            primarySlot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
-            const vid = primarySlot.querySelector("video");
-            if (!vid) return;
-
-            const pInstance = new Plyr(vid, {
-                controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
-                fullscreen: { enabled: true, fallback: true, iosNative: true }
-            });
-            inlinePostPlyr = pInstance;
-
-            const startPlayback = () => {
-                vid.muted = false;
-                pInstance.muted = false;
-                const pr = pInstance.play();
-                if (pr && pr.catch) {
-                    pr.catch(() => {
-                        vid.muted = true;
-                        pInstance.muted = true;
-                        pInstance.play().catch(() => {});
+                if (idx === 0) {
+                    const pInstance = new Plyr(vid, {
+                        controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
+                        fullscreen: { enabled: true, fallback: true, iosNative: true }
                     });
-                }
-            };
+                    inlinePostPlyr = pInstance;
 
-            if (sourceInfo.kind === "hls" && window.Hls && window.Hls.isSupported()) {
-                inlinePostHls = new window.Hls({ enableWorker: true });
-                inlinePostHls.loadSource(cleanUrl);
-                inlinePostHls.attachMedia(vid);
-                inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
-            } else {
-                vid.src = cleanUrl;
-                vid.load();
-                vid.addEventListener("canplay", startPlayback, { once: true });
-                setTimeout(startPlayback, 150);
-            }
+                    inlinePostHls = bindCrossPlatformMedia(vid, pInstance, cleanUrl, {
+                        posterUrl,
+                        autoPlay: true,
+                        existingHls: inlinePostHls,
+                        onError: () => {
+                            if (!isIosDevice && isHlsManifestUrl(cleanUrl)) {
+                                inlinePostHls = bindCrossPlatformMedia(vid, pInstance, cleanUrl, {
+                                    posterUrl,
+                                    autoPlay: true,
+                                    hlsConfig: { enableWorker: false }
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    vid.src = cleanUrl;
+                    vid.preload = "metadata";
+                    vid.muted = true;
+                }
+            });
         }
 
         function getIdlePostMediaHtml(item) {
@@ -3576,12 +3528,8 @@
             if (hasCustomCover) {
                 return `<img src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
             }
-            const srcInfo = detectMediaSourceType(item.videoUrl);
-            if (srcInfo.kind === "youtube" && srcInfo.id) {
-                return `<img src="https://img.youtube.com/vi/${escAttr(srcInfo.id)}/hqdefault.jpg" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
-            }
-            if (item.itemType === "post" && item.videoUrl && (srcInfo.kind === "file" || srcInfo.kind === "hls")) {
-                return `<video src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover; background:#000; display:block;"></video>`;
+            if (item.itemType === "post" && item.videoUrl) {
+                return `<video src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline webkit-playsinline style="width:100%; height:100%; object-fit:cover; background:#000; display:block;"></video>`;
             }
             return `<img src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
         }
@@ -4002,7 +3950,7 @@
         `);
 
         // =====================================================================
-        // پخش ماهواره (LIVE TV) با پلیر Plyr اختصاصی
+        // پخش ماهواره (LIVE TV) با پلیر Plyr یکسان در اندروید و آیفون
         // =====================================================================
         const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
         const liveTvVideoEl = document.getElementById("livetv-video-el");
@@ -4055,7 +4003,7 @@
             }
             activeLiveTvUrl = "";
             if (liveTvHls) {
-                liveTvHls.destroy();
+                try { liveTvHls.destroy(); } catch (_) {}
                 liveTvHls = null;
             }
             try { liveTvPlyr.pause(); } catch (_) {}
@@ -4082,7 +4030,7 @@
                     };
                 } else if (!line.startsWith("#") && /^https?:\/\//i.test(line)) {
                     const meta = pendingMeta || { name: "شبکه زنده", group: "زنده" };
-                    const isHls = /\.m3u8(\?|$)/i.test(line);
+                    const isHls = isHlsManifestUrl(line);
                     channels.push({
                         id: "ch_" + channels.length,
                         name: meta.name,
@@ -4210,11 +4158,6 @@
             document.getElementById("livetv-status-text").innerText = `در حال اتصال به استریم (${group})...`;
             renderLiveTvChannels();
 
-            if (liveTvHls) {
-                liveTvHls.destroy();
-                liveTvHls = null;
-            }
-
             let handledFailure = false;
             const handleDeadStream = (reasonText) => {
                 if (handledFailure) return;
@@ -4239,53 +4182,30 @@
                 }
             }, 6000);
 
-            liveTvVideoEl.onplaying = () => {
-                if (liveTvFailoverTimer) {
-                    clearTimeout(liveTvFailoverTimer);
-                    liveTvFailoverTimer = null;
-                }
-                if (deadLiveTvUrls.has(url)) {
-                    deadLiveTvUrls.delete(url);
-                    renderLiveTvChannels();
-                }
-                document.getElementById("livetv-status-text").innerText = `پخش زنده فعال (Plyr) • ${group}`;
-            };
-
-            const startLivePlay = () => {
-                liveTvVideoEl.muted = false;
-                liveTvPlyr.muted = false;
-                const p = liveTvPlyr.play();
-                if (p && p.catch) {
-                    p.catch(() => {
-                        liveTvVideoEl.muted = true;
-                        liveTvPlyr.muted = true;
-                        liveTvPlyr.play().catch(() => {});
-                    });
-                }
-            };
-
-            if (/\.m3u8(\?|$)/i.test(url) && window.Hls && window.Hls.isSupported()) {
-                liveTvHls = new window.Hls({
+            liveTvHls = bindCrossPlatformMedia(liveTvVideoEl, liveTvPlyr, url, {
+                autoPlay: true,
+                existingHls: liveTvHls,
+                hlsConfig: {
                     enableWorker: true,
                     lowLatencyMode: true,
                     manifestLoadingTimeOut: 4500,
                     fragLoadingTimeOut: 5500
-                });
-                liveTvHls.loadSource(url);
-                liveTvHls.attachMedia(liveTvVideoEl);
-                liveTvHls.on(window.Hls.Events.MANIFEST_PARSED, startLivePlay);
-                liveTvHls.on(window.Hls.Events.ERROR, (_, errData) => {
-                    if (errData && errData.fatal) {
-                        handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
+                },
+                onPlaying: () => {
+                    if (liveTvFailoverTimer) {
+                        clearTimeout(liveTvFailoverTimer);
+                        liveTvFailoverTimer = null;
                     }
-                });
-            } else {
-                liveTvVideoEl.src = url;
-                liveTvVideoEl.onerror = () => {
+                    if (deadLiveTvUrls.has(url)) {
+                        deadLiveTvUrls.delete(url);
+                        renderLiveTvChannels();
+                    }
+                    document.getElementById("livetv-status-text").innerText = `پخش زنده فعال (Plyr) • ${group}`;
+                },
+                onError: () => {
                     handleDeadStream("این استریم غیرفعال است و روی لیست علامت خورد.");
-                };
-                startLivePlay();
-            }
+                }
+            });
         }
 
         function quickPlayLiveTv() {
@@ -4300,16 +4220,16 @@
 
         function enterLiveTvFullscreen() {
             try {
-                if (liveTvVideoEl.webkitEnterFullscreen) {
-                    liveTvVideoEl.webkitEnterFullscreen();
-                    syncFloatingExitButton();
+                if (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.enabled) {
+                    liveTvPlyr.fullscreen.enter();
+                    setTimeout(syncFloatingExitButton, 120);
                     return;
                 }
             } catch (_) {}
             try {
-                if (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.enabled) {
-                    liveTvPlyr.fullscreen.enter();
-                    setTimeout(syncFloatingExitButton, 120);
+                if (liveTvVideoEl.webkitEnterFullscreen) {
+                    liveTvVideoEl.webkitEnterFullscreen();
+                    syncFloatingExitButton();
                     return;
                 }
             } catch (_) {}
@@ -4324,7 +4244,7 @@
         }
 
         // =====================================================================
-        // پخش‌کننده اصلی فیلم‌ها (فایل مستقیم، HLS، آپارات، یوتوب و پست تلگرام)
+        // پخش‌کننده اصلی فیلم‌ها (هماهنگ در اندروید و آیفون)
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -4358,15 +4278,6 @@
             fullscreen: { enabled: true, fallback: true, iosNative: true }
         });
         let hlsInstance = null;
-
-        function ensureVideoElementInFrameWrap() {
-            let v = document.getElementById("main-video-player");
-            if (!v) {
-                frameWrapEl.innerHTML = `<video id="main-video-player" playsinline webkit-playsinline controls preload="auto"></video>`;
-                v = document.getElementById("main-video-player");
-            }
-            return v;
-        }
 
         function isCurrentlyFullscreen() {
             return Boolean(
@@ -4439,13 +4350,9 @@
             }
 
             try {
-                if (frameWrapEl.querySelector("iframe")) {
-                    if (frameWrapEl.requestFullscreen) {
-                        frameWrapEl.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
-                    } else if (frameWrapEl.webkitRequestFullscreen) {
-                        frameWrapEl.webkitRequestFullscreen();
-                        setTimeout(syncFloatingExitButton, 150);
-                    }
+                if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.enabled) {
+                    plyrInstance.fullscreen.enter();
+                    setTimeout(syncFloatingExitButton, 150);
                     return;
                 }
             } catch (_) {}
@@ -4453,14 +4360,6 @@
             try {
                 if (videoEl.webkitEnterFullscreen) {
                     videoEl.webkitEnterFullscreen();
-                    setTimeout(syncFloatingExitButton, 150);
-                    return;
-                }
-            } catch (_) {}
-
-            try {
-                if (plyrInstance && plyrInstance.fullscreen && plyrInstance.fullscreen.enabled) {
-                    plyrInstance.fullscreen.enter();
                     setTimeout(syncFloatingExitButton, 150);
                     return;
                 }
@@ -4523,114 +4422,7 @@
             loadVideoSource(mv, true, Number(videoEl.currentTime || 0), false);
         }
 
-        function triggerPlayWithFallback(onSuccess) {
-            if (playbackStoppedManually) return;
-            videoEl.muted = false;
-            plyrInstance.muted = false;
-            const p1 = plyrInstance.play();
-            const handlePromise = (promiseObj) => {
-                if (playbackStoppedManually) {
-                    videoEl.pause();
-                    return;
-                }
-                if (!promiseObj || !promiseObj.then) {
-                    if (onSuccess) onSuccess();
-                    return;
-                }
-                promiseObj.then(() => {
-                    if (playbackStoppedManually) {
-                        videoEl.pause();
-                        return;
-                    }
-                    setMoviePlayerStatus("در حال پخش", false, false);
-                    if (onSuccess) onSuccess();
-                }).catch(() => {
-                    if (playbackStoppedManually) return;
-                    videoEl.muted = true;
-                    plyrInstance.muted = true;
-                    const p2 = plyrInstance.play();
-                    const handleMuted = (pr) => {
-                        if (playbackStoppedManually) {
-                            videoEl.pause();
-                            return;
-                        }
-                        if (pr && pr.then) {
-                            pr.then(() => {
-                                if (playbackStoppedManually) {
-                                    videoEl.pause();
-                                    return;
-                                }
-                                setMoviePlayerStatus("در حال پخش (بی‌صدا؛ برای صدا «وصل صدا» را بزنید)", false, true);
-                                if (onSuccess) onSuccess();
-                            }).catch(() => {
-                                setMoviePlayerStatus("برای شروع پخش روی دکمه پخش بزنید.", true, false);
-                            });
-                        } else {
-                            setMoviePlayerStatus("در حال پخش (بی‌صدا)", false, true);
-                            if (onSuccess) onSuccess();
-                        }
-                    };
-                    if (p2 && p2.then) handleMuted(p2);
-                    else handleMuted(videoEl.play());
-                });
-            };
-
-            if (p1 && p1.then) {
-                handlePromise(p1);
-            } else {
-                handlePromise(videoEl.play());
-            }
-        }
-
-        function attachDirectNativeVideo(url, seekToSec, autoPlay, triggerFullAfterPlay) {
-            if (playbackStoppedManually) return;
-            ensureVideoElementInFrameWrap();
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
-            try { plyrInstance.source = { type: "video", sources: [{ src: url }] }; } catch (_) {}
-            videoEl.removeAttribute("src");
-            videoEl.src = url;
-            videoEl.load();
-
-            let playedOnce = false;
-            const runPlayback = () => {
-                if (playbackStoppedManually) return;
-                if (typeof seekToSec === "number" && seekToSec >= 0) {
-                    suppressSyncEvents = true;
-                    try { videoEl.currentTime = seekToSec; } catch (_) {}
-                    setTimeout(() => { suppressSyncEvents = false; }, 350);
-                }
-                if (autoPlay && !playedOnce) {
-                    playedOnce = true;
-                    triggerPlayWithFallback(triggerFullAfterPlay);
-                }
-            };
-
-            videoEl.onerror = () => {
-                if (!playbackStoppedManually) {
-                    setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false);
-                }
-            };
-
-            videoEl.onplaying = () => {
-                if (playbackStoppedManually) {
-                    videoEl.pause();
-                    return;
-                }
-                setMoviePlayerStatus(videoEl.muted ? "در حال پخش (بی‌صدا)" : "در حال پخش", false, videoEl.muted);
-            };
-
-            if (typeof seekToSec === "number" && seekToSec > 0) {
-                videoEl.addEventListener("loadedmetadata", runPlayback, { once: true });
-            } else {
-                videoEl.addEventListener("canplay", runPlayback, { once: true });
-                setTimeout(runPlayback, 120);
-            }
-        }
-
-        async function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
+        function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
             if (!mv || !mv.videoUrl) return;
             stopAllInlinePostPlayers();
             playbackStoppedManually = false;
@@ -4643,6 +4435,9 @@
                 `${mv.genre || "فیلم"} ${mv.year ? "• " + mv.year : ""}`;
             setMoviePlayerStatus("در حال بارگذاری...", false, false);
 
+            const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
+            const cleanUrl = String(mv.videoUrl || "").trim();
+
             const triggerFullAfterPlay = () => {
                 if (autoFullscreen && !playbackStoppedManually) {
                     setTimeout(() => {
@@ -4653,87 +4448,59 @@
                 }
             };
 
-            const sourceInfo = detectMediaSourceType(mv.videoUrl);
-            const isSameMovie = currentLoadedMovieId === mv.id && (Boolean(videoEl.src) || Boolean(frameWrapEl.querySelector("iframe")));
-            if (isSameMovie && sourceInfo.kind !== "youtube" && sourceInfo.kind !== "aparat" && sourceInfo.kind !== "telegram") {
+            const isSameMovie = currentLoadedMovieId === mv.id && Boolean(videoEl.src);
+            if (isSameMovie) {
                 if (typeof seekToSec === "number" && seekToSec >= 0) {
                     suppressSyncEvents = true;
                     try { videoEl.currentTime = seekToSec; } catch (_) {}
                     setTimeout(() => { suppressSyncEvents = false; }, 350);
                 }
                 if (autoPlay) {
-                    triggerPlayWithFallback(triggerFullAfterPlay);
+                    videoEl.muted = false;
+                    plyrInstance.muted = false;
+                    plyrInstance.play().catch(() => {});
+                    triggerFullAfterPlay();
                 }
                 return;
             }
             currentLoadedMovieId = mv.id;
 
-            if (hlsInstance) {
-                hlsInstance.destroy();
-                hlsInstance = null;
-            }
-
-            if (sourceInfo.kind === "youtube" || sourceInfo.kind === "aparat") {
-                try { plyrInstance.pause(); } catch (_) {}
-                videoEl.pause();
-                renderIframeIntoContainer(frameWrapEl, sourceInfo.embedUrl);
-                setMoviePlayerStatus("در حال پخش", false, false);
-                triggerFullAfterPlay();
-                return;
-            }
-
-            if (sourceInfo.kind === "telegram") {
-                try { plyrInstance.pause(); } catch (_) {}
-                videoEl.pause();
-                const directMp4 = await resolveTelegramVideoUrlIfPossible(sourceInfo);
-                if (playbackStoppedManually || currentLoadedMovieId !== mv.id) return;
-
-                if (directMp4) {
-                    attachDirectNativeVideo(directMp4, seekToSec, autoPlay, triggerFullAfterPlay);
-                    return;
-                }
-
-                frameWrapEl.innerHTML = buildTelegramCleanEmbedHtml(sourceInfo);
-                setMoviePlayerStatus("در حال پخش", false, false);
-                triggerFullAfterPlay();
-                return;
-            }
-
-            const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
-            ensureVideoElementInFrameWrap();
-            videoEl.setAttribute("poster", posterUrl);
-            plyrInstance.poster = posterUrl;
-
-            if (sourceInfo.kind === "hls" && window.Hls && window.Hls.isSupported()) {
-                hlsInstance = new window.Hls({
-                    enableWorker: true,
-                    lowLatencyMode: false
-                });
-                hlsInstance.loadSource(sourceInfo.url);
-                hlsInstance.attachMedia(videoEl);
-                hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
+            hlsInstance = bindCrossPlatformMedia(videoEl, plyrInstance, cleanUrl, {
+                posterUrl,
+                seekToSec,
+                autoPlay,
+                existingHls: hlsInstance,
+                onBeforeSeek: () => { suppressSyncEvents = true; },
+                onAfterSeek: () => { suppressSyncEvents = false; },
+                onPlaying: (isMuted) => {
+                    if (playbackStoppedManually) {
+                        videoEl.pause();
+                        return;
+                    }
+                    setMoviePlayerStatus(
+                        isMuted ? "در حال پخش (بی‌صدا؛ برای صدا «وصل صدا» را بزنید)" : "در حال پخش",
+                        false,
+                        isMuted
+                    );
+                },
+                onReadyPlay: triggerFullAfterPlay,
+                onError: (errReason) => {
                     if (playbackStoppedManually) return;
-                    if (typeof seekToSec === "number" && seekToSec >= 0) {
-                        suppressSyncEvents = true;
-                        try { videoEl.currentTime = seekToSec; } catch (_) {}
-                        setTimeout(() => { suppressSyncEvents = false; }, 350);
+                    if (errReason === "hls_fatal") {
+                        hlsInstance = bindCrossPlatformMedia(videoEl, plyrInstance, cleanUrl, {
+                            posterUrl,
+                            seekToSec,
+                            autoPlay,
+                            onPlaying: (isMuted) => setMoviePlayerStatus(isMuted ? "در حال پخش (بی‌صدا)" : "در حال پخش", false, isMuted),
+                            onError: () => setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false)
+                        });
+                    } else if (errReason === "fallback_blocked") {
+                        setMoviePlayerStatus("برای شروع پخش روی دکمه پخش بزنید.", true, false);
+                    } else {
+                        setMoviePlayerStatus("خطا در پخش این لینک (لینک نامعتبر یا مسدود است).", true, false);
                     }
-                    if (autoPlay) {
-                        triggerPlayWithFallback(triggerFullAfterPlay);
-                    }
-                });
-                hlsInstance.on(window.Hls.Events.ERROR, (_, errData) => {
-                    if (errData && errData.fatal && !playbackStoppedManually) {
-                        if (hlsInstance) {
-                            hlsInstance.destroy();
-                            hlsInstance = null;
-                        }
-                        attachDirectNativeVideo(sourceInfo.url, seekToSec, autoPlay, triggerFullAfterPlay);
-                    }
-                });
-            } else {
-                attachDirectNativeVideo(sourceInfo.url, seekToSec, autoPlay, triggerFullAfterPlay);
-            }
+                }
+            });
         }
 
         function openMovieDetail(id, fromTab = null) {
@@ -4827,14 +4594,11 @@
             videoEl.removeAttribute("src");
             videoEl.src = "";
             videoEl.load();
-            if (!frameWrapEl.querySelector("video")) {
-                frameWrapEl.innerHTML = `<video id="main-video-player" playsinline webkit-playsinline controls preload="auto"></video>`;
-            }
             currentLoadedMovieId = null;
             currentLoadedMovieObj = null;
             setMoviePlayerStatus("", false, false);
             if (hlsInstance) {
-                hlsInstance.destroy();
+                try { hlsInstance.destroy(); } catch (_) {}
                 hlsInstance = null;
             }
             document.getElementById("active-player-box").classList.remove("show");
