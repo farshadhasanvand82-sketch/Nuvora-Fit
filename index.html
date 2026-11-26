@@ -628,7 +628,6 @@
             background: var(--red-soft);
         }
 
-        /* قاب واحد پست با Plyr یکپارچه و بدون تداخل backdrop-filter در اندروید */
         .single-post-media-stage {
             width: 100%;
             height: 175px;
@@ -642,12 +641,14 @@
 
         .single-post-media-stage img,
         .single-post-media-stage video,
+        .single-post-media-stage iframe,
         .single-post-media-stage .plyr,
         .single-post-media-stage .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
             background: #000000;
+            border: 0;
         }
 
         .single-post-media-stage img {
@@ -686,7 +687,6 @@
             background: var(--red-soft);
         }
 
-        /* ==================== فضای مستقل پخش ماهواره / LIVE TV با Plyr ==================== */
         .livetv-overlay-screen {
             position: fixed;
             inset: 0;
@@ -973,10 +973,13 @@
 
         .player-frame-wrap .plyr,
         .player-frame-wrap .plyr__video-wrapper,
-        .player-frame-wrap video {
+        .player-frame-wrap video,
+        .player-frame-wrap iframe {
             width: 100%;
             height: 100%;
             background: #000000;
+            border: 0;
+            display: block;
         }
 
         .player-frame-wrap:fullscreen,
@@ -1309,12 +1312,14 @@
 
         .movie-poster-box img,
         .movie-poster-box video,
+        .movie-poster-box iframe,
         .movie-poster-box .plyr,
         .movie-poster-box .plyr__video-wrapper {
             width: 100%;
             height: 100%;
             display: block;
             background: #000000;
+            border: 0;
         }
 
         .movie-poster-box img {
@@ -1975,7 +1980,6 @@
                 </button>
             </div>
 
-            <!-- ۱. فرم ورود -->
             <form id="auth-form-login" onsubmit="submitLoginAccount(event)">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
                     با آیدی و رمز اختصاصی خود وارد حساب شوید.
@@ -1992,7 +1996,6 @@
                 <button type="submit" class="btn-main">ورود به حساب</button>
             </form>
 
-            <!-- ۲. فرم ثبت‌نام -->
             <form id="auth-form-register" style="display:none;" onsubmit="submitRegisterAccount(event)">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
                     یک حساب جدید با آیدی یکتا بسازید. آیدی تکراری پذیرفته نمی‌شود.
@@ -2012,7 +2015,7 @@
                 </div>
                 <div class="field-box">
                     <label for="reg-avatar-input">لینک عکس پروفایل (اختیاری)</label>
-                    <input type="url" id="reg-avatar-input" placeholder="https://... لینک عکس پروفایل">
+                    <input type="url" id="reg-avatar-input" placeholder="لینک را وارد کنید">
                 </div>
                 <div class="field-box">
                     <label for="reg-avatar-file">یا انتخاب عکس پروفایل از گوشی</label>
@@ -2021,7 +2024,6 @@
                 <button type="submit" class="btn-main">ثبت‌نام و ساخت حساب</button>
             </form>
 
-            <!-- ۳. فرم ویرایش پروفایل -->
             <form id="auth-form-edit" style="display:none;" onsubmit="submitEditProfile(event)">
                 <p style="font-size:12px; color:var(--text-muted); margin-bottom:12px;">
                     اطلاعات پروفایل خود را ویرایش کنید. آیدی جدید نباید با آیدی کاربران دیگر تکراری باشد.
@@ -2041,7 +2043,7 @@
                 </div>
                 <div class="field-box">
                     <label for="edit-avatar-input">لینک عکس پروفایل (اختیاری)</label>
-                    <input type="url" id="edit-avatar-input" placeholder="https://... لینک عکس پروفایل">
+                    <input type="url" id="edit-avatar-input" placeholder="لینک را وارد کنید">
                 </div>
                 <div class="field-box">
                     <label for="edit-avatar-file">یا انتخاب عکس جدید از گوشی</label>
@@ -2390,11 +2392,11 @@
                     </div>
                     <div class="field-box">
                         <label for="m-poster">لینک پوستر (عکس)</label>
-                        <input type="url" id="m-poster" placeholder="https://... (اختیاری)">
+                        <input type="url" id="m-poster" placeholder="لینک را وارد کنید">
                     </div>
                     <div class="field-box">
-                        <label for="m-video">لینک مستقیم پخش فیلم (MP4 یا m3u8)</label>
-                        <input type="url" id="m-video" placeholder="https://.../movie.mp4" required>
+                        <label for="m-video">لینک پخش فیلم</label>
+                        <input type="url" id="m-video" placeholder="لینک را وارد کنید" required>
                     </div>
                     <div class="field-box">
                         <label for="m-desc">خلاصه داستان</label>
@@ -2463,7 +2465,7 @@
 
                 <div class="field-box">
                     <label for="page-item-cover">کاور فیلم / تصویر پست (لینک عکس)</label>
-                    <input type="url" id="page-item-cover" placeholder="https://... لینک کاور (اختیاری؛ در صورت خالی بودن از خود ویدئو استفاده می‌شود)">
+                    <input type="url" id="page-item-cover" placeholder="لینک را وارد کنید">
                 </div>
 
                 <div class="field-box">
@@ -2472,8 +2474,8 @@
                 </div>
 
                 <div class="field-box">
-                    <label for="page-item-url">لینک مستقیم دائمی (فیلم / مدیا / محتوا)</label>
-                    <input type="url" id="page-item-url" placeholder="https://.../direct-link.mp4" required>
+                    <label for="page-item-url">لینک فیلم / پست / مدیا</label>
+                    <input type="url" id="page-item-url" placeholder="لینک را وارد کنید" required>
                 </div>
 
                 <div class="field-box">
@@ -2552,7 +2554,7 @@
 
         <div id="explore-panel-feed">
             <div class="sec-title-row">
-                <h2>پست‌ها (پلیر Plyr • اسکرول چپ و راست)</h2>
+                <h2>پست‌ها (اسکرول چپ و راست)</h2>
                 <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="reshuffleExploreRandom()">🔀 ترتیب جدید</button>
             </div>
             <div id="explore-random-posts-track" class="explore-horizontal-track"></div>
@@ -2666,6 +2668,132 @@
                 e.preventDefault();
             }
         });
+
+        // =====================================================================
+        // تشخیص و تبدیل لینک‌های آپارات، یوتوب و پست تلگرام به پخش داخلی شفاف
+        // =====================================================================
+        function extractYouTubeId(url) {
+            const s = String(url || "").trim();
+            const m = s.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/|live\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/i);
+            return m ? m[1] : "";
+        }
+
+        function extractAparatId(url) {
+            const s = String(url || "").trim();
+            const m = s.match(/aparat\.com\/v\/([A-Za-z0-9_-]+)/i) ||
+                      s.match(/aparat\.com\/video\/video\/embed\/videohash\/([A-Za-z0-9_-]+)/i);
+            return m ? m[1] : "";
+        }
+
+        function extractTelegramPostInfo(url) {
+            const s = String(url || "").trim();
+            // پشتیبانی از t.me/channel/123 و telegram.me/channel/123 و t.me/s/channel/123 و t.me/c/123456/789
+            let m = s.match(/(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/(?:s\/)?([A-Za-z0-9_]+)\/(\d+)/i);
+            if (m && m[1].toLowerCase() !== "c") {
+                return { channel: m[1], postId: m[2], isPrivateChannel: false };
+            }
+            m = s.match(/(?:https?:\/\/)?(?:t\.me|telegram\.me|telegram\.dog)\/c\/(\d+)\/(\d+)/i);
+            if (m) {
+                return { channel: "c/" + m[1], postId: m[2], isPrivateChannel: true };
+            }
+            return null;
+        }
+
+        function isTelegramDirectFileUrl(url) {
+            const s = String(url || "").trim();
+            return /api\.telegram\.org\/file\/bot/i.test(s) ||
+                   /t\.me\/.*(\.mp4|\.mkv|\.webm|\.mov|\.m3u8)(\?|$)/i.test(s);
+        }
+
+        function detectMediaSourceType(rawUrl) {
+            const url = String(rawUrl || "").trim();
+            if (!url) return { kind: "empty", url: "" };
+
+            const ytId = extractYouTubeId(url);
+            if (ytId) {
+                return {
+                    kind: "youtube",
+                    url,
+                    id: ytId,
+                    embedUrl: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`
+                };
+            }
+
+            const apId = extractAparatId(url);
+            if (apId) {
+                return {
+                    kind: "aparat",
+                    url,
+                    id: apId,
+                    embedUrl: `https://www.aparat.com/video/video/embed/videohash/${apId}/vt/frame`
+                };
+            }
+
+            if (isTelegramDirectFileUrl(url)) {
+                return { kind: "file", url };
+            }
+
+            const tgInfo = extractTelegramPostInfo(url);
+            if (tgInfo) {
+                return {
+                    kind: "telegram",
+                    url,
+                    ...tgInfo
+                };
+            }
+
+            if (/\.m3u8(\?|$)/i.test(url)) {
+                return { kind: "hls", url };
+            }
+
+            return { kind: "file", url };
+        }
+
+        function buildTelegramCleanEmbedHtml(tgInfo) {
+            const postPath = `${tgInfo.channel}/${tgInfo.postId}`;
+            const embedSrc = `https://t.me/${postPath}?embed=1&userpic=false`;
+            return `
+                <div style="width:100%; height:100%; background:#000; position:relative; overflow:hidden;">
+                    <iframe
+                        src="${escAttr(embedSrc)}"
+                        style="width:100%; height:100%; border:0; display:block; background:#000;"
+                        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                        allowfullscreen
+                        scrolling="no"
+                        referrerpolicy="no-referrer-when-downgrade"
+                    ></iframe>
+                </div>
+            `;
+        }
+
+        async function resolveTelegramVideoUrlIfPossible(tgInfo) {
+            if (!tgInfo || tgInfo.isPrivateChannel) return null;
+            const previewUrl = `https://t.me/s/${tgInfo.channel}/${tgInfo.postId}`;
+            try {
+                const resp = await fetch(previewUrl, { cache: "no-store" });
+                if (!resp.ok) return null;
+                const html = await resp.text();
+                const match = html.match(/<video[^>]+src=["']([^"']+)["']/i) ||
+                              html.match(/data-video-src=["']([^"']+)["']/i);
+                if (match && match[1]) {
+                    return match[1].replace(/&amp;/g, "&");
+                }
+            } catch (_) {}
+            return null;
+        }
+
+        function renderIframeIntoContainer(containerEl, srcUrl) {
+            if (!containerEl) return;
+            containerEl.innerHTML = `
+                <iframe
+                    src="${escAttr(srcUrl)}"
+                    style="width:100%; height:100%; border:0; display:block; background:#000;"
+                    allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                    allowfullscreen
+                    referrerpolicy="no-referrer-when-downgrade"
+                ></iframe>
+            `;
+        }
 
         const THEME_STORAGE_KEY = "zeuc_movie_theme_mode";
         let currentThemeMode = localStorage.getItem(THEME_STORAGE_KEY) || "night";
@@ -3305,7 +3433,7 @@
         }
 
         // =====================================================================
-        // پخش پست روی همان یک کادر با پلیر Plyr + تصویر و صدا در WebView
+        // پخش پست درون‌خطی با پشتیبانی کامل از فایل مستقیم، آپارات، یوتوب و تلگرام
         // =====================================================================
         let activeInlinePostId = null;
         let inlinePostPlyr = null;
@@ -3352,7 +3480,7 @@
             playPostInlineOnCard(itemId);
         }
 
-        function playPostInlineOnCard(itemId) {
+        async function playPostInlineOnCard(itemId) {
             const item = moviesList.find(m => m.id === itemId);
             if (!item || !item.videoUrl) return;
 
@@ -3362,56 +3490,85 @@
 
             moviesRef.child(itemId).child("views").transaction(v => (Number(v) || 0) + 1);
 
-            const cleanUrl = String(item.videoUrl || "").trim();
             const posterUrl = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
             const slots = document.querySelectorAll(`.post-media-slot[data-post-id="${CSS.escape(itemId)}"]`);
             const btns = document.querySelectorAll(`.post-play-toggle-btn[data-post-id="${CSS.escape(itemId)}"]`);
-
             btns.forEach(b => { b.innerText = "⏹ توقف پخش"; });
 
-            slots.forEach((slot, idx) => {
-                slot.classList.add("playing-post-box");
-                slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
-                const vid = slot.querySelector("video");
-                if (!vid) return;
+            const primarySlot = slots[0];
+            if (!primarySlot) return;
 
-                if (idx === 0) {
-                    const pInstance = new Plyr(vid, {
-                        controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
-                        fullscreen: { enabled: true, fallback: true, iosNative: true }
-                    });
-                    inlinePostPlyr = pInstance;
+            primarySlot.classList.add("playing-post-box");
+            const sourceInfo = detectMediaSourceType(item.videoUrl);
 
-                    const startPlayback = () => {
-                        vid.muted = false;
-                        pInstance.muted = false;
-                        const pr = pInstance.play();
-                        if (pr && pr.catch) {
-                            pr.catch(() => {
-                                vid.muted = true;
-                                pInstance.muted = true;
-                                pInstance.play().catch(() => {});
-                            });
-                        }
-                    };
+            if (sourceInfo.kind === "youtube" || sourceInfo.kind === "aparat") {
+                renderIframeIntoContainer(primarySlot, sourceInfo.embedUrl);
+                return;
+            }
 
-                    if (/\.m3u8(\?|$)/i.test(cleanUrl) && window.Hls && window.Hls.isSupported()) {
-                        inlinePostHls = new window.Hls({ enableWorker: true });
-                        inlinePostHls.loadSource(cleanUrl);
-                        inlinePostHls.attachMedia(vid);
-                        inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
-                    } else {
-                        vid.src = cleanUrl;
+            if (sourceInfo.kind === "telegram") {
+                const directMp4 = await resolveTelegramVideoUrlIfPossible(sourceInfo);
+                if (activeInlinePostId !== itemId) return;
+
+                if (directMp4) {
+                    primarySlot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
+                    const vid = primarySlot.querySelector("video");
+                    if (vid) {
+                        const pInst = new Plyr(vid, {
+                            controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
+                            fullscreen: { enabled: true, fallback: true, iosNative: true }
+                        });
+                        inlinePostPlyr = pInst;
+                        vid.src = directMp4;
                         vid.load();
-                        vid.addEventListener("canplay", startPlayback, { once: true });
-                        setTimeout(startPlayback, 150);
+                        pInst.play().catch(() => {
+                            vid.muted = true;
+                            pInst.muted = true;
+                            pInst.play().catch(() => {});
+                        });
                     }
-                } else {
-                    vid.src = cleanUrl;
-                    vid.preload = "metadata";
-                    vid.muted = true;
+                    return;
                 }
+
+                primarySlot.innerHTML = buildTelegramCleanEmbedHtml(sourceInfo);
+                return;
+            }
+
+            const cleanUrl = sourceInfo.url;
+            primarySlot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
+            const vid = primarySlot.querySelector("video");
+            if (!vid) return;
+
+            const pInstance = new Plyr(vid, {
+                controls: ["play-large", "play", "progress", "current-time", "mute", "volume", "fullscreen"],
+                fullscreen: { enabled: true, fallback: true, iosNative: true }
             });
+            inlinePostPlyr = pInstance;
+
+            const startPlayback = () => {
+                vid.muted = false;
+                pInstance.muted = false;
+                const pr = pInstance.play();
+                if (pr && pr.catch) {
+                    pr.catch(() => {
+                        vid.muted = true;
+                        pInstance.muted = true;
+                        pInstance.play().catch(() => {});
+                    });
+                }
+            };
+
+            if (sourceInfo.kind === "hls" && window.Hls && window.Hls.isSupported()) {
+                inlinePostHls = new window.Hls({ enableWorker: true });
+                inlinePostHls.loadSource(cleanUrl);
+                inlinePostHls.attachMedia(vid);
+                inlinePostHls.on(window.Hls.Events.MANIFEST_PARSED, startPlayback);
+            } else {
+                vid.src = cleanUrl;
+                vid.load();
+                vid.addEventListener("canplay", startPlayback, { once: true });
+                setTimeout(startPlayback, 150);
+            }
         }
 
         function getIdlePostMediaHtml(item) {
@@ -3419,7 +3576,11 @@
             if (hasCustomCover) {
                 return `<img src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
             }
-            if (item.itemType === "post" && item.videoUrl) {
+            const srcInfo = detectMediaSourceType(item.videoUrl);
+            if (srcInfo.kind === "youtube" && srcInfo.id) {
+                return `<img src="https://img.youtube.com/vi/${escAttr(srcInfo.id)}/hqdefault.jpg" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
+            }
+            if (item.itemType === "post" && item.videoUrl && (srcInfo.kind === "file" || srcInfo.kind === "hls")) {
                 return `<video src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline style="width:100%; height:100%; object-fit:cover; background:#000; display:block;"></video>`;
             }
             return `<img src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
@@ -4163,7 +4324,7 @@
         }
 
         // =====================================================================
-        // پخش‌کننده اصلی فیلم‌ها
+        // پخش‌کننده اصلی فیلم‌ها (فایل مستقیم، HLS، آپارات، یوتوب و پست تلگرام)
         // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
@@ -4197,6 +4358,15 @@
             fullscreen: { enabled: true, fallback: true, iosNative: true }
         });
         let hlsInstance = null;
+
+        function ensureVideoElementInFrameWrap() {
+            let v = document.getElementById("main-video-player");
+            if (!v) {
+                frameWrapEl.innerHTML = `<video id="main-video-player" playsinline webkit-playsinline controls preload="auto"></video>`;
+                v = document.getElementById("main-video-player");
+            }
+            return v;
+        }
 
         function isCurrentlyFullscreen() {
             return Boolean(
@@ -4267,6 +4437,18 @@
                 exitFullscreenNow();
                 return;
             }
+
+            try {
+                if (frameWrapEl.querySelector("iframe")) {
+                    if (frameWrapEl.requestFullscreen) {
+                        frameWrapEl.requestFullscreen().then(syncFloatingExitButton).catch(() => {});
+                    } else if (frameWrapEl.webkitRequestFullscreen) {
+                        frameWrapEl.webkitRequestFullscreen();
+                        setTimeout(syncFloatingExitButton, 150);
+                    }
+                    return;
+                }
+            } catch (_) {}
 
             try {
                 if (videoEl.webkitEnterFullscreen) {
@@ -4400,16 +4582,9 @@
             }
         }
 
-        function normalizePlayableVideoUrl(rawUrl) {
-            const trimmed = (rawUrl || "").trim();
-            if (/\.m3u8(\?|$)/i.test(trimmed)) {
-                return { kind: "hls", url: trimmed };
-            }
-            return { kind: "file", url: trimmed };
-        }
-
         function attachDirectNativeVideo(url, seekToSec, autoPlay, triggerFullAfterPlay) {
             if (playbackStoppedManually) return;
+            ensureVideoElementInFrameWrap();
             if (hlsInstance) {
                 hlsInstance.destroy();
                 hlsInstance = null;
@@ -4455,7 +4630,7 @@
             }
         }
 
-        function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
+        async function loadVideoSource(mv, autoPlay = true, seekToSec = null, autoFullscreen = false) {
             if (!mv || !mv.videoUrl) return;
             stopAllInlinePostPlayers();
             playbackStoppedManually = false;
@@ -4468,10 +4643,6 @@
                 `${mv.genre || "فیلم"} ${mv.year ? "• " + mv.year : ""}`;
             setMoviePlayerStatus("در حال بارگذاری...", false, false);
 
-            const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
-            videoEl.setAttribute("poster", posterUrl);
-            plyrInstance.poster = posterUrl;
-
             const triggerFullAfterPlay = () => {
                 if (autoFullscreen && !playbackStoppedManually) {
                     setTimeout(() => {
@@ -4482,9 +4653,9 @@
                 }
             };
 
-            const parsed = normalizePlayableVideoUrl(mv.videoUrl);
-            const isSameMovie = currentLoadedMovieId === mv.id && Boolean(videoEl.src);
-            if (isSameMovie) {
+            const sourceInfo = detectMediaSourceType(mv.videoUrl);
+            const isSameMovie = currentLoadedMovieId === mv.id && (Boolean(videoEl.src) || Boolean(frameWrapEl.querySelector("iframe")));
+            if (isSameMovie && sourceInfo.kind !== "youtube" && sourceInfo.kind !== "aparat" && sourceInfo.kind !== "telegram") {
                 if (typeof seekToSec === "number" && seekToSec >= 0) {
                     suppressSyncEvents = true;
                     try { videoEl.currentTime = seekToSec; } catch (_) {}
@@ -4502,12 +4673,43 @@
                 hlsInstance = null;
             }
 
-            if (parsed.kind === "hls" && window.Hls && window.Hls.isSupported()) {
+            if (sourceInfo.kind === "youtube" || sourceInfo.kind === "aparat") {
+                try { plyrInstance.pause(); } catch (_) {}
+                videoEl.pause();
+                renderIframeIntoContainer(frameWrapEl, sourceInfo.embedUrl);
+                setMoviePlayerStatus("در حال پخش", false, false);
+                triggerFullAfterPlay();
+                return;
+            }
+
+            if (sourceInfo.kind === "telegram") {
+                try { plyrInstance.pause(); } catch (_) {}
+                videoEl.pause();
+                const directMp4 = await resolveTelegramVideoUrlIfPossible(sourceInfo);
+                if (playbackStoppedManually || currentLoadedMovieId !== mv.id) return;
+
+                if (directMp4) {
+                    attachDirectNativeVideo(directMp4, seekToSec, autoPlay, triggerFullAfterPlay);
+                    return;
+                }
+
+                frameWrapEl.innerHTML = buildTelegramCleanEmbedHtml(sourceInfo);
+                setMoviePlayerStatus("در حال پخش", false, false);
+                triggerFullAfterPlay();
+                return;
+            }
+
+            const posterUrl = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
+            ensureVideoElementInFrameWrap();
+            videoEl.setAttribute("poster", posterUrl);
+            plyrInstance.poster = posterUrl;
+
+            if (sourceInfo.kind === "hls" && window.Hls && window.Hls.isSupported()) {
                 hlsInstance = new window.Hls({
                     enableWorker: true,
                     lowLatencyMode: false
                 });
-                hlsInstance.loadSource(parsed.url);
+                hlsInstance.loadSource(sourceInfo.url);
                 hlsInstance.attachMedia(videoEl);
                 hlsInstance.on(window.Hls.Events.MANIFEST_PARSED, () => {
                     if (playbackStoppedManually) return;
@@ -4526,11 +4728,11 @@
                             hlsInstance.destroy();
                             hlsInstance = null;
                         }
-                        attachDirectNativeVideo(parsed.url, seekToSec, autoPlay, triggerFullAfterPlay);
+                        attachDirectNativeVideo(sourceInfo.url, seekToSec, autoPlay, triggerFullAfterPlay);
                     }
                 });
             } else {
-                attachDirectNativeVideo(parsed.url, seekToSec, autoPlay, triggerFullAfterPlay);
+                attachDirectNativeVideo(sourceInfo.url, seekToSec, autoPlay, triggerFullAfterPlay);
             }
         }
 
@@ -4625,6 +4827,9 @@
             videoEl.removeAttribute("src");
             videoEl.src = "";
             videoEl.load();
+            if (!frameWrapEl.querySelector("video")) {
+                frameWrapEl.innerHTML = `<video id="main-video-player" playsinline webkit-playsinline controls preload="auto"></video>`;
+            }
             currentLoadedMovieId = null;
             currentLoadedMovieObj = null;
             setMoviePlayerStatus("", false, false);
