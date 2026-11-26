@@ -139,7 +139,81 @@
             padding-top: calc(122px + env(safe-area-inset-top, 0px));
         }
 
-        /* اسلایدر ۵ فیلم رندوم با تغییر خودکار هر ۵ ثانیه */
+        /* کارت‌ها و گرید ۱۶:۹ برای «نمایش همه» در خانه و «نتایج جستجو» */
+        .movies-16x9-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .movie-card-16x9 {
+            border-radius: 22px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease;
+        }
+
+        .movie-card-16x9:hover {
+            transform: translateY(-2px);
+        }
+
+        .poster-16x9-box {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            border-radius: 16px;
+            overflow: hidden;
+            background: #000;
+            border: 1px solid rgba(255, 77, 109, 0.3);
+        }
+
+        .poster-16x9-box img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .poster-16x9-overlay {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to top, rgba(8, 2, 5, 0.88) 0%, rgba(8, 2, 5, 0.15) 55%, transparent 100%);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 12px;
+            gap: 4px;
+        }
+
+        .poster-16x9-title {
+            font-size: 15.5px;
+            font-weight: 900;
+            color: #fff;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.75);
+        }
+
+        /* نوار ویرایش گروهی ادمین */
+        .bulk-edit-box {
+            background: var(--surface-sub);
+            border: 1px solid rgba(255, 77, 109, 0.32);
+            border-radius: 18px;
+            padding: 12px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .bulk-controls-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
         .hero-random-slider-card {
             border-radius: 26px;
             padding: 14px;
@@ -221,7 +295,6 @@
             background: linear-gradient(135deg, #ff3b5c, #b80f30);
         }
 
-        /* ردیف اسلایدی ژانرها با پوسترهای بزرگ و دکمه نمایش همه */
         .genre-section-block {
             margin-bottom: 18px;
         }
@@ -685,7 +758,6 @@
             cursor: not-allowed;
         }
 
-        /* هدر مرتب و بدون هم‌پوشانی در تمام سایزهای گوشی */
         .top-header {
             position: fixed;
             top: 0;
@@ -898,7 +970,6 @@
 
         .single-post-media-stage img,
         .single-post-media-stage video,
-        .single-post-media-stage iframe,
         .single-post-media-stage .plyr,
         .single-post-media-stage .plyr__video-wrapper {
             width: 100%;
@@ -1224,8 +1295,7 @@
 
         .player-frame-wrap .plyr,
         .player-frame-wrap .plyr__video-wrapper,
-        .player-frame-wrap video,
-        .player-frame-wrap iframe {
+        .player-frame-wrap video {
             width: 100%;
             height: 100%;
             background: #000000;
@@ -1515,7 +1585,6 @@
 
         .movie-poster-box img,
         .movie-poster-box video,
-        .movie-poster-box iframe,
         .movie-poster-box .plyr,
         .movie-poster-box .plyr__video-wrapper {
             width: 100%;
@@ -2315,34 +2384,87 @@
         </div>
     </div>
 
-    <!-- مودال ویرایش کاور و لوگو توسط ادمین -->
+    <!-- مودال ویرایش کامل و همه‌جانبه فیلم/پست توسط ادمین -->
     <div id="admin-edit-media-modal" class="modal-backdrop">
         <div class="glass modal-card">
-            <span class="pill-tag">ویرایش کاور و لوگو</span>
+            <span class="pill-tag">ویرایش کامل آیتم</span>
             <h3 id="adm-edit-media-title" style="font-size:16px; font-weight:900; color:var(--text-strong); margin-bottom:10px;">ویرایش آیتم</h3>
             <form onsubmit="submitAdminMediaEdit(event)">
                 <div class="field-box">
-                    <label for="adm-edit-cover-url">لینک جدید کاور</label>
-                    <input type="url" id="adm-edit-cover-url" placeholder="لینک خود را وارد کنید">
+                    <label for="adm-edit-title">عنوان فیلم / پست</label>
+                    <input type="text" id="adm-edit-title" placeholder="عنوان را وارد کنید" required>
                 </div>
+
+                <div class="field-box">
+                    <label>نوع آیتم</label>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" id="adm-edit-type-movie" class="btn-watch" style="padding:7px 12px; font-size:12px;" onclick="setAdminEditType('movie')">فیلم</button>
+                        <button type="button" id="adm-edit-type-post" class="btn-sec" style="padding:7px 12px; font-size:12px;" onclick="setAdminEditType('post')">پست</button>
+                    </div>
+                </div>
+
+                <div class="field-box">
+                    <label>ژانرها (چندتایی مجاز است)</label>
+                    <div id="adm-edit-genres-grid" class="multi-genre-grid"></div>
+                </div>
+
+                <div class="field-box">
+                    <label>نوع زبان / نسخه</label>
+                    <div class="lang-choice-row">
+                        <button type="button" id="adm-edit-lang-dub" class="lang-choice-btn active-dub" onclick="setAdminEditLang('dub')">
+                            <span class="lang-dot"></span><span>دوبله</span>
+                        </button>
+                        <button type="button" id="adm-edit-lang-sub" class="lang-choice-btn" onclick="setAdminEditLang('sub')">
+                            <span class="lang-dot"></span><span>زیرنویس</span>
+                        </button>
+                        <button type="button" id="adm-edit-lang-orig" class="lang-choice-btn" onclick="setAdminEditLang('orig')">
+                            <span class="lang-dot"></span><span>زبان اصلی</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="field-box">
+                    <label for="adm-edit-year">سال و مدت</label>
+                    <input type="text" id="adm-edit-year" placeholder="مثلاً: 2026 • 110 دقیقه">
+                </div>
+
+                <div class="field-box">
+                    <label for="adm-edit-video-url">لینک مستقیم ویدیو (MP4 یا m3u8)</label>
+                    <input type="url" id="adm-edit-video-url" placeholder="لینک مستقیم ویدیو را وارد کنید" required>
+                </div>
+
+                <div class="field-box">
+                    <label for="adm-edit-cover-url">لینک کاور / پوستر</label>
+                    <input type="url" id="adm-edit-cover-url" placeholder="لینک کاور را وارد کنید">
+                </div>
+
                 <div class="field-box">
                     <label for="adm-edit-cover-file">یا انتخاب کاور جدید از گوشی</label>
                     <input type="file" id="adm-edit-cover-file" accept="image/*" onchange="handleAdminEditFilePicked(event, 'cover')">
                 </div>
+
                 <div class="field-box">
                     <label for="adm-edit-logo-text">متن / نام لوگو (برچسب اختصاصی)</label>
                     <input type="text" id="adm-edit-logo-text" placeholder="مثلاً: ZEUC VIP یا لوگو اختصاصی">
                 </div>
+
                 <div class="field-box">
                     <label for="adm-edit-logo-url">لینک تصویر لوگو (اختیاری)</label>
-                    <input type="url" id="adm-edit-logo-url" placeholder="لینک خود را وارد کنید">
+                    <input type="url" id="adm-edit-logo-url" placeholder="لینک تصویر لوگو">
                 </div>
+
                 <div class="field-box">
                     <label for="adm-edit-logo-file">یا انتخاب تصویر لوگو از گوشی</label>
                     <input type="file" id="adm-edit-logo-file" accept="image/*" onchange="handleAdminEditFilePicked(event, 'logo')">
                 </div>
+
+                <div class="field-box">
+                    <label for="adm-edit-desc">توضیحات</label>
+                    <textarea id="adm-edit-desc" rows="2" placeholder="توضیحات فیلم یا پست..."></textarea>
+                </div>
+
                 <div style="display:grid; grid-template-columns: 1fr 1fr; gap:8px;">
-                    <button type="submit" class="btn-main">ذخیره تغییرات</button>
+                    <button type="submit" class="btn-main">ذخیره تغییرات کامل</button>
                     <button type="button" class="btn-sec" onclick="closeAdminMediaEditModal()">لغو</button>
                 </div>
             </form>
@@ -2475,14 +2597,28 @@
 
     <!-- ======================= ۱. صفحه خانه ======================= -->
     <main id="tab-home" class="page-view active">
-        <!-- اسلایدر ۵ فیلم رندوم با تغییر خودکار هر ۵ ثانیه -->
-        <div id="home-random-slider-box" class="glass hero-random-slider-card">
-            <div id="home-random-slide-content" class="empty-note">در حال آماده‌سازی پیشنهادهای رندوم...</div>
-            <div id="home-random-slider-dots" class="hero-slider-dots"></div>
+        <div id="home-main-content">
+            <div id="home-random-slider-box" class="glass hero-random-slider-card">
+                <div id="home-random-slide-content" class="empty-note">در حال آماده‌سازی پیشنهادهای رندوم...</div>
+                <div id="home-random-slider-dots" class="hero-slider-dots"></div>
+            </div>
+
+            <div id="home-genre-carousels-container"></div>
         </div>
 
-        <!-- ردیف‌های اسلایدی تفکیک‌شده بر اساس ژانر -->
-        <div id="home-genre-carousels-container"></div>
+        <!-- نمای اختصاصی «نمایش همه» یک ژانر با کارت‌های ۱۶:۹ (بدون رفتن به سرچ) -->
+        <div id="home-all-genre-view" style="display:none;">
+            <div class="glass filter-card" style="padding:14px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                    <div>
+                        <span class="pill-tag" style="margin-bottom:4px;">نمایش همه ژانر</span>
+                        <h2 id="home-all-genre-title" style="font-size:17px; font-weight:900; color:var(--text-strong);">همه فیلم‌ها</h2>
+                    </div>
+                    <button type="button" class="btn-sec" onclick="closeHomeGenreAllView()">← بازگشت به خانه</button>
+                </div>
+            </div>
+            <div id="home-all-genre-grid-16x9" class="movies-16x9-grid"></div>
+        </div>
     </main>
 
     <!-- ======================= ۲. صفحه جستجو و ژانر ======================= -->
@@ -2499,7 +2635,7 @@
             <div id="genre-filter-chips" class="genre-pills"></div>
         </div>
 
-        <div id="search-movies-list" class="movies-list"></div>
+        <div id="search-movies-list" class="movies-16x9-grid"></div>
     </section>
 
     <!-- ======================= ۳. صفحه لیست علاقه‌مندی‌ها ======================= -->
@@ -2615,7 +2751,6 @@
                 </button>
             </div>
 
-            <!-- بخش تفکیک‌شده ۱: افزودن فیلم، دکمه پست و مدیریت کاور/لوگو -->
             <div id="adm-section-media">
                 <div class="glass adm-panel-card">
                     <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:10px; flex-wrap:wrap;">
@@ -2665,8 +2800,8 @@
                             <input type="text" id="m-logo-text" placeholder="مثلاً: ZEUC EXCLUSIVE">
                         </div>
                         <div class="field-box">
-                            <label for="m-video">لینک ویدیو (یوتیوب، آپارات، تلگرام، MP4 یا m3u8)</label>
-                            <input type="url" id="m-video" placeholder="لینک خود را وارد کنید" required>
+                            <label for="m-video">لینک مستقیم ویدیو (MP4 یا m3u8)</label>
+                            <input type="url" id="m-video" placeholder="لینک مستقیم ویدیو را وارد کنید" required>
                         </div>
                         <div class="field-box">
                             <label for="m-desc">خلاصه / توضیحات</label>
@@ -2677,12 +2812,35 @@
                 </div>
 
                 <div class="glass adm-panel-card">
-                    <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">آیتم‌های منتشرشده (ویرایش کاور و لوگو / حذف)</h3>
+                    <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">آیتم‌های منتشرشده (ویرایش کامل و کلی / حذف)</h3>
+
+                    <!-- نوار ویرایش کلی (گروهی) روی آیتم‌های انتخاب‌شده -->
+                    <div class="bulk-edit-box">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                            <label style="display:inline-flex; align-items:center; gap:6px; font-size:12.5px; font-weight:800; color:var(--text-strong); cursor:pointer;">
+                                <input type="checkbox" id="adm-select-all-cb" onchange="toggleAdminSelectAll(this.checked)">
+                                <span>انتخاب همه (<span id="adm-bulk-count">0</span> انتخاب‌شده)</span>
+                            </label>
+                            <button type="button" class="btn-del" style="padding:4px 10px; font-size:11px;" onclick="applyAdminBulkDelete()">حذف انتخاب‌شده‌ها</button>
+                        </div>
+                        <div class="bulk-controls-row">
+                            <select id="adm-bulk-genre" style="background:var(--input-bg); color:var(--text-strong); border:1px solid rgba(255,77,109,0.3); border-radius:11px; padding:7px 9px; font-size:12px;">
+                                <option value="">تغییر ژانر (بدون تغییر)</option>
+                            </select>
+                            <select id="adm-bulk-lang" style="background:var(--input-bg); color:var(--text-strong); border:1px solid rgba(255,77,109,0.3); border-radius:11px; padding:7px 9px; font-size:12px;">
+                                <option value="">تغییر زبان (بدون تغییر)</option>
+                                <option value="dub">دوبله</option>
+                                <option value="sub">زیرنویس</option>
+                                <option value="orig">زبان اصلی</option>
+                            </select>
+                        </div>
+                        <button type="button" class="btn-sync-now" style="width:100%; padding:8px;" onclick="applyAdminBulkEdit()">✓ اعمال تغییر کلی روی موارد انتخاب‌شده</button>
+                    </div>
+
                     <div id="adm-movies-list"></div>
                 </div>
             </div>
 
-            <!-- بخش تفکیک‌شده ۲: اعلان همگانی زمان‌دار -->
             <div id="adm-section-notify" style="display:none;">
                 <div class="glass adm-panel-card">
                     <h3 style="font-size:15px; font-weight:900; margin-bottom:10px; color:var(--text-strong);">ارسال اعلان همگانی بالای صفحه</h3>
@@ -2711,7 +2869,6 @@
                 </div>
             </div>
 
-            <!-- بخش تفکیک‌شده ۳: لیست کاربران، اعلان تکی، مسدودسازی و حذف -->
             <div id="adm-section-users" style="display:none;">
                 <div class="glass adm-panel-card">
                     <h3 style="font-size:15px; font-weight:900; margin-bottom:8px; color:var(--text-strong);">مدیریت کاربران برنامه</h3>
@@ -2782,8 +2939,8 @@
                 </div>
 
                 <div class="field-box">
-                    <label for="page-item-url">لینک ویدیو (یوتیوب، آپارات، تلگرام، MP4 یا m3u8)</label>
-                    <input type="url" id="page-item-url" placeholder="لینک خود را وارد کنید" required>
+                    <label for="page-item-url">لینک مستقیم ویدیو (MP4 یا m3u8)</label>
+                    <input type="url" id="page-item-url" placeholder="لینک مستقیم ویدیو را وارد کنید" required>
                 </div>
 
                 <div class="field-box">
@@ -2977,34 +3134,8 @@
             }
         });
 
-        function resolveSocialEmbedUrl(rawUrl) {
-            const u = String(rawUrl || "").trim();
-            if (!u) return "";
-
-            const ytMatch = u.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/)|youtu\.be\/)([A-Za-z0-9_-]{6,})/);
-            if (ytMatch && ytMatch[1]) {
-                return `https://www.youtube.com/embed/${ytMatch[1]}?autoplay=1&playsinline=1&rel=0&modestbranding=1`;
-            }
-
-            const aparatMatch = u.match(/aparat\.com\/v\/([A-Za-z0-9_-]+)/);
-            if (aparatMatch && aparatMatch[1]) {
-                return `https://www.aparat.com/video/video/embed/videohash/${aparatMatch[1]}/vt/frame`;
-            }
-
-            const tgMatch = u.match(/t\.me\/([A-Za-z0-9_]+)\/(\d+)/);
-            if (tgMatch && tgMatch[1] && tgMatch[2]) {
-                return `https://t.me/${tgMatch[1]}/${tgMatch[2]}?embed=1&userpic=false`;
-            }
-
-            return "";
-        }
-
         function isDirectVideoFileUrl(url) {
-            const clean = String(url || "").trim();
-            if (!clean) return false;
-            if (/\.m3u8(\?|$)/i.test(clean)) return true;
-            if (/\.(mp4|webm|ogg|mov|m4v)(\?|$)/i.test(clean)) return true;
-            return !resolveSocialEmbedUrl(clean);
+            return Boolean(String(url || "").trim());
         }
 
         const isIosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
@@ -3844,9 +3975,6 @@
             }
         }
 
-        // =====================================================================
-        // پخش پست روی همان یک کادر با پلیر Plyr یا قاب تعبیه‌شده
-        // =====================================================================
         let activeInlinePostId = null;
         let inlinePostPlyr = null;
         let inlinePostHls = null;
@@ -3909,15 +4037,8 @@
 
             btns.forEach(b => { b.innerText = "⏹ توقف پخش"; });
 
-            const embedUrl = !isDirectVideoFileUrl(cleanUrl) ? resolveSocialEmbedUrl(cleanUrl) : "";
-
             slots.forEach((slot, idx) => {
                 slot.classList.add("playing-post-box");
-                if (embedUrl) {
-                    slot.innerHTML = `<iframe src="${escAttr(embedUrl)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%; height:100%; border:0; background:#000;"></iframe>`;
-                    return;
-                }
-
                 slot.innerHTML = `<video playsinline webkit-playsinline controls autoplay preload="auto" poster="${escAttr(posterUrl)}"></video>`;
                 const vid = slot.querySelector("video");
                 if (!vid) return;
@@ -3932,14 +4053,7 @@
                     inlinePostHls = bindCrossPlatformMedia(vid, pInstance, cleanUrl, {
                         posterUrl,
                         autoPlay: true,
-                        existingHls: inlinePostHls,
-                        onError: () => {
-                            const fallbackEmbed = resolveSocialEmbedUrl(cleanUrl);
-                            if (fallbackEmbed) {
-                                destroyInlinePostPlayer();
-                                slot.innerHTML = `<iframe src="${escAttr(fallbackEmbed)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%; height:100%; border:0; background:#000;"></iframe>`;
-                            }
-                        }
+                        existingHls: inlinePostHls
                     });
                 } else {
                     vid.src = cleanUrl;
@@ -3954,15 +4068,12 @@
             if (hasCustomCover) {
                 return `<img src="${escAttr(item.poster.trim())}" alt="${escAttr(item.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">`;
             }
-            if (item.itemType === "post" && item.videoUrl && isDirectVideoFileUrl(item.videoUrl)) {
+            if (item.itemType === "post" && item.videoUrl) {
                 return `<video src="${escAttr(item.videoUrl.trim())}#t=0.5" preload="metadata" muted playsinline webkit-playsinline style="width:100%; height:100%; object-fit:cover; background:#000; display:block;"></video>`;
             }
             return `<img src="${FALLBACK_POSTER}" alt="${escAttr(item.title)}" loading="lazy">`;
         }
 
-        // =====================================================================
-        // بخش اکسپلور
-        // =====================================================================
         let activeExploreSubtab = "feed";
         let inspectedCreatorId = null;
         let shuffledPostsCache = [];
@@ -4267,15 +4378,26 @@
 
         function renderAdminPresetGenres() {
             const box = document.getElementById("adm-preset-genres");
-            if (!box) return;
-            box.innerHTML = PRESET_GENRES.map(g => {
-                const active = adminSelectedGenres.includes(g);
-                return `
-                    <button type="button" class="multi-genre-btn ${active ? "selected" : ""}" onclick="toggleAdminPresetGenre('${escAttr(g)}')">
-                        ${active ? "✓ " : ""}${esc(g)}
-                    </button>
-                `;
-            }).join("");
+            if (box) {
+                box.innerHTML = PRESET_GENRES.map(g => {
+                    const active = adminSelectedGenres.includes(g);
+                    return `
+                        <button type="button" class="multi-genre-btn ${active ? "selected" : ""}" onclick="toggleAdminPresetGenre('${escAttr(g)}')">
+                            ${active ? "✓ " : ""}${esc(g)}
+                        </button>
+                    `;
+                }).join("");
+            }
+
+            const bulkGenreSel = document.getElementById("adm-bulk-genre");
+            if (bulkGenreSel && bulkGenreSel.options.length <= 1) {
+                PRESET_GENRES.forEach(g => {
+                    const opt = document.createElement("option");
+                    opt.value = g;
+                    opt.textContent = "ژانر: " + g;
+                    bulkGenreSel.appendChild(opt);
+                });
+            }
         }
 
         function toggleAdminPresetGenre(gName) {
@@ -4439,9 +4561,6 @@
             </svg>
         `);
 
-        // =====================================================================
-        // پخش ماهواره (LIVE TV) با پلیر Plyr یکسان در اندروید و آیفون
-        // =====================================================================
         const IPTV_PLAYLIST_URL = "https://iptv-org.github.io/iptv/index.m3u";
         const liveTvVideoEl = document.getElementById("livetv-video-el");
         const liveTvPlayerBox = document.getElementById("livetv-player-box");
@@ -4733,12 +4852,10 @@
             } catch (_) {}
         }
 
-        // =====================================================================
-        // پخش‌کننده اصلی فیلم‌ها
-        // =====================================================================
         let moviesList = [];
         let adminAuthed = false;
         let activeGenre = "همه";
+        let activeHomeAllGenre = null;
         let roomsData = [];
         let activeRoomId = null;
         let activeRoomName = "";
@@ -4949,19 +5066,6 @@
                 }
             };
 
-            const socialEmbedUrl = !isDirectVideoFileUrl(cleanUrl) ? resolveSocialEmbedUrl(cleanUrl) : "";
-            if (socialEmbedUrl) {
-                currentLoadedMovieId = mv.id;
-                if (hlsInstance) {
-                    try { hlsInstance.destroy(); } catch (_) {}
-                    hlsInstance = null;
-                }
-                frameWrapEl.innerHTML = `<iframe src="${escAttr(socialEmbedUrl)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%; height:100%; border:0; background:#000;"></iframe>`;
-                setMoviePlayerStatus("در حال پخش در پلیر داخلی برنامه", false, false);
-                triggerFullAfterPlay();
-                return;
-            }
-
             ensureMainVideoElementInFrame();
 
             const isSameMovie = currentLoadedMovieId === mv.id && Boolean(videoEl.src);
@@ -5002,12 +5106,6 @@
                 onReadyPlay: triggerFullAfterPlay,
                 onError: (errReason) => {
                     if (playbackStoppedManually) return;
-                    const fallbackEmbed = resolveSocialEmbedUrl(cleanUrl);
-                    if (fallbackEmbed) {
-                        frameWrapEl.innerHTML = `<iframe src="${escAttr(fallbackEmbed)}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen style="width:100%; height:100%; border:0; background:#000;"></iframe>`;
-                        setMoviePlayerStatus("در حال پخش در پلیر داخلی برنامه", false, false);
-                        return;
-                    }
                     if (errReason === "hls_fatal") {
                         hlsInstance = bindCrossPlatformMedia(videoEl, plyrInstance, cleanUrl, {
                             posterUrl,
@@ -5534,6 +5632,9 @@
             const navBtn = document.getElementById("tb-" + tabKey);
             if (navBtn) navBtn.classList.add("active");
 
+            if (tabKey === "home") {
+                closeHomeGenreAllView();
+            }
             if (tabKey === "admin") {
                 syncAdminView();
                 renderAdminPresetGenres();
@@ -5602,9 +5703,6 @@
             tryOpenDeepLinkedMovie();
         });
 
-        // =====================================================================
-        // اسلایدر ۵ فیلم رندوم (تغییر هر ۵ ثانیه) و اسلایدرهای تفکیک‌شده ژانرها
-        // =====================================================================
         let homeRandomFiveMovies = [];
         let homeRandomSlideIndex = 0;
         let homeRandomIntervalId = null;
@@ -5677,26 +5775,94 @@
             return list.includes(genreName);
         }
 
+        /* نمایش همه در منوی خانه -> باز کردن نمای ۱۶:۹ در همان خانه (بدون رفتن به سرچ) */
         function openGenreInSearch(genreName) {
-            activeGenre = genreName;
-            const searchInp = document.getElementById("search-movie-input");
-            if (searchInp) searchInp.value = "";
-            openTab("search");
+            activeHomeAllGenre = genreName;
+            const mainHome = document.getElementById("home-main-content");
+            const allView = document.getElementById("home-all-genre-view");
+            const titleEl = document.getElementById("home-all-genre-title");
+            if (mainHome) mainHome.style.display = "none";
+            if (allView) allView.style.display = "block";
+            if (titleEl) titleEl.innerText = `همه فیلم‌های ${genreName}`;
+            renderHomeGenreAll16x9();
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function closeHomeGenreAllView() {
+            activeHomeAllGenre = null;
+            const mainHome = document.getElementById("home-main-content");
+            const allView = document.getElementById("home-all-genre-view");
+            if (allView) allView.style.display = "none";
+            if (mainHome) mainHome.style.display = "block";
+        }
+
+        function buildPoster16x9CardHtml(mv) {
+            const isFav = favIds.includes(mv.id);
+            const viewsCount = Number(mv.views) || 0;
+            const isPost = mv.itemType === "post";
+            const kindTag = isPost ? "پست" : "فیلم";
+            const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
+            const onCardClick = isPost
+                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
+                : `openMovieDetail('${escAttr(mv.id)}', 'home')`;
+
+            return `
+                <div class="glass movie-card-16x9" onclick="${onCardClick}">
+                    <div class="poster-16x9-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(mv.id)}">
+                        <img src="${escAttr(posterSrc)}" alt="${escAttr(mv.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
+                        <div class="poster-16x9-overlay">
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span class="pill-tag" style="margin-bottom:0;">${esc(kindTag)}</span>
+                                ${renderLangBadgeHtml(mv.langType || "dub")}
+                                ${renderCustomLogoHtml(mv)}
+                            </div>
+                            <div class="poster-16x9-title">${esc(mv.title)}</div>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--text-muted); flex-wrap:wrap; gap:6px;">
+                        <span>${esc(mv.genre || "درام")} ${mv.year ? "• " + esc(mv.year) : ""}</span>
+                        <span>👁 ${viewsCount} بازدید</span>
+                    </div>
+
+                    ${mv.desc ? `<div class="movie-desc-short" style="margin-bottom:0;">${esc(mv.desc)}</div>` : ``}
+
+                    <div class="movie-actions-row" onclick="event.stopPropagation()">
+                        <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(mv.id)}" onclick="playMovieById('${escAttr(mv.id)}', true)">▶ پخش</button>
+                        ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 ساخت اتاق</button>` : ``}
+                        <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">${isFav ? "♥ ذخیره شد" : "♡ ذخیره"}</button>
+                        <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 لینک</button>
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderHomeGenreAll16x9() {
+            const grid = document.getElementById("home-all-genre-grid-16x9");
+            if (!grid || !activeHomeAllGenre) return;
+            const films = moviesList.filter(m => m.itemType !== "post" && itemMatchesGenre(m, activeHomeAllGenre));
+            if (!films.length) {
+                grid.innerHTML = `<div class="glass empty-note">هنوز فیلمی در ژانر «${esc(activeHomeAllGenre)}» ثبت نشده است.</div>`;
+                return;
+            }
+            grid.innerHTML = films.map(buildPoster16x9CardHtml).join("");
         }
 
         function renderHomeGenreCarousels() {
             const container = document.getElementById("home-genre-carousels-container");
             if (!container) return;
 
-            const adminFilms = moviesList.filter(m => !isUserCreatedItem(m) && m.itemType !== "post");
-            const sourcePool = adminFilms.length ? adminFilms : moviesList.filter(m => m.itemType !== "post");
+            const allFilms = moviesList.filter(m => m.itemType !== "post");
+            if (!allFilms.length) {
+                container.innerHTML = `<div class="glass empty-note">هنوز فیلمی در برنامه ثبت نشده است.</div>`;
+                return;
+            }
 
-            container.innerHTML = PRESET_GENRES.map(genreName => {
-                const matching = sourcePool.filter(m => itemMatchesGenre(m, genreName));
+            const sectionsHtml = PRESET_GENRES.map(genreName => {
+                const matching = allFilms.filter(m => itemMatchesGenre(m, genreName));
                 if (!matching.length) return "";
-                const topFive = matching.slice(0, 5);
 
-                const slidesHtml = topFive.map(mv => {
+                const cardsHtml = matching.map(mv => {
                     const posterSrc = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
                     return `
                         <div class="glass genre-slide-poster-card" onclick="openMovieDetail('${escAttr(mv.id)}', 'home')">
@@ -5704,8 +5870,9 @@
                                 <img src="${escAttr(posterSrc)}" alt="${escAttr(mv.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
                             </div>
                             <div class="genre-slide-title">${esc(mv.title)}</div>
-                            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px; flex-wrap:wrap;">
+                            <div style="display:flex; align-items:center; justify-content:space-between; gap:4px;">
                                 ${renderLangBadgeHtml(mv.langType || "dub")}
+                                <span style="font-size:10.5px; color:var(--text-muted);">👁 ${Number(mv.views) || 0}</span>
                             </div>
                         </div>
                     `;
@@ -5713,9 +5880,9 @@
 
                 const showAllCardHtml = `
                     <div class="glass genre-show-all-card" onclick="openGenreInSearch('${escAttr(genreName)}')">
-                        <span class="pill-tag" style="margin-bottom:0;">${matching.length} فیلم</span>
-                        <strong style="font-size:14px; font-weight:900; color:var(--text-strong);">نمایش همه</strong>
-                        <span style="font-size:11px; color:var(--chip-text);">ژانر ${esc(genreName)}</span>
+                        <span class="pill-tag" style="margin-bottom:0;">نمایش همه</span>
+                        <strong style="font-size:13.5px; font-weight:900; color:var(--text-strong);">${esc(genreName)}</strong>
+                        <span style="font-size:11px; color:var(--text-muted);">${matching.length} فیلم • ۱۶:۹</span>
                     </div>
                 `;
 
@@ -5726,77 +5893,33 @@
                             <button type="button" class="btn-sec" style="padding:4px 10px; font-size:11px;" onclick="openGenreInSearch('${escAttr(genreName)}')">نمایش همه</button>
                         </div>
                         <div class="genre-carousel-track">
-                            ${slidesHtml}
+                            ${cardsHtml}
                             ${showAllCardHtml}
                         </div>
                     </section>
                 `;
-            }).join("") || `<div class="glass empty-note">هنوز فیلمی در ژانرها ثبت نشده است.</div>`;
+            }).join("");
+
+            container.innerHTML = sectionsHtml || `<div class="glass empty-note">فیلمی برای نمایش یافت نشد.</div>`;
         }
 
-        function toggleFavorite(id) {
-            if (favIds.includes(id)) {
-                favIds = favIds.filter(x => x !== id);
-            } else {
-                favIds.push(id);
-            }
-            localStorage.setItem(FAV_STORAGE, JSON.stringify(favIds));
-            userProfileRef.update({ favorites: favIds, updatedAt: Date.now() }).catch(() => {});
-            renderAllMovieViews();
-            if (selectedDetailMovieId) {
-                renderMovieDetailContent();
-            }
-        }
-
-        function buildMovieCardHtml(mv) {
-            const isFav = favIds.includes(mv.id);
-            const viewsCount = Number(mv.views) || 0;
-            const isPost = mv.itemType === "post";
-            const kindTag = isPost ? "پست" : "فیلم";
-            const onCardClick = isPost
-                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
-                : `openMovieDetail('${escAttr(mv.id)}')`;
-            const onPlayClick = isPost
-                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
-                : `playMovieById('${escAttr(mv.id)}', true)`;
-
-            return `
-                <div class="glass movie-card" onclick="${onCardClick}">
-                    <div class="movie-card-top-row">
-                        <div class="movie-poster-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${isPost ? "event.stopPropagation()" : ""}">
-                            ${getIdlePostMediaHtml(mv)}
-                        </div>
-                        <div class="movie-info-col">
-                            <strong>${esc(mv.title)}</strong>
-                            <div class="movie-sub-meta">
-                                ${renderLangBadgeHtml(mv.langType || "dub")}
-                                ${renderCustomLogoHtml(mv)}
-                                <span>${esc(kindTag)} • ${esc(mv.genre || "درام")}</span>
-                                ${mv.year ? `<span>• ${esc(mv.year)}</span>` : ""}
-                                <span>• 👁 ${viewsCount}</span>
-                            </div>
-                            <div class="movie-desc-short">${esc(mv.desc || (isPost ? "برای پخش با پلیر اختصاصی روی همین قاب ضربه بزنید" : "برای مشاهده توضیحات و پخش ضربه بزنید"))}</div>
-                            <div class="movie-actions-row" onclick="event.stopPropagation()">
-                                <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${onPlayClick}">▶ پخش</button>
-                                ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 اتاق</button>` : ``}
-                                <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 اشتراک</button>
-                                <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">${isFav ? "♥ ذخیره" : "♡"}</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        function renderHomeMovies() {
+        function renderAllMovieViews() {
             renderHomeGenreCarousels();
+            if (activeHomeAllGenre) renderHomeGenreAll16x9();
+            renderGenreChips();
+            renderFilteredMovies();
+            renderFavoritesList();
+            renderAdminMoviesList();
+            renderPageMyItems();
+            renderExploreSections();
+            populateRoomMovieSelect();
         }
 
         function renderGenreChips() {
             const box = document.getElementById("genre-filter-chips");
             if (!box) return;
-            const allChips = ["همه", ...PRESET_GENRES];
-            box.innerHTML = allChips.map(g => `
+            const genres = ["همه", ...PRESET_GENRES];
+            box.innerHTML = genres.map(g => `
                 <button type="button" class="genre-chip ${activeGenre === g ? "active" : ""}" onclick="selectGenre('${escAttr(g)}')">${esc(g)}</button>
             `).join("");
         }
@@ -5808,38 +5931,106 @@
         }
 
         function renderFilteredMovies() {
+            const box = document.getElementById("search-movies-list");
+            if (!box) return;
             const q = (document.getElementById("search-movie-input").value || "").trim().toLowerCase();
-            const list = document.getElementById("search-movies-list");
-            const filtered = moviesList.filter(m => {
-                const matchGenre = activeGenre === "همه" || itemMatchesGenre(m, activeGenre);
-                const matchText = !q ||
+
+            const list = moviesList.filter(m => {
+                const matchG = activeGenre === "همه" || itemMatchesGenre(m, activeGenre);
+                const matchQ = !q ||
                     (m.title || "").toLowerCase().includes(q) ||
                     (m.genre || "").toLowerCase().includes(q) ||
                     (m.desc || "").toLowerCase().includes(q);
-                return matchGenre && matchText;
+                return matchG && matchQ;
             });
 
-            list.innerHTML = filtered.length
-                ? filtered.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">موردی با این فیلتر پیدا نشد.</div>`;
+            if (!list.length) {
+                box.innerHTML = `<div class="glass empty-note">موردی با این جستجو یا ژانر پیدا نشد.</div>`;
+                return;
+            }
+            box.innerHTML = list.map(buildPoster16x9CardHtml).join("");
         }
 
         function renderFavoritesList() {
-            const list = document.getElementById("favorites-movies-list");
-            const saved = moviesList.filter(m => favIds.includes(m.id));
-            list.innerHTML = saved.length
-                ? saved.map(buildMovieCardHtml).join("")
-                : `<div class="glass empty-note">هنوز فیلمی به لیست خود اضافه نکرده‌اید.</div>`;
+            const box = document.getElementById("favorites-movies-list");
+            if (!box) return;
+            const favMovies = moviesList.filter(m => favIds.includes(m.id));
+            if (!favMovies.length) {
+                box.innerHTML = `<div class="glass empty-note">لیست فیلم‌های شما هنوز خالی است. با زدن «♡ ذخیره» فیلم‌ها را به لیست خود اضافه کنید.</div>`;
+                return;
+            }
+            box.innerHTML = favMovies.map(buildMovieCardHtml).join("");
         }
 
-        // =====================================================================
-        // پنل ادمین تفکیک‌شده (فیلم و پست، اعلان همگانی و تکی، کاربران و مسدودسازی)
-        // =====================================================================
-        let currentAdminMediaMode = "movie";
-        let currentTargetNotifyUid = null;
-        let currentEditingMediaId = null;
-        let pendingEditCoverData = "";
-        let pendingEditLogoData = "";
+        function buildMovieCardHtml(mv) {
+            const isFav = favIds.includes(mv.id);
+            const viewsCount = Number(mv.views) || 0;
+            const isPost = mv.itemType === "post";
+            const kindTag = isPost ? "پست" : "فیلم";
+            const cInfo = getCreatorInfo(mv);
+            const hasCreator = Boolean(cInfo.uid);
+            const onCardClick = isPost
+                ? `togglePostInlinePlayback('${escAttr(mv.id)}')`
+                : `openMovieDetail('${escAttr(mv.id)}')`;
+
+            return `
+                <div class="glass movie-card" onclick="${onCardClick}">
+                    ${hasCreator ? `
+                        <div class="explore-author-strip" onclick="event.stopPropagation(); openCreatorPageInExplore('${escAttr(cInfo.uid)}')">
+                            <div style="display:flex; align-items:center; gap:7px; min-width:0; flex:1;">
+                                <img class="explore-author-avatar" src="${escAttr(cInfo.avatar)}" alt="${escAttr(cInfo.name)}" onerror="this.src='${DEFAULT_AVATAR}'">
+                                <div style="min-width:0;">
+                                    <strong style="display:block; font-size:11.5px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.name)}</strong>
+                                    <span style="display:block; font-size:10px; color:var(--chip-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.handle)}</span>
+                                </div>
+                            </div>
+                            <span class="pill-tag" style="margin-bottom:0; font-size:10px;">مشاهده پیج</span>
+                        </div>
+                    ` : ``}
+
+                    <div class="movie-card-top-row">
+                        <div class="movie-poster-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(mv.id)}" onclick="${isPost ? "event.stopPropagation()" : ""}">
+                            ${getIdlePostMediaHtml(mv)}
+                        </div>
+                        <div class="movie-info-col">
+                            <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:3px;">
+                                <span class="pill-tag" style="margin-bottom:0;">${esc(kindTag)}</span>
+                                ${renderLangBadgeHtml(mv.langType || "dub")}
+                                ${renderCustomLogoHtml(mv)}
+                            </div>
+                            <strong>${esc(mv.title)}</strong>
+                            <div class="movie-sub-meta">
+                                <span>${esc(mv.genre || "درام")} ${mv.year ? "• " + esc(mv.year) : ""}</span>
+                                <span>• 👁 ${viewsCount} بازدید</span>
+                            </div>
+                            <div class="movie-desc-short">${esc(mv.desc || "")}</div>
+                            <div class="movie-actions-row" onclick="event.stopPropagation()">
+                                <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(mv.id)}" onclick="playMovieById('${escAttr(mv.id)}', true)">▶ پخش</button>
+                                ${!isPost ? `<button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(mv.id)}')">👥 ساخت اتاق</button>` : ``}
+                                <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(mv.id)}')">${isFav ? "♥ ذخیره شد" : "♡ ذخیره"}</button>
+                                <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(mv.id)}')">🔗 لینک</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        async function toggleFavorite(id) {
+            if (favIds.includes(id)) {
+                favIds = favIds.filter(x => x !== id);
+            } else {
+                favIds.push(id);
+            }
+            localStorage.setItem(FAV_STORAGE, JSON.stringify(favIds));
+            renderAllMovieViews();
+            if (selectedDetailMovieId === id) {
+                renderMovieDetailContent();
+            }
+            if (isAccountCompleted()) {
+                await userProfileRef.update({ favorites: favIds }).catch(() => {});
+            }
+        }
 
         function loginAdminPanel(e) {
             e.preventDefault();
@@ -5849,10 +6040,8 @@
                 document.getElementById("adm-login-error").style.display = "none";
                 document.getElementById("adm-pass-field").value = "";
                 syncAdminView();
-                switchAdminSubtab("media");
                 renderAdminPresetGenres();
                 selectAdminItemLang(adminSelectedLang);
-                renderAdminMoviesList();
                 renderAdminUsersList();
             } else {
                 document.getElementById("adm-login-error").style.display = "block";
@@ -5875,92 +6064,148 @@
             if (subKey === "media") renderAdminMoviesList();
         }
 
+        let adminMediaMode = "movie";
         function setAdminMediaMode(mode) {
-            currentAdminMediaMode = mode === "post" ? "post" : "movie";
-            const isPost = currentAdminMediaMode === "post";
-            document.getElementById("adm-composer-heading").innerText =
-                isPost ? "افزودن پست جدید" : "افزودن فیلم جدید";
-            document.getElementById("adm-title-label").innerText =
-                isPost ? "عنوان پست" : "نام فیلم";
-            document.getElementById("m-title").placeholder =
-                isPost ? "عنوان پست را وارد کنید" : "نام فیلم را وارد کنید";
-            document.getElementById("adm-submit-media-btn").innerText =
-                isPost ? "انتشار پست" : "انتشار فیلم";
-            document.getElementById("adm-btn-mode-movie").className = isPost ? "btn-sec" : "btn-watch";
+            adminMediaMode = mode === "post" ? "post" : "movie";
+            const isPost = adminMediaMode === "post";
+            document.getElementById("adm-btn-mode-movie").className = !isPost ? "btn-watch" : "btn-sec";
             document.getElementById("adm-btn-mode-post").className = isPost ? "btn-watch" : "btn-sec";
-            document.getElementById("adm-btn-mode-movie").style.padding = "6px 11px";
-            document.getElementById("adm-btn-mode-movie").style.fontSize = "11.5px";
-            document.getElementById("adm-btn-mode-post").style.padding = "6px 11px";
-            document.getElementById("adm-btn-mode-post").style.fontSize = "11.5px";
+            document.getElementById("adm-composer-heading").innerText = isPost ? "افزودن پست جدید" : "افزودن فیلم جدید";
+            document.getElementById("adm-title-label").innerText = isPost ? "عنوان پست" : "نام فیلم";
+            document.getElementById("m-title").placeholder = isPost ? "عنوان پست را وارد کنید" : "نام فیلم را وارد کنید";
+            document.getElementById("adm-submit-media-btn").innerText = isPost ? "انتشار پست" : "انتشار فیلم";
         }
 
         async function addNewMovie(e) {
             e.preventDefault();
-            if (!adminAuthed) return;
             const title = document.getElementById("m-title").value.trim();
-            const genresArr = adminSelectedGenres.length ? adminSelectedGenres : ["درام"];
-            const genre = genresArr.join("، ");
+            const genresArr = adminSelectedGenres.length ? adminSelectedGenres.slice() : ["اکشن"];
             const year = document.getElementById("m-year").value.trim();
             const poster = document.getElementById("m-poster").value.trim();
-            const customLogoText = document.getElementById("m-logo-text").value.trim();
+            const customLogoText = (document.getElementById("m-logo-text").value || "").trim();
             const videoUrl = document.getElementById("m-video").value.trim();
             const desc = document.getElementById("m-desc").value.trim();
             if (!title || !videoUrl) return;
 
             await moviesRef.push({
                 title,
-                itemType: currentAdminMediaMode,
+                itemType: adminMediaMode,
                 genres: genresArr,
-                genre,
+                genre: genresArr.join("، "),
                 year,
                 langType: adminSelectedLang,
                 poster,
                 customLogoText,
-                customLogoUrl: "",
                 videoUrl,
                 desc,
                 views: 0,
                 createdAt: Date.now()
             });
+
             document.getElementById("m-title").value = "";
             document.getElementById("m-poster").value = "";
             document.getElementById("m-logo-text").value = "";
             document.getElementById("m-video").value = "";
             document.getElementById("m-desc").value = "";
+            alert(adminMediaMode === "post" ? "پست منتشر شد." : "فیلم منتشر شد.");
         }
 
-        function openAdminMediaEditModal(id) {
-            const item = moviesList.find(m => m.id === id);
-            if (!item) return;
-            currentEditingMediaId = id;
-            pendingEditCoverData = "";
-            pendingEditLogoData = "";
+        let editingAdminMediaId = null;
+        let editingAdminType = "movie";
+        let editingAdminGenres = ["اکشن"];
+        let editingAdminLang = "dub";
+        let editingAdminCoverUpload = "";
+        let editingAdminLogoUpload = "";
+        let selectedBulkIds = new Set();
 
-            document.getElementById("adm-edit-media-title").innerText = `ویرایش «${item.title || ""}»`;
-            document.getElementById("adm-edit-cover-url").value =
-                item.poster && !item.poster.startsWith("data:") ? item.poster : "";
+        function renderAdminEditGenresGrid() {
+            const box = document.getElementById("adm-edit-genres-grid");
+            if (!box) return;
+            box.innerHTML = PRESET_GENRES.map(g => {
+                const active = editingAdminGenres.includes(g);
+                return `
+                    <button type="button" class="multi-genre-btn ${active ? "selected" : ""}" onclick="toggleAdminEditGenre('${escAttr(g)}')">
+                        ${active ? "✓ " : ""}${esc(g)}
+                    </button>
+                `;
+            }).join("");
+        }
+
+        function toggleAdminEditGenre(gName) {
+            if (editingAdminGenres.includes(gName)) {
+                if (editingAdminGenres.length > 1) {
+                    editingAdminGenres = editingAdminGenres.filter(x => x !== gName);
+                }
+            } else {
+                editingAdminGenres.push(gName);
+            }
+            renderAdminEditGenresGrid();
+        }
+
+        function setAdminEditType(typeKey) {
+            editingAdminType = typeKey === "post" ? "post" : "movie";
+            document.getElementById("adm-edit-type-movie").className = editingAdminType === "movie" ? "btn-watch" : "btn-sec";
+            document.getElementById("adm-edit-type-post").className = editingAdminType === "post" ? "btn-watch" : "btn-sec";
+        }
+
+        function setAdminEditLang(langKey) {
+            editingAdminLang = langKey;
+            document.getElementById("adm-edit-lang-dub").className = "lang-choice-btn" + (langKey === "dub" ? " active-dub" : "");
+            document.getElementById("adm-edit-lang-sub").className = "lang-choice-btn" + (langKey === "sub" ? " active-sub" : "");
+            document.getElementById("adm-edit-lang-orig").className = "lang-choice-btn" + (langKey === "orig" ? " active-orig" : "");
+        }
+
+        function openAdminMediaEditModal(itemId) {
+            const item = moviesList.find(m => m.id === itemId);
+            if (!item) return;
+            editingAdminMediaId = itemId;
+            editingAdminCoverUpload = "";
+            editingAdminLogoUpload = "";
+
+            editingAdminType = item.itemType === "post" ? "post" : "movie";
+            editingAdminGenres = Array.isArray(item.genres) && item.genres.length
+                ? item.genres.slice()
+                : String(item.genre || "اکشن").split(/[،,]/).map(s => s.trim()).filter(Boolean);
+            if (!editingAdminGenres.length) editingAdminGenres = ["اکشن"];
+            editingAdminLang = item.langType || "dub";
+
+            document.getElementById("adm-edit-media-title").innerText = `ویرایش کامل: ${item.title || ""}`;
+            document.getElementById("adm-edit-title").value = item.title || "";
+            document.getElementById("adm-edit-year").value = item.year || "";
+            document.getElementById("adm-edit-video-url").value = item.videoUrl || "";
+            document.getElementById("adm-edit-cover-url").value = (item.poster || "").startsWith("data:") ? "" : (item.poster || "");
+            document.getElementById("adm-edit-cover-file").value = "";
             document.getElementById("adm-edit-logo-text").value = item.customLogoText || "";
-            document.getElementById("adm-edit-logo-url").value =
-                item.customLogoUrl && !item.customLogoUrl.startsWith("data:") ? item.customLogoUrl : "";
+            document.getElementById("adm-edit-logo-url").value = (item.customLogoUrl || "").startsWith("data:") ? "" : (item.customLogoUrl || "");
+            document.getElementById("adm-edit-logo-file").value = "";
+            document.getElementById("adm-edit-desc").value = item.desc || "";
+
+            setAdminEditType(editingAdminType);
+            renderAdminEditGenresGrid();
+            setAdminEditLang(editingAdminLang);
 
             document.getElementById("admin-edit-media-modal").classList.add("show");
         }
 
         function closeAdminMediaEditModal() {
-            currentEditingMediaId = null;
-            pendingEditCoverData = "";
-            pendingEditLogoData = "";
+            editingAdminMediaId = null;
+            editingAdminCoverUpload = "";
+            editingAdminLogoUpload = "";
             document.getElementById("admin-edit-media-modal").classList.remove("show");
         }
 
-        function handleAdminEditFilePicked(e, kind) {
+        function handleAdminEditFilePicked(e, targetKind) {
             const file = e.target && e.target.files && e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = () => {
-                if (typeof reader.result === "string") {
-                    if (kind === "cover") pendingEditCoverData = reader.result;
-                    if (kind === "logo") pendingEditLogoData = reader.result;
+                if (typeof reader.result !== "string") return;
+                if (targetKind === "cover") {
+                    editingAdminCoverUpload = reader.result;
+                    document.getElementById("adm-edit-cover-url").value = "";
+                } else {
+                    editingAdminLogoUpload = reader.result;
+                    document.getElementById("adm-edit-logo-url").value = "";
                 }
             };
             reader.readAsDataURL(file);
@@ -5968,27 +6213,109 @@
 
         async function submitAdminMediaEdit(e) {
             e.preventDefault();
-            if (!currentEditingMediaId) return;
-            const curr = moviesList.find(m => m.id === currentEditingMediaId) || {};
-            const coverUrlInp = (document.getElementById("adm-edit-cover-url").value || "").trim();
-            const logoTextInp = (document.getElementById("adm-edit-logo-text").value || "").trim();
-            const logoUrlInp = (document.getElementById("adm-edit-logo-url").value || "").trim();
+            if (!editingAdminMediaId) return;
+            const existing = moviesList.find(m => m.id === editingAdminMediaId) || {};
 
-            const nextPoster = coverUrlInp || pendingEditCoverData || curr.poster || "";
-            const nextLogoUrl = logoUrlInp || pendingEditLogoData || curr.customLogoUrl || "";
+            const titleVal = (document.getElementById("adm-edit-title").value || "").trim();
+            const yearVal = (document.getElementById("adm-edit-year").value || "").trim();
+            const videoVal = (document.getElementById("adm-edit-video-url").value || "").trim();
+            const coverUrlVal = (document.getElementById("adm-edit-cover-url").value || "").trim();
+            const logoTextVal = (document.getElementById("adm-edit-logo-text").value || "").trim();
+            const logoUrlVal = (document.getElementById("adm-edit-logo-url").value || "").trim();
+            const descVal = (document.getElementById("adm-edit-desc").value || "").trim();
 
-            await moviesRef.child(currentEditingMediaId).update({
-                poster: nextPoster,
-                customLogoText: logoTextInp,
-                customLogoUrl: nextLogoUrl,
+            if (!titleVal || !videoVal) return;
+
+            const finalPoster = coverUrlVal || editingAdminCoverUpload || existing.poster || "";
+            const finalLogoUrl = logoUrlVal || editingAdminLogoUpload || existing.customLogoUrl || "";
+            const genresToSave = editingAdminGenres.length ? editingAdminGenres.slice() : ["اکشن"];
+
+            await moviesRef.child(editingAdminMediaId).update({
+                title: titleVal,
+                itemType: editingAdminType,
+                genres: genresToSave,
+                genre: genresToSave.join("، "),
+                langType: editingAdminLang,
+                year: yearVal,
+                videoUrl: videoVal,
+                poster: finalPoster,
+                customLogoText: logoTextVal,
+                customLogoUrl: finalLogoUrl,
+                desc: descVal,
                 updatedAt: Date.now()
             });
+
             closeAdminMediaEditModal();
+            alert("تغییرات کامل آیتم ذخیره شد.");
         }
 
-        async function deleteMovie(id) {
-            if (!confirm("آیا مطمئنید این آیتم حذف شود؟")) return;
-            await moviesRef.child(id).remove();
+        function updateBulkCountLabel() {
+            const el = document.getElementById("adm-bulk-count");
+            if (el) el.innerText = String(selectedBulkIds.size);
+        }
+
+        function toggleBulkItemCheck(itemId, checked) {
+            if (checked) selectedBulkIds.add(itemId);
+            else selectedBulkIds.delete(itemId);
+            updateBulkCountLabel();
+        }
+
+        function toggleAdminSelectAll(checked) {
+            selectedBulkIds.clear();
+            if (checked) {
+                moviesList.forEach(m => selectedBulkIds.add(m.id));
+            }
+            document.querySelectorAll(".adm-bulk-item-cb").forEach(cb => {
+                cb.checked = checked;
+            });
+            updateBulkCountLabel();
+        }
+
+        async function applyAdminBulkEdit() {
+            if (!selectedBulkIds.size) {
+                alert("ابتدا حداقل یک آیتم را با چک‌باکس انتخاب کنید.");
+                return;
+            }
+            const gVal = (document.getElementById("adm-bulk-genre").value || "").trim();
+            const lVal = (document.getElementById("adm-bulk-lang").value || "").trim();
+            if (!gVal && !lVal) {
+                alert("لطفاً تغییر ژانر یا تغییر زبان را انتخاب کنید.");
+                return;
+            }
+
+            const updates = {};
+            selectedBulkIds.forEach(id => {
+                const item = moviesList.find(m => m.id === id);
+                if (!item) return;
+                if (gVal) {
+                    updates[`${id}/genres`] = [gVal];
+                    updates[`${id}/genre`] = gVal;
+                }
+                if (lVal) {
+                    updates[`${id}/langType`] = lVal;
+                }
+                updates[`${id}/updatedAt`] = Date.now();
+            });
+
+            await moviesRef.update(updates);
+            alert("تغییر کلی روی موارد انتخاب‌شده اعمال شد.");
+        }
+
+        async function applyAdminBulkDelete() {
+            if (!selectedBulkIds.size) {
+                alert("هیچ آیتمی انتخاب نشده است.");
+                return;
+            }
+            if (!confirm(`آیا مطمئنید ${selectedBulkIds.size} آیتم انتخاب‌شده حذف شوند؟`)) return;
+            const updates = {};
+            selectedBulkIds.forEach(id => {
+                updates[id] = null;
+            });
+            await moviesRef.update(updates);
+            selectedBulkIds.clear();
+            const allCb = document.getElementById("adm-select-all-cb");
+            if (allCb) allCb.checked = false;
+            updateBulkCountLabel();
         }
 
         async function submitGlobalAnnouncement(e) {
@@ -6005,25 +6332,29 @@
                 createdAt: now,
                 expiresAt: now + durationToMs(val, unit)
             });
+
             document.getElementById("adm-global-notif-text").value = "";
-            alert("اعلان همگانی برای همه کاربران ارسال شد.");
+            alert("اعلان همگانی ارسال شد.");
         }
 
-        function openAdminUserNotifyModal(uid, uName) {
-            currentTargetNotifyUid = uid;
-            document.getElementById("adm-notify-target-title").innerText = `ارسال اعلان برای ${uName || "کاربر"}`;
+        let targetNotifyUid = null;
+        function openAdminUserNotifyModal(uid) {
+            const u = allUsersMap[uid] || {};
+            targetNotifyUid = uid;
+            document.getElementById("adm-notify-target-title").innerText =
+                `اعلان برای: ${u.name || "کاربر"} (${u.handle || "@user"})`;
             document.getElementById("adm-target-notif-text").value = "";
             document.getElementById("admin-user-notify-modal").classList.add("show");
         }
 
         function closeAdminUserNotifyModal() {
-            currentTargetNotifyUid = null;
+            targetNotifyUid = null;
             document.getElementById("admin-user-notify-modal").classList.remove("show");
         }
 
         async function submitTargetedAnnouncement(e) {
             e.preventDefault();
-            if (!currentTargetNotifyUid) return;
+            if (!targetNotifyUid) return;
             const text = (document.getElementById("adm-target-notif-text").value || "").trim();
             const val = Number(document.getElementById("adm-target-notif-val").value || 30);
             const unit = document.getElementById("adm-target-notif-unit").value;
@@ -6032,112 +6363,113 @@
             const now = Date.now();
             await announcementsRef.push({
                 scope: "targeted",
-                targetUid: currentTargetNotifyUid,
+                targetUid: targetNotifyUid,
                 text,
                 createdAt: now,
                 expiresAt: now + durationToMs(val, unit)
             });
+
             closeAdminUserNotifyModal();
             alert("اعلان اختصاصی برای کاربر ارسال شد.");
         }
 
-        async function toggleBanUser(uid, currentBanned) {
-            if (!uid) return;
-            await db.ref("zeuc_movie_v1/users/" + uid).update({
-                banned: !currentBanned,
-                updatedAt: Date.now()
-            });
+        async function toggleBanUser(uid) {
+            const u = allUsersMap[uid] || {};
+            const nextBanned = !(u.banned === true);
+            await db.ref("zeuc_movie_v1/users/" + uid).update({ banned: nextBanned });
         }
 
-        async function deleteUserRecord(uid, uHandle) {
-            if (!uid) return;
-            if (!confirm("آیا حساب این کاربر کاملاً حذف شود؟")) return;
-            const hKey = handleKeyFromNormalized(uHandle);
+        async function deleteUserAccount(uid) {
+            const u = allUsersMap[uid] || {};
+            if (!confirm(`آیا کاربر «${u.name || "کاربر"}» حذف شود؟`)) return;
+            const hKey = handleKeyFromNormalized(u.handle);
             if (hKey) {
-                await handlesRegistryRef.child(hKey).remove().catch(() => {});
+                handlesRegistryRef.child(hKey).remove().catch(() => {});
             }
             await db.ref("zeuc_movie_v1/users/" + uid).remove();
-        }
-
-        function renderAdminMoviesList() {
-            const box = document.getElementById("adm-movies-list");
-            if (!box) return;
-            box.innerHTML = moviesList.length
-                ? moviesList.map(m => `
-                    <div class="adm-user-row">
-                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
-                            <div>
-                                <strong>${esc(m.title)}</strong>
-                                <span style="display:block; font-size:11px; color:var(--text-muted);">${m.itemType === "post" ? "پست" : "فیلم"} • ${esc(m.genre || "")}</span>
-                            </div>
-                            <div style="display:flex; gap:6px;">
-                                <button type="button" class="btn-sec" style="padding:6px 10px; font-size:11px;" onclick="openAdminMediaEditModal('${escAttr(m.id)}')">✏️ کاور و لوگو</button>
-                                <button type="button" class="btn-del" onclick="deleteMovie('${escAttr(m.id)}')">حذف</button>
-                            </div>
-                        </div>
-                    </div>
-                `).join("")
-                : `<div class="empty-note">موردی ثبت نشده است.</div>`;
         }
 
         function renderAdminUsersList() {
             const box = document.getElementById("adm-users-list");
             if (!box) return;
-            const entries = Object.entries(allUsersMap).filter(([_, u]) => u && (u.name || u.handle));
+            const entries = Object.entries(allUsersMap).filter(([_, u]) => u && (u.name || u.handle || u.pin));
             if (!entries.length) {
                 box.innerHTML = `<div class="empty-note">هنوز کاربری ثبت نشده است.</div>`;
                 return;
             }
             box.innerHTML = entries.map(([uid, u]) => {
                 const isBanned = u.banned === true;
-                const uName = u.name || "کاربر";
-                const uHandle = u.handle || "@user";
                 return `
                     <div class="adm-user-row">
                         <div>
-                            <strong>${esc(uName)}</strong>
-                            <span style="font-size:11.5px; color:var(--chip-text); margin-right:6px;">${esc(uHandle)}</span>
+                            <strong style="font-size:13.5px; color:var(--text-strong);">${esc(u.name || "کاربر")}</strong>
+                            <span style="font-size:11.5px; color:var(--chip-text);">(${esc(u.handle || "@user")})</span>
                             ${isBanned ? `<span class="dead-status-badge">مسدود</span>` : ``}
                         </div>
                         <div class="adm-user-actions">
-                            <button type="button" class="btn-sec" style="padding:6px 10px; font-size:11px;" onclick="openAdminUserNotifyModal('${escAttr(uid)}', '${escAttr(uName)}')">📩 اعلان تکی</button>
-                            <button type="button" class="btn-del" onclick="toggleBanUser('${escAttr(uid)}', ${isBanned})">${isBanned ? "رفع مسدودیت" : "مسدود کردن"}</button>
-                            <button type="button" class="btn-del" onclick="deleteUserRecord('${escAttr(uid)}', '${escAttr(uHandle)}')">حذف کاربر</button>
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openAdminUserNotifyModal('${escAttr(uid)}')">📩 اعلان</button>
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="toggleBanUser('${escAttr(uid)}')">${isBanned ? "رفع مسدودیت" : "🚫 مسدود"}</button>
+                            <button type="button" class="btn-del" style="padding:5px 10px; font-size:11px;" onclick="deleteUserAccount('${escAttr(uid)}')">🗑 حذف کاربر</button>
                         </div>
                     </div>
                 `;
             }).join("");
         }
 
-        function renderAllMovieViews() {
+        function renderAdminMoviesList() {
+            const box = document.getElementById("adm-movies-list");
+            if (!box) return;
             document.getElementById("adm-mv-count").innerText = moviesList.length;
-            renderHomeMovies();
-            renderFilteredMovies();
-            renderFavoritesList();
-            renderPageMyItems();
-            renderExploreSections();
-            populateRoomMovieSelect();
-            if (adminAuthed) {
-                renderAdminMoviesList();
-                renderAdminUsersList();
+            updateBulkCountLabel();
+            if (!moviesList.length) {
+                box.innerHTML = `<div class="empty-note">آیتمی ثبت نشده است.</div>`;
+                return;
             }
+            box.innerHTML = moviesList.map(m => {
+                const isChecked = selectedBulkIds.has(m.id);
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; padding:9px 0; border-bottom:1px solid rgba(255,59,92,0.16);">
+                        <div style="min-width:0; flex:1; display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" class="adm-bulk-item-cb" ${isChecked ? "checked" : ""} onchange="toggleBulkItemCheck('${escAttr(m.id)}', this.checked)" style="width:16px; height:16px; flex-shrink:0; cursor:pointer;">
+                            <div style="min-width:0;">
+                                <strong style="font-size:13.5px; color:var(--text-strong);">${esc(m.title)}</strong>
+                                ${renderLangBadgeHtml(m.langType || "dub")}
+                                ${renderCustomLogoHtml(m)}
+                                <span style="display:block; font-size:11px; color:var(--text-muted);">${esc(m.itemType === "post" ? "پست" : "فیلم")} • ${esc(m.genre || "درام")} • 👁 ${Number(m.views) || 0}</span>
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:6px; flex-shrink:0;">
+                            <button type="button" class="btn-sec" style="padding:6px 10px; font-size:11px;" onclick="openAdminMediaEditModal('${escAttr(m.id)}')">✏️ ویرایش کامل</button>
+                            <button type="button" class="btn-del" onclick="deleteMovie('${escAttr(m.id)}')">حذف</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
         }
 
-        function esc(str) {
-            return String(str || "").replace(/[&<>"']/g, m => ({
+        async function deleteMovie(id) {
+            if (!confirm("حذف شود؟")) return;
+            selectedBulkIds.delete(id);
+            await moviesRef.child(id).remove();
+        }
+
+        function esc(s) {
+            return String(s || "").replace(/[&<>"']/g, c => ({
                 "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
-            }[m]));
+            }[c]));
         }
 
-        function escAttr(str) {
-            return String(str || "").replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+        function escAttr(s) {
+            return String(s || "").replace(/'/g, "&#39;").replace(/"/g, "&quot;");
         }
 
+        renderHomeGenreCarousels();
         renderGenreChips();
-        renderComposerGenres();
+        renderFilteredMovies();
+        renderFavoritesList();
         renderAdminPresetGenres();
-        selectPageItemLang("dub");
-        selectAdminItemLang("dub");
+        selectAdminItemLang(adminSelectedLang);
+        renderRoomsList();
         syncRoomPanelsVisibility();
     </script>
 </body>
