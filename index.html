@@ -2740,7 +2740,7 @@
                 <div class="field-box">
                     <label for="adm-edit-video-url">لینک فیلم یا ویدیو (MKV ،MP4 ،M3U8 و سایر لینک‌ها)</label>
                     <input type="url" id="adm-edit-video-url" placeholder="https://example.com/movie.mkv یا .mp4 یا سایر لینک‌ها" required>
-                    <span class="field-hint">پشتیبانی از MKV، MP4، WebM، M3U8 و لینک‌های مستقیم پخش ویدیو</span>
+                    <span class="field-hint">پشتیبانی از MKV، MP4، WebM، M3U8 و سایر لینک‌های مستقیم پخش ویدیو</span>
                 </div>
 
                 <div class="field-box">
@@ -3339,6 +3339,14 @@
             </div>
 
             <form onsubmit="submitPageItem(event)">
+                <div class="field-box" id="page-kind-switch-group">
+                    <label>نوع محتوا</label>
+                    <div style="display:flex; gap:8px;">
+                        <button type="button" id="page-btn-kind-post" class="btn-watch" style="padding:7px 12px; font-size:12px;" onclick="switchComposerMediaKind('post')">پست</button>
+                        <button type="button" id="page-btn-kind-movie" class="btn-sec" style="padding:7px 12px; font-size:12px;" onclick="switchComposerMediaKind('movie')">فیلم</button>
+                    </div>
+                </div>
+
                 <div class="field-box">
                     <label id="page-item-title-label" for="page-item-title">اسم فیلم / عنوان پست</label>
                     <input type="text" id="page-item-title" placeholder="نام فیلم یا عنوان پست را وارد کنید..." required>
@@ -3812,12 +3820,8 @@
         let appBootedOnce = false;
         let bootTimeoutTimer = null;
 
-        function isUserCreatedItem(item) {
-            return Boolean(item && item.authorId);
-        }
-
         function getHomeMoviesList() {
-            return moviesList.filter(m => !isUserCreatedItem(m) && m.itemType !== "post" && m.itemType !== "text");
+            return moviesList.filter(m => m && m.itemType !== "post" && m.itemType !== "text");
         }
 
         function getRequestedMovieIdFromUrl() {
@@ -4180,7 +4184,7 @@
             fixedSlot.innerHTML = `
                 <button type="button" class="promo-ad-close-btn" title="بستن تبلیغ" aria-label="بستن تبلیغ" onclick="event.stopPropagation(); dismissAdBanner('${escAttr(activeAd.id)}')">✕</button>
                 <div class="fixed-ad-link-area" onclick="openAdDestination('${escAttr(activeAd.id)}', '${escAttr(activeAd.targetUrl)}')" title="${escAttr(activeAd.title || "تبلیغ")}">
-                    <img src="${escAttr(activeAd.mediaUrl)}" alt="${escAttr(activeAd.title || "تبلیغ")}" onerror="dismissAdBanner('${escAttr(activeAd.id)}')">
+                    <img src="${escAttr(activeAd.mediaUrl)}" alt="${escAttr(activeAd.title || "تبلیغ")}">
                     <span class="fixed-ad-badge">${esc(activeAd.title || "تبلیغ")}</span>
                 </div>
             `;
@@ -5200,6 +5204,24 @@
             reader.readAsDataURL(file);
         }
 
+        function syncComposerKindButtons() {
+            const bPost = document.getElementById("page-btn-kind-post");
+            const bMovie = document.getElementById("page-btn-kind-movie");
+            if (bPost) bPost.className = composerKind === "post" ? "btn-watch" : "btn-sec";
+            if (bMovie) bMovie.className = composerKind === "movie" ? "btn-watch" : "btn-sec";
+            if (bPost) { bPost.style.padding = "7px 12px"; bPost.style.fontSize = "12px"; }
+            if (bMovie) { bMovie.style.padding = "7px 12px"; bMovie.style.fontSize = "12px"; }
+        }
+
+        function switchComposerMediaKind(kind) {
+            composerKind = kind === "movie" ? "movie" : "post";
+            document.getElementById("composer-kind-pill").innerText =
+                composerKind === "movie" ? "بخش اختصاصی فیلم" : "بخش اختصاصی پست";
+            document.getElementById("composer-form-title").innerText =
+                composerKind === "movie" ? "افزودن فیلم جدید" : "افزودن پست جدید";
+            syncComposerKindButtons();
+        }
+
         function openPageComposer(kind) {
             if (!isAccountCompleted()) {
                 openNameModal("login");
@@ -5216,6 +5238,9 @@
             uploadedCoverDataUrl = "";
             selectedComposerGenres = [AVAILABLE_GENRES[0]];
             selectedComposerLang = "dub";
+
+            document.getElementById("page-kind-switch-group").style.display = isText ? "none" : "block";
+            syncComposerKindButtons();
 
             document.getElementById("composer-kind-pill").innerText =
                 isText ? "بخش اختصاصی متن" : (composerKind === "movie" ? "بخش اختصاصی فیلم" : "بخش اختصاصی پست");
@@ -5304,9 +5329,18 @@
             };
 
             if (moviesRef) {
-                await moviesRef.push(payload).catch(() => {});
+                const pushed = await moviesRef.push(payload).catch(() => null);
+                const newId = (pushed && pushed.key) || ("local_" + Date.now());
+                if (!moviesList.some(m => m.id === newId)) {
+                    moviesList = [{ id: newId, ...payload }, ...moviesList];
+                    shuffledPostsCache = [];
+                    shuffledMoviesCache = [];
+                    renderAllMovieViews();
+                }
             } else {
                 moviesList.unshift({ id: "local_" + Date.now(), ...payload });
+                shuffledPostsCache = [];
+                shuffledMoviesCache = [];
                 renderAllMovieViews();
             }
 
@@ -5314,8 +5348,8 @@
             renderPageMyItems();
             alert(
                 isText
-                    ? "متن در پیج و اکسپلور منتشر شد."
-                    : (composerKind === "movie" ? "فیلم در پیج و اکسپلور منتشر شد." : "پست در پیج و اکسپلور منتشر شد.")
+                    ? "متن منتشر شد و در لیست نمایش داده شد."
+                    : (composerKind === "movie" ? "فیلم منتشر شد و در لیست نمایش داده شد." : "پست منتشر شد و در لیست نمایش داده شد.")
             );
         }
 
@@ -5393,67 +5427,67 @@
                 try { liveTvHls.destroy(); } catch (_) {}
                 liveTvHls = null;
             }
-            try { liveTvPlyr.pause(); } catch (_) {}
             liveTvVideoEl.pause();
             liveTvVideoEl.removeAttribute("src");
             liveTvVideoEl.load();
         }
 
-        function parseM3uText(rawText) {
-            const lines = String(rawText || "").split(/\r?\n/);
-            const channels = [];
-            let pendingMeta = null;
+        function parseM3uPlaylist(rawText) {
+            const lines = rawText.split(/\r?\n/);
+            const items = [];
+            let currentMeta = null;
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (!line) continue;
                 if (line.startsWith("#EXTINF:")) {
                     const commaIdx = line.indexOf(",");
-                    const title = commaIdx !== -1 ? line.slice(commaIdx + 1).trim() : "شبکه زنده";
+                    const titlePart = commaIdx >= 0 ? line.slice(commaIdx + 1).trim() : "شبکه زنده";
                     const groupMatch = line.match(/group-title="([^"]*)"/i);
-                    pendingMeta = {
-                        name: title || "شبکه زنده",
-                        group: groupMatch ? groupMatch[1].trim() : "زنده"
+                    const logoMatch = line.match(/tvg-logo="([^"]*)"/i);
+                    currentMeta = {
+                        title: titlePart || "شبکه زنده",
+                        group: (groupMatch && groupMatch[1]) ? groupMatch[1].trim() : "عمومی",
+                        logo: (logoMatch && logoMatch[1]) ? logoMatch[1].trim() : ""
                     };
-                } else if (!line.startsWith("#") && /^https?:\/\//i.test(line)) {
-                    const meta = pendingMeta || { name: "شبکه زنده", group: "زنده" };
-                    const isHls = isHlsManifestUrl(line);
-                    channels.push({
-                        id: "ch_" + channels.length,
-                        name: meta.name,
-                        group: meta.group,
-                        url: line,
-                        isHls
-                    });
-                    pendingMeta = null;
+                } else if (!line.startsWith("#")) {
+                    if (/^https?:\/\//i.test(line)) {
+                        const meta = currentMeta || { title: "شبکه زنده", group: "عمومی", logo: "" };
+                        items.push({
+                            title: meta.title,
+                            group: meta.group,
+                            logo: meta.logo,
+                            url: line,
+                            isHls: isHlsManifestUrl(line)
+                        });
+                    }
+                    currentMeta = null;
                 }
             }
-            return channels;
+            return items;
         }
 
         async function loadLiveTvPlaylist() {
-            const listBox = document.getElementById("livetv-channels-list");
             const badge = document.getElementById("livetv-count-badge");
+            const listBox = document.getElementById("livetv-channels-list");
             badge.innerText = "در حال دریافت...";
-            listBox.innerHTML = `<div class="empty-note">در حال دریافت لیست شبکه‌های زنده از IPTV-ORG...</div>`;
+            listBox.innerHTML = `<div class="empty-note">در حال دریافت لیست پخش زنده از IPTV-ORG...</div>`;
 
             try {
                 const res = await fetch(IPTV_PLAYLIST_URL, { cache: "no-store" });
-                if (!res.ok) throw new Error("Network error");
+                if (!res.ok) throw new Error("خطا در دریافت لیست");
                 const txt = await res.text();
-                const parsed = parseM3uText(txt);
+                const parsed = parseM3uPlaylist(txt);
                 liveTvChannels = parsed;
-                liveTvFiltered = parsed;
                 liveTvLoadedOnce = true;
-
-                badge.innerText = `${parsed.length} شبکه`;
                 filterLiveTvChannels();
-                if (parsed.length > 0 && !activeLiveTvUrl) {
-                    quickPlayLiveTv();
+                if (liveTvFiltered.length) {
+                    const firstWorking = liveTvFiltered.find(ch => !deadLiveTvUrls.has(ch.url)) || liveTvFiltered[0];
+                    playLiveTvChannel(firstWorking.url, firstWorking.title, firstWorking.group, true);
                 }
             } catch (_) {
-                badge.innerText = "خطای دریافت";
-                listBox.innerHTML = `<div class="empty-note">دریافت لیست IPTV امکان‌پذیر نشد. در کادر بالا لینک مستقیم خود را وارد کنید یا مجدد تلاش کنید.</div>`;
+                badge.innerText = "خطای اتصال";
+                listBox.innerHTML = `<div class="empty-note">دریافت لیست IPTV ممکن نشد. لینک مستقیم خود را در کادر بالا وارد کنید.</div>`;
             }
         }
 
@@ -5461,304 +5495,602 @@
             liveTvOnlyHls = !liveTvOnlyHls;
             const btn = document.getElementById("livetv-hls-only-btn");
             if (btn) {
-                btn.style.borderColor = liveTvOnlyHls ? "var(--red-primary)" : "";
-                btn.style.color = liveTvOnlyHls ? "var(--chip-text)" : "";
+                btn.innerText = liveTvOnlyHls ? "HLS فعال" : "همه لینک‌ها";
+                btn.className = liveTvOnlyHls ? "btn-sec" : "btn-watch";
             }
             filterLiveTvChannels();
         }
 
         function filterLiveTvChannels() {
             const q = (document.getElementById("livetv-search-input").value || "").trim().toLowerCase();
-            liveTvFiltered = liveTvChannels.filter(ch => {
-                if (liveTvOnlyHls && !ch.isHls) return false;
-                if (!q) return true;
-                return ch.name.toLowerCase().includes(q) || ch.group.toLowerCase().includes(q);
-            });
+            let base = liveTvOnlyHls ? liveTvChannels.filter(ch => ch.isHls) : liveTvChannels;
+            if (q) {
+                liveTvFiltered = base.filter(ch =>
+                    ch.title.toLowerCase().includes(q) ||
+                    ch.group.toLowerCase().includes(q) ||
+                    ch.url.toLowerCase().includes(q)
+                );
+            } else {
+                liveTvFiltered = base;
+            }
+            const badge = document.getElementById("livetv-count-badge");
+            if (badge) badge.innerText = `${liveTvFiltered.length} شبکه`;
             renderLiveTvChannels();
         }
 
         function clearLiveTvSearch() {
-            document.getElementById("livetv-search-input").value = "";
+            const inp = document.getElementById("livetv-search-input");
+            if (inp) inp.value = "";
             filterLiveTvChannels();
         }
 
-        function renderLiveTvChannels() {
-            const listBox = document.getElementById("livetv-channels-list");
-            if (!liveTvFiltered.length) {
-                listBox.innerHTML = `<div class="empty-note">شبکه‌ای با این جستجو پیدا نشد.</div>`;
-                return;
-            }
-
-            const visibleSlice = liveTvFiltered.slice(0, 120);
-            listBox.innerHTML = visibleSlice.map(ch => {
-                const isPlaying = ch.url === activeLiveTvUrl;
-                const isDead = deadLiveTvUrls.has(ch.url);
-                return `
-                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""} ${isDead ? "dead-stream" : ""}" onclick="playLiveTvStream('${escAttr(ch.url)}', '${escAttr(ch.name)}', true)">
-                        <div class="livetv-channel-meta">
-                            <strong>${esc(ch.name)}${isDead ? `<span class="dead-status-badge">این لینک کار نمیکند</span>` : ``}</strong>
-                            <span>${esc(ch.group)} • ${ch.isHls ? "HLS" : "STREAM"}</span>
-                        </div>
-                        <button type="button" class="btn-watch" style="padding:6px 11px; font-size:11px;">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                            <span>${isPlaying ? "در حال پخش" : (isDead ? "تست مجدد" : "پخش")}</span>
-                        </button>
-                    </div>
-                `;
-            }).join("");
-        }
-
         function quickPlayLiveTv() {
-            const customInputVal = (document.getElementById("livetv-search-input").value || "").trim();
-            if (/^https?:\/\//i.test(customInputVal)) {
-                playLiveTvStream(customInputVal, "پخش لینک دلخواه", false);
+            const inpVal = (document.getElementById("livetv-search-input").value || "").trim();
+            if (/^https?:\/\//i.test(inpVal)) {
+                playLiveTvChannel(inpVal, "پخش لینک دلخواه", "لینک مستقیم", false);
                 return;
             }
-
-            const hlsPool = liveTvChannels.filter(ch => ch.isHls && !deadLiveTvUrls.has(ch.url));
-            const pool = hlsPool.length ? hlsPool : liveTvChannels.filter(ch => !deadLiveTvUrls.has(ch.url));
-            if (!pool.length) {
-                document.getElementById("livetv-status-text").innerText = "شبکه فعالی برای پخش فوری یافت نشد.";
-                return;
+            if (!liveTvFiltered.length) {
+                filterLiveTvChannels();
             }
-            const randomCh = pool[Math.floor(Math.random() * pool.length)];
-            playLiveTvStream(randomCh.url, randomCh.name, true);
+            if (liveTvFiltered.length) {
+                const candidate = liveTvFiltered.find(ch => !deadLiveTvUrls.has(ch.url)) || liveTvFiltered[0];
+                playLiveTvChannel(candidate.url, candidate.title, candidate.group, false);
+            }
         }
 
-        function playLiveTvStream(url, title, allowAutoFailover = false) {
+        function playLiveTvChannel(url, title, group, autoAdvanceOnFail = false) {
             if (!url) return;
             if (liveTvFailoverTimer) {
                 clearTimeout(liveTvFailoverTimer);
                 liveTvFailoverTimer = null;
             }
+
             activeLiveTvUrl = url;
             document.getElementById("livetv-current-title").innerText = title || "شبکه زنده";
-            document.getElementById("livetv-status-text").innerText = "در حال اتصال به استریم...";
+            document.getElementById("livetv-status-text").innerText = `در حال اتصال • ${group || "عمومی"}`;
             renderLiveTvChannels();
 
-            const handleChannelDead = () => {
+            let settled = false;
+            const handleChannelFailure = () => {
+                if (settled) return;
+                settled = true;
                 if (liveTvFailoverTimer) {
                     clearTimeout(liveTvFailoverTimer);
                     liveTvFailoverTimer = null;
                 }
                 markLiveTvUrlDead(url);
-                document.getElementById("livetv-status-text").innerText = "این لینک کار نمیکند";
-                if (allowAutoFailover) {
-                    const nextCandidate = liveTvChannels.find(c => c.isHls && c.url !== url && !deadLiveTvUrls.has(c.url));
-                    if (nextCandidate) {
-                        setTimeout(() => {
-                            if (activeLiveTvUrl === url) {
-                                playLiveTvStream(nextCandidate.url, nextCandidate.name, true);
-                            }
-                        }, 800);
+                document.getElementById("livetv-status-text").innerText = `این لینک پاسخ نداد (${group || "عمومی"})`;
+                if (autoAdvanceOnFail && liveTvFiltered.length) {
+                    const nextCh = liveTvFiltered.find(ch => ch.url !== url && !deadLiveTvUrls.has(ch.url));
+                    if (nextCh) {
+                        document.getElementById("livetv-status-text").innerText = "در حال تعویض خودکار به شبکه فعال بعدی...";
+                        setTimeout(() => playLiveTvChannel(nextCh.url, nextCh.title, nextCh.group, true), 450);
                     }
                 }
             };
 
-            liveTvFailoverTimer = setTimeout(() => {
-                if (activeLiveTvUrl === url && (liveTvVideoEl.readyState < 2 || liveTvVideoEl.paused)) {
-                    handleChannelDead();
-                }
-            }, 9000);
+            liveTvFailoverTimer = setTimeout(handleChannelFailure, 6000);
 
             liveTvHls = bindCrossPlatformMedia(liveTvVideoEl, liveTvPlyr, url, {
                 autoPlay: true,
                 existingHls: liveTvHls,
                 hlsConfig: {
-                    maxBufferLength: 10,
-                    maxMaxBufferLength: 20
+                    manifestLoadingTimeOut: 5000,
+                    levelLoadingTimeOut: 5000,
+                    fragLoadingTimeOut: 6000
                 },
-                onPlaying: (wasMuted) => {
+                onPlaying: (isMuted) => {
+                    settled = true;
                     if (liveTvFailoverTimer) {
                         clearTimeout(liveTvFailoverTimer);
                         liveTvFailoverTimer = null;
                     }
-                    deadLiveTvUrls.delete(url);
-                    renderLiveTvChannels();
-                    document.getElementById("livetv-status-text").innerText = wasMuted
-                        ? "در حال پخش (بی‌صدا — برای صدا دکمه صدا را بزنید)"
-                        : "در حال پخش زنده با Plyr";
+                    document.getElementById("livetv-status-text").innerText = isMuted
+                        ? `در حال پخش (بی‌صدا — صدا را وصل کنید) • ${group || "عمومی"}`
+                        : `در حال پخش زنده • ${group || "عمومی"}`;
                 },
-                onError: handleChannelDead
+                onError: handleChannelFailure
             });
         }
 
+        function renderLiveTvChannels() {
+            const listBox = document.getElementById("livetv-channels-list");
+            if (!listBox) return;
+
+            const inpVal = (document.getElementById("livetv-search-input").value || "").trim();
+            let html = "";
+
+            if (/^https?:\/\//i.test(inpVal)) {
+                html += `
+                    <div class="livetv-channel-item" onclick="playLiveTvChannel('${escAttr(inpVal)}', 'پخش لینک واردشده', 'لینک مستقیم', false)">
+                        <div class="livetv-channel-meta">
+                            <strong>پخش لینک مستقیم واردشده</strong>
+                            <span>${esc(inpVal)}</span>
+                        </div>
+                        <button type="button" class="btn-watch" style="padding:6px 12px;">پخش</button>
+                    </div>
+                `;
+            }
+
+            const sliceList = liveTvFiltered.slice(0, 120);
+            if (!sliceList.length && !html) {
+                listBox.innerHTML = `<div class="empty-note">هیچ شبکه‌ای با این جستجو یافت نشد.</div>`;
+                return;
+            }
+
+            html += sliceList.map(ch => {
+                const isPlaying = activeLiveTvUrl === ch.url;
+                const isDead = deadLiveTvUrls.has(ch.url);
+                return `
+                    <div class="livetv-channel-item ${isPlaying ? "playing" : ""} ${isDead ? "dead-stream" : ""}" onclick="playLiveTvChannel('${escAttr(ch.url)}', '${escAttr(ch.title)}', '${escAttr(ch.group)}', false)">
+                        <div class="livetv-channel-meta">
+                            <strong>${esc(ch.title)}${isDead ? `<span class="dead-status-badge">لینک از کار افتاده</span>` : ``}</strong>
+                            <span>${esc(ch.group)} ${ch.isHls ? "• HLS" : ""}</span>
+                        </div>
+                        <button type="button" class="${isPlaying ? "btn-sync-now" : "btn-watch"}" style="padding:6px 12px;">
+                            ${isPlaying ? "در حال پخش" : (isDead ? "تست مجدد" : "پخش")}
+                        </button>
+                    </div>
+                `;
+            }).join("");
+
+            listBox.innerHTML = html;
+        }
+
         function enterLiveTvFullscreen() {
-            const target = liveTvPlayerBox || liveTvVideoEl;
-            try {
-                if (liveTvPlyr && liveTvPlyr.fullscreen && liveTvPlyr.fullscreen.enabled) {
-                    liveTvPlyr.fullscreen.enter();
-                } else if (target.requestFullscreen) {
-                    target.requestFullscreen();
-                } else if (target.webkitRequestFullscreen) {
-                    target.webkitRequestFullscreen();
-                } else if (isIosDevice && liveTvVideoEl.webkitEnterFullscreen) {
-                    liveTvVideoEl.webkitEnterFullscreen();
-                }
-            } catch (_) {}
-            updateFloatingExitButton();
+            enterFullscreenTarget(liveTvPlayerBox, liveTvVideoEl);
         }
 
         let moviesList = [];
         let selectedGenre = "همه";
+        let currentPlayingMovie = null;
         let selectedDetailMovieId = null;
         let previousTabBeforeDetail = "home";
-        let pendingQuickRoomMovieId = null;
+        let quickRoomTargetMovieId = null;
 
         let activeRoomId = null;
         let activeRoomData = null;
         let isRoomHost = false;
-        let allRoomsMap = {};
-        let roomMode = "create";
-
-        let roomSyncListenerRef = null;
-        let roomChatListenerRef = null;
-        let isApplyingRemoteRoomState = false;
-        let lastHostPushTime = 0;
+        let roomsMap = {};
+        let suppressRoomSyncUntil = 0;
 
         const videoEl = document.getElementById("main-video-player");
         const playerFrameWrap = document.getElementById("player-frame-wrap");
         const exitFsBtn = document.getElementById("floating-exit-fs-btn");
-        let hlsInstance = null;
-        let currentPlayingMovie = null;
+        let mainHls = null;
 
-        const plyrPlayer = new Plyr(videoEl, {
-            controls: ["play-large", "play", "progress", "current-time", "duration", "mute", "volume", "captions", "settings", "pip", "fullscreen"],
-            fullscreen: { enabled: true, fallback: true, iosNative: true }
+        const player = new Plyr(videoEl, {
+            controls: [
+                "play-large",
+                "play",
+                "progress",
+                "current-time",
+                "duration",
+                "mute",
+                "volume",
+                "settings",
+                "pip",
+                "airplay",
+                "fullscreen"
+            ],
+            fullscreen: {
+                enabled: true,
+                fallback: true,
+                iosNative: true
+            }
         });
 
         function isAnyFullscreenActive() {
             return Boolean(
                 document.fullscreenElement ||
                 document.webkitFullscreenElement ||
-                videoEl.webkitDisplayingFullscreen ||
-                liveTvVideoEl.webkitDisplayingFullscreen ||
-                document.body.classList.contains("pseudo-fullscreen-active")
+                (videoEl && videoEl.webkitDisplayingFullscreen) ||
+                (liveTvVideoEl && liveTvVideoEl.webkitDisplayingFullscreen)
             );
         }
 
-        function updateFloatingExitButton() {
+        function syncExitFullscreenButton() {
             if (!exitFsBtn) return;
             exitFsBtn.classList.toggle("visible", isAnyFullscreenActive());
         }
 
-        function enterFullscreenNow() {
-            const liveTvVisible = document.getElementById("livetv-overlay-screen").classList.contains("show");
-            if (liveTvVisible) {
-                enterLiveTvFullscreen();
-                return;
-            }
-            if (!playerFrameWrap) return;
-
+        function enterFullscreenTarget(containerEl, vidEl) {
             try {
-                if (playerFrameWrap.requestFullscreen) {
-                    const p = playerFrameWrap.requestFullscreen();
-                    if (p && p.catch) p.catch(() => activatePseudoFullscreen());
-                } else if (playerFrameWrap.webkitRequestFullscreen) {
-                    playerFrameWrap.webkitRequestFullscreen();
-                } else if (isIosDevice && videoEl.webkitEnterFullscreen) {
-                    videoEl.webkitEnterFullscreen();
-                } else {
-                    activatePseudoFullscreen();
+                if (vidEl && typeof vidEl.webkitEnterFullscreen === "function" && isIosDevice) {
+                    vidEl.webkitEnterFullscreen();
+                    setTimeout(syncExitFullscreenButton, 120);
+                    return;
                 }
-            } catch (_) {
-                activatePseudoFullscreen();
-            }
-            setTimeout(updateFloatingExitButton, 200);
+                const target = containerEl || vidEl;
+                if (target) {
+                    if (target.requestFullscreen) {
+                        target.requestFullscreen().catch(() => {});
+                    } else if (target.webkitRequestFullscreen) {
+                        target.webkitRequestFullscreen();
+                    }
+                }
+            } catch (_) {}
+            setTimeout(syncExitFullscreenButton, 120);
         }
 
-        function activatePseudoFullscreen() {
-            document.body.classList.add("pseudo-fullscreen-active");
-            playerFrameWrap.style.position = "fixed";
-            playerFrameWrap.style.inset = "0";
-            playerFrameWrap.style.width = "100vw";
-            playerFrameWrap.style.height = "100vh";
-            playerFrameWrap.style.zIndex = "2147483640";
-            playerFrameWrap.style.borderRadius = "0";
-            updateFloatingExitButton();
+        function enterFullscreenNow() {
+            const isLiveTvVisible = document.getElementById("livetv-overlay-screen").classList.contains("show");
+            if (isLiveTvVisible) {
+                enterFullscreenTarget(liveTvPlayerBox, liveTvVideoEl);
+            } else {
+                enterFullscreenTarget(playerFrameWrap, videoEl);
+            }
         }
 
         function exitFullscreenNow() {
-            document.body.classList.remove("pseudo-fullscreen-active");
-            if (playerFrameWrap) {
-                playerFrameWrap.style.position = "";
-                playerFrameWrap.style.inset = "";
-                playerFrameWrap.style.width = "";
-                playerFrameWrap.style.height = "";
-                playerFrameWrap.style.zIndex = "";
-                playerFrameWrap.style.borderRadius = "";
-            }
             try {
                 if (document.fullscreenElement && document.exitFullscreen) {
-                    document.exitFullscreen();
+                    document.exitFullscreen().catch(() => {});
                 } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
                     document.webkitExitFullscreen();
                 }
+                if (videoEl && typeof videoEl.webkitExitFullscreen === "function") {
+                    videoEl.webkitExitFullscreen();
+                }
+                if (liveTvVideoEl && typeof liveTvVideoEl.webkitExitFullscreen === "function") {
+                    liveTvVideoEl.webkitExitFullscreen();
+                }
             } catch (_) {}
-            setTimeout(updateFloatingExitButton, 150);
+            setTimeout(syncExitFullscreenButton, 120);
         }
 
-        document.addEventListener("fullscreenchange", updateFloatingExitButton);
-        document.addEventListener("webkitfullscreenchange", updateFloatingExitButton);
+        document.addEventListener("fullscreenchange", syncExitFullscreenButton);
+        document.addEventListener("webkitfullscreenchange", syncExitFullscreenButton);
+        videoEl.addEventListener("webkitbeginfullscreen", syncExitFullscreenButton);
+        videoEl.addEventListener("webkitendfullscreen", syncExitFullscreenButton);
+        liveTvVideoEl.addEventListener("webkitbeginfullscreen", syncExitFullscreenButton);
+        liveTvVideoEl.addEventListener("webkitendfullscreen", syncExitFullscreenButton);
 
-        function openMovieDetail(movieId, fromTabName = null) {
+        function esc(str) {
+            return String(str || "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;");
+        }
+
+        function escAttr(str) {
+            return String(str || "")
+                .replace(/\\/g, "\\\\")
+                .replace(/'/g, "\\'")
+                .replace(/"/g, "&quot;");
+        }
+
+        let randomSliderItems = [];
+        let randomSliderIndex = 0;
+        let randomSliderTimer = null;
+
+        function buildRandomSliderPool() {
+            const homeMovies = getHomeMoviesList();
+            if (!homeMovies.length) {
+                randomSliderItems = [];
+                return;
+            }
+            const shuffled = homeMovies.slice();
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            randomSliderItems = shuffled.slice(0, Math.min(5, shuffled.length));
+            if (randomSliderIndex >= randomSliderItems.length) {
+                randomSliderIndex = 0;
+            }
+        }
+
+        function renderRandomHeroSlider() {
+            const contentBox = document.getElementById("home-random-slide-content");
+            const dotsBox = document.getElementById("home-random-slider-dots");
+            if (!contentBox || !dotsBox) return;
+
+            if (!randomSliderItems.length) {
+                buildRandomSliderPool();
+            }
+            if (!randomSliderItems.length) {
+                contentBox.innerHTML = `<div class="empty-note">هنوز فیلمی در دسترس نیست.</div>`;
+                dotsBox.innerHTML = "";
+                return;
+            }
+
+            const item = randomSliderItems[randomSliderIndex] || randomSliderItems[0];
+            const posterSrc = item.poster && item.poster.trim() ? item.poster.trim() : FALLBACK_POSTER;
+            const fmtLabel = item.videoUrl ? detectVideoFormatLabel(item.videoUrl) : "";
+
+            contentBox.innerHTML = `
+                <div class="hero-slide-clickable" onclick="openMovieDetail('${escAttr(item.id)}', 'home')">
+                    <div class="hero-slide-stage">
+                        <img src="${escAttr(posterSrc)}" alt="${escAttr(item.title)}" onerror="this.src='${FALLBACK_POSTER}'">
+                        <div class="hero-slide-overlay">
+                            <div class="hero-slide-meta-row">
+                                <span class="pill-tag" style="margin-bottom:0;">پیشنهاد ویژه${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
+                                ${renderCustomLogoHtml(item)}
+                                ${renderLangBadgeHtml(item.langType || "dub")}
+                            </div>
+                            <div class="hero-slide-title">${esc(item.title)}</div>
+                            <div style="font-size:11.5px; color:#ffd6de;">${esc(item.genre || "درام")} ${item.year ? "• " + esc(item.year) : ""} • 👁 ${Number(item.views || 0)} بازدید</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            dotsBox.innerHTML = randomSliderItems.map((_, idx) =>
+                `<button type="button" class="hero-dot-btn ${idx === randomSliderIndex ? "active" : ""}" aria-label="اسلاید ${idx + 1}" onclick="selectRandomSliderSlide(${idx})"></button>`
+            ).join("");
+        }
+
+        function selectRandomSliderSlide(idx) {
+            if (!randomSliderItems.length) return;
+            randomSliderIndex = ((idx % randomSliderItems.length) + randomSliderItems.length) % randomSliderItems.length;
+            renderRandomHeroSlider();
+            restartRandomSliderAutoplay();
+        }
+
+        function startRandomSliderAutoplay() {
+            if (randomSliderTimer) clearInterval(randomSliderTimer);
+            randomSliderTimer = setInterval(() => {
+                if (!randomSliderItems.length) return;
+                randomSliderIndex = (randomSliderIndex + 1) % randomSliderItems.length;
+                renderRandomHeroSlider();
+            }, 4200);
+        }
+
+        function restartRandomSliderAutoplay() {
+            startRandomSliderAutoplay();
+        }
+
+        function itemHasGenre(item, genreName) {
+            if (!item || !genreName) return false;
+            if (Array.isArray(item.genres) && item.genres.includes(genreName)) {
+                return true;
+            }
+            const gStr = String(item.genre || "");
+            return gStr.split(/[،,]/).map(s => s.trim()).includes(genreName);
+        }
+
+        function renderHomeGenreCarousels() {
+            const container = document.getElementById("home-genre-carousels-container");
+            if (!container) return;
+
+            const allHomeMovies = getHomeMoviesList();
+            if (!allHomeMovies.length) {
+                container.innerHTML = `<div class="glass empty-note">هنوز فیلمی ثبت نشده است. از بخش ادمین یا پیج فیلم اضافه کنید.</div>`;
+                return;
+            }
+
+            let html = "";
+            PRESET_GENRES.forEach(genreName => {
+                const matching = allHomeMovies.filter(m => itemHasGenre(m, genreName));
+                if (!matching.length) return;
+
+                const preview = matching.slice(0, 5);
+                const cardsHtml = preview.map(m => {
+                    const posterSrc = m.poster && m.poster.trim() ? m.poster.trim() : FALLBACK_POSTER;
+                    return `
+                        <div class="glass genre-slide-poster-card" onclick="openMovieDetail('${escAttr(m.id)}', 'home')">
+                            <div class="genre-large-poster-wrap">
+                                <img src="${escAttr(posterSrc)}" alt="${escAttr(m.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
+                            </div>
+                            <div class="genre-slide-title">${esc(m.title)}</div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px; flex-wrap:wrap;">
+                                ${renderLangBadgeHtml(m.langType || "dub")}
+                                <span style="font-size:10.5px; color:var(--text-muted);">👁 ${Number(m.views || 0)}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                const allCardHtml = `
+                    <div class="glass genre-show-all-card" onclick="openHomeGenreAllView('${escAttr(genreName)}')">
+                        <strong style="font-size:13.5px; font-weight:900; color:var(--chip-text);">نمایش همه ژانر</strong>
+                        <span style="font-size:12px; font-weight:800; color:var(--text-strong);">${esc(genreName)}</span>
+                        <span style="font-size:11px; color:var(--text-muted);">(${matching.length} فیلم)</span>
+                    </div>
+                `;
+
+                html += `
+                    <section class="genre-section-block">
+                        <div class="genre-section-header">
+                            <h3>${esc(genreName)}</h3>
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openHomeGenreAllView('${escAttr(genreName)}')">
+                                نمایش همه ژانر (${matching.length})
+                            </button>
+                        </div>
+                        <div class="genre-carousel-track">
+                            ${cardsHtml}
+                            ${allCardHtml}
+                        </div>
+                    </section>
+                `;
+            });
+
+            container.innerHTML = html || `<div class="glass empty-note">در دسته‌بندی‌های آماده فیلمی ثبت نشده است.</div>`;
+        }
+
+        function openHomeGenreAllView(genreName) {
+            const mainContent = document.getElementById("home-main-content");
+            const allView = document.getElementById("home-all-genre-view");
+            const titleEl = document.getElementById("home-all-genre-title");
+            const gridBox = document.getElementById("home-all-genre-grid-16x9");
+            if (!mainContent || !allView || !titleEl || !gridBox) return;
+
+            const matching = getHomeMoviesList().filter(m => itemHasGenre(m, genreName));
+            titleEl.innerText = `همه فیلم‌های ژانر «${genreName}» (${matching.length})`;
+
+            gridBox.innerHTML = matching.length
+                ? matching.map(buildMovie16x9CardHtml).join("")
+                : `<div class="glass empty-note">فیلمی در این ژانر یافت نشد.</div>`;
+
+            mainContent.style.display = "none";
+            allView.style.display = "block";
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        }
+
+        function closeHomeGenreAllView() {
+            const mainContent = document.getElementById("home-main-content");
+            const allView = document.getElementById("home-all-genre-view");
+            if (allView) allView.style.display = "none";
+            if (mainContent) mainContent.style.display = "block";
+        }
+
+        function buildMovie16x9CardHtml(m) {
+            const posterSrc = m.poster && m.poster.trim() ? m.poster.trim() : FALLBACK_POSTER;
+            const fmtLabel = m.videoUrl ? detectVideoFormatLabel(m.videoUrl) : "";
+            return `
+                <div class="glass movie-card-16x9" onclick="openMovieDetail('${escAttr(m.id)}', 'home')">
+                    <div class="poster-16x9-box">
+                        <img src="${escAttr(posterSrc)}" alt="${escAttr(m.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
+                        <div class="poster-16x9-overlay">
+                            <div style="display:flex; justify-content:space-between; align-items:center; gap:6px; flex-wrap:wrap;">
+                                <span class="pill-tag" style="margin-bottom:0;">${esc(m.genre || "درام")}${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
+                                ${renderCustomLogoHtml(m)}
+                                ${renderLangBadgeHtml(m.langType || "dub")}
+                            </div>
+                            <div class="poster-16x9-title">${esc(m.title)}</div>
+                            <div style="font-size:11px; color:#ffd6de;">${m.year ? esc(m.year) + " • " : ""}👁 ${Number(m.views || 0)} بازدید</div>
+                        </div>
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;" onclick="event.stopPropagation()">
+                        <button type="button" class="btn-watch" style="flex:1;" onclick="playMovieById('${escAttr(m.id)}', true)">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                            <span>پخش فیلم</span>
+                        </button>
+                        <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(m.id)}')">
+                            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        </button>
+                    </div>
+                    ${buildItemSocialBlockHtml(m)}
+                </div>
+            `;
+        }
+
+        function buildMovieCardHtml(m) {
+            const isFav = favIds.includes(m.id);
+            const isText = m.itemType === "text";
+            const isPost = m.itemType === "post";
+            const posterSrc = m.poster && m.poster.trim() ? m.poster.trim() : FALLBACK_POSTER;
+            const typeBadge = isText ? "متن" : (isPost ? "پست" : "فیلم");
+            const fmtLabel = !isText && m.videoUrl ? detectVideoFormatLabel(m.videoUrl) : "";
+
+            return `
+                <div class="glass movie-card" onclick="${isText ? `recordItemViewOnce('${escAttr(m.id)}')` : (isPost ? `togglePostInlinePlayback('${escAttr(m.id)}')` : `openMovieDetail('${escAttr(m.id)}', 'other')`)}">
+                    <div class="movie-card-top-row">
+                        ${!isText ? `
+                            <div class="movie-poster-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(m.id)}" onclick="event.stopPropagation()">
+                                ${getIdlePostMediaHtml(m)}
+                            </div>
+                        ` : ``}
+                        <div class="movie-info-col">
+                            <strong>${esc(m.title)}</strong>
+                            <div class="movie-sub-meta">
+                                <span class="pill-tag" style="margin-bottom:0; padding:2px 8px; font-size:10px;">${esc(typeBadge)}${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
+                                ${renderCustomLogoHtml(m)}
+                                ${!isText ? renderLangBadgeHtml(m.langType || "dub") : ``}
+                                <span>${esc(m.genre || "درام")}</span>
+                                ${m.year ? `<span>• ${esc(m.year)}</span>` : ""}
+                            </div>
+                            ${isText
+                                ? `<div class="text-post-body-box" style="margin-bottom:8px;">${esc(m.textBody || m.desc || "")}</div>`
+                                : `<div class="movie-desc-short">${esc(m.desc || "بدون توضیحات")}</div>`
+                            }
+                            ${!isText ? `
+                                <div class="movie-actions-row" onclick="event.stopPropagation()">
+                                    <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(m.id)}" onclick="${isPost ? `togglePostInlinePlayback('${escAttr(m.id)}')` : `playMovieById('${escAttr(m.id)}', true)`}">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
+                                        <span>${isPost ? "پخش پست" : "پخش"}</span>
+                                    </button>
+                                    ${!isPost ? `
+                                        <button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(m.id)}')">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
+                                            <span>اتاق</span>
+                                        </button>
+                                    ` : ``}
+                                    <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(m.id)}')" title="اشتراک لینک">
+                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                    </button>
+                                    <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(m.id)}')">
+                                        ${isFav ? "✓ در لیست" : "+ لیست من"}
+                                    </button>
+                                </div>
+                            ` : ``}
+                        </div>
+                    </div>
+                    ${buildItemSocialBlockHtml(m)}
+                </div>
+            `;
+        }
+
+        function renderAllMovieViews() {
+            stopAllInlinePostPlayers();
+            buildRandomSliderPool();
+            renderRandomHeroSlider();
+            renderHomeGenreCarousels();
+            renderFilteredMovies();
+            renderFavoritesList();
+            populateRoomMovieSelect();
+            renderAdminMovies();
+            if (isAccountCompleted()) {
+                renderPageMyItems();
+                renderExploreSections();
+            }
+        }
+
+        function openMovieDetail(movieId, fromSource = "home") {
             const mv = moviesList.find(m => m.id === movieId);
             if (!mv) return;
             if (mv.itemType === "post") {
                 openTab("explore");
-                setTimeout(() => playPostInlineOnCard(movieId), 160);
+                setTimeout(() => playPostInlineOnCard(mv.id), 160);
                 return;
             }
             if (mv.itemType === "text") {
-                openTab("explore");
                 return;
             }
-            previousTabBeforeDetail = fromTabName || getCurrentActiveTabName();
             selectedDetailMovieId = movieId;
-            if (moviesRef) {
-                moviesRef.child(movieId).child("views").transaction(v => (Number(v) || 0) + 1).catch(() => {});
-            }
+            previousTabBeforeDetail = fromSource === "home" ? "home" : (fromSource === "explore" ? "explore" : "search");
+
+            recordItemViewOnce(movieId);
+
             renderMovieDetailContent();
             openTab("movie-detail");
-        }
-
-        function goBackFromMovieDetail() {
-            const target = (previousTabBeforeDetail && previousTabBeforeDetail !== "movie-detail")
-                ? previousTabBeforeDetail
-                : "home";
-            openTab(target);
         }
 
         function renderMovieDetailContent() {
             const mv = moviesList.find(m => m.id === selectedDetailMovieId);
             if (!mv) return;
 
-            const posterEl = document.getElementById("detail-poster-img");
-            const titleEl = document.getElementById("detail-movie-title");
-            const langBadgeEl = document.getElementById("detail-movie-lang-badge");
-            const logoBadgeEl = document.getElementById("detail-movie-logo-badge");
-            const genreEl = document.getElementById("detail-movie-genre");
-            const yearEl = document.getElementById("detail-movie-year");
-            const viewsEl = document.getElementById("detail-movie-views");
-            const descEl = document.getElementById("detail-movie-desc");
-            const favBtn = document.getElementById("detail-fav-btn");
-
-            if (posterEl) {
-                posterEl.src = mv.poster || FALLBACK_POSTER;
-                posterEl.onerror = () => { posterEl.src = FALLBACK_POSTER; };
+            const posterImg = document.getElementById("detail-poster-img");
+            if (posterImg) {
+                posterImg.src = mv.poster && mv.poster.trim() ? mv.poster.trim() : FALLBACK_POSTER;
+                posterImg.onerror = () => { posterImg.src = FALLBACK_POSTER; };
             }
-            if (titleEl) titleEl.innerText = mv.title || "بدون عنوان";
-            if (langBadgeEl) langBadgeEl.innerHTML = renderLangBadgeHtml(mv.langType || "dub");
-            if (logoBadgeEl) logoBadgeEl.innerHTML = renderCustomLogoHtml(mv);
-            if (genreEl) genreEl.innerText = mv.genre || "عمومی";
-            if (yearEl) yearEl.innerText = mv.year || "تاریخ ثبت‌نشده";
-            if (viewsEl) viewsEl.innerText = `👁 ${Number(mv.views || 0)} بازدید`;
-            if (descEl) descEl.innerText = mv.desc ? mv.desc : "توضیحاتی برای این فیلم ثبت نشده است.";
 
+            const fmtLabel = mv.videoUrl ? detectVideoFormatLabel(mv.videoUrl) : "";
+            document.getElementById("detail-item-kind-badge").innerText =
+                (mv.itemType === "post" ? "صفحه پست" : "صفحه فیلم") + (fmtLabel ? " • " + fmtLabel : "");
+            document.getElementById("detail-movie-title").innerText = mv.title || "بدون عنوان";
+            document.getElementById("detail-movie-lang-badge").innerHTML = renderLangBadgeHtml(mv.langType || "dub");
+            document.getElementById("detail-movie-logo-badge").innerHTML = renderCustomLogoHtml(mv);
+            document.getElementById("detail-movie-genre").innerText = mv.genre || "درام";
+            document.getElementById("detail-movie-year").innerText = mv.year ? `تاریخ: ${mv.year}` : "بدون تاریخ";
+            document.getElementById("detail-movie-views").innerText = `👁 ${Number(mv.views || 0)} بازدید`;
+            document.getElementById("detail-movie-desc").innerText = mv.desc || "توضیحی برای این مورد ثبت نشده است.";
+
+            const favBtn = document.getElementById("detail-fav-btn");
             const isFav = favIds.includes(mv.id);
             if (favBtn) {
-                favBtn.innerHTML = isFav ? "✓ در لیست من ذخیره شد" : "+ ذخیره در لیست من";
+                favBtn.className = isFav ? "btn-watch" : "btn-sec";
+                favBtn.style.padding = "11px 12px";
+                favBtn.innerHTML = `<span>${isFav ? "✓ ذخیره شده در لیست من" : "+ ذخیره در لیست من"}</span>`;
             }
+        }
+
+        function goBackFromMovieDetail() {
+            openTab(previousTabBeforeDetail || "home");
         }
 
         function playCurrentDetailMovie() {
@@ -5775,444 +6107,476 @@
         function openQuickRoomModalForMovie(movieId) {
             const mv = moviesList.find(m => m.id === movieId);
             if (!mv) return;
-            pendingQuickRoomMovieId = movieId;
-            document.getElementById("quick-room-movie-subtitle").innerText =
-                `فیلم انتخاب‌شده: «${mv.title}» — یک اسم دلخواه برای اتاق بنویسید.`;
-            document.getElementById("quick-room-name-input").value = "";
+            quickRoomTargetMovieId = movieId;
+            const subEl = document.getElementById("quick-room-movie-subtitle");
+            if (subEl) subEl.innerText = `فیلم انتخاب‌شده: «${mv.title}»`;
+            const nameInp = document.getElementById("quick-room-name-input");
+            if (nameInp) nameInp.value = `اتاق ${mv.title}`;
             document.getElementById("quick-room-modal").classList.add("show");
-            setTimeout(() => document.getElementById("quick-room-name-input").focus(), 80);
         }
 
         function closeQuickRoomModal() {
-            pendingQuickRoomMovieId = null;
+            quickRoomTargetMovieId = null;
             document.getElementById("quick-room-modal").classList.remove("show");
         }
 
         async function submitQuickRoomForMovie(e) {
             e.preventDefault();
-            const customRoomName = (document.getElementById("quick-room-name-input").value || "").trim();
-            const mv = moviesList.find(m => m.id === pendingQuickRoomMovieId);
-            if (!customRoomName || !mv || !roomsRef) return;
+            const mv = moviesList.find(m => m.id === quickRoomTargetMovieId);
+            const roomName = (document.getElementById("quick-room-name-input").value || "").trim();
+            if (!mv || !roomName || !roomsRef) return;
 
             const hostName = currentUserName || "سازنده اتاق";
             const newRoomRef = roomsRef.push();
             const roomId = newRoomRef.key;
-
-            await newRoomRef.set({
-                name: customRoomName,
+            const roomPayload = {
+                name: roomName,
                 hostId: persistentUserId,
                 hostName,
                 movieId: mv.id,
                 movieTitle: mv.title,
                 videoUrl: mv.videoUrl,
-                isPlaying: true,
                 currentTime: 0,
+                isPlaying: true,
                 updatedAt: Date.now()
-            }).catch(() => {});
+            };
 
+            await newRoomRef.set(roomPayload);
             closeQuickRoomModal();
             openTab("room");
-            enterWatchRoom(roomId, {
-                name: customRoomName,
-                hostId: persistentUserId,
-                hostName,
-                movieId: mv.id,
-                movieTitle: mv.title,
-                videoUrl: mv.videoUrl,
-                isPlaying: true,
-                currentTime: 0
+            enterWatchRoom(roomId, { id: roomId, ...roomPayload }, true);
+        }
+
+        function renderGenreChips() {
+            const box = document.getElementById("genre-filter-chips");
+            if (!box) return;
+            const allGenres = ["همه", ...AVAILABLE_GENRES];
+            box.innerHTML = allGenres.map(g =>
+                `<button type="button" class="genre-chip ${selectedGenre === g ? "active" : ""}" onclick="selectGenreFilter('${escAttr(g)}')">${esc(g)}</button>`
+            ).join("");
+        }
+
+        function selectGenreFilter(genre) {
+            selectedGenre = genre;
+            renderGenreChips();
+            renderFilteredMovies();
+        }
+
+        function renderFilteredMovies() {
+            const box = document.getElementById("search-movies-list");
+            if (!box) return;
+            const q = (document.getElementById("search-movie-input").value || "").trim().toLowerCase();
+
+            const filtered = moviesList.filter(m => {
+                const matchGenre = selectedGenre === "همه" || itemHasGenre(m, selectedGenre);
+                const matchQuery = !q ||
+                    (m.title && m.title.toLowerCase().includes(q)) ||
+                    (m.genre && m.genre.toLowerCase().includes(q)) ||
+                    (m.desc && m.desc.toLowerCase().includes(q)) ||
+                    (m.textBody && m.textBody.toLowerCase().includes(q));
+                return matchGenre && matchQuery;
             });
+
+            if (!filtered.length) {
+                box.innerHTML = `<div class="glass empty-note">موردی با این فیلتر یا جستجو پیدا نشد.</div>`;
+                return;
+            }
+            box.innerHTML = filtered.map(m => m.itemType === "post" || m.itemType === "text" ? buildMovieCardHtml(m) : buildMovie16x9CardHtml(m)).join("");
         }
 
-        function getCurrentActiveTabName() {
-            const activeSec = document.querySelector(".page-view.active");
-            if (!activeSec) return "home";
-            return activeSec.id.replace("tab-", "");
+        function renderFavoritesList() {
+            const box = document.getElementById("favorites-movies-list");
+            if (!box) return;
+            const favMovies = moviesList.filter(m => favIds.includes(m.id));
+            if (!favMovies.length) {
+                box.innerHTML = `<div class="glass empty-note">لیست فیلم‌های شما خالی است.</div>`;
+                return;
+            }
+            box.innerHTML = favMovies.map(buildMovieCardHtml).join("");
         }
 
-        function openTab(tabName) {
+        function toggleFavorite(movieId) {
+            if (favIds.includes(movieId)) {
+                favIds = favIds.filter(id => id !== movieId);
+            } else {
+                favIds.push(movieId);
+            }
+            safeStorageSet(FAV_STORAGE, JSON.stringify(favIds));
+            if (userProfileRef) {
+                userProfileRef.update({ favorites: favIds }).catch(() => {});
+            }
+            renderAllMovieViews();
+        }
+
+        function showPlayerErrorUi(msgText) {
+            const statusEl = document.getElementById("now-playing-status");
+            const retryBtn = document.getElementById("btn-retry-movie");
+            if (statusEl) statusEl.innerText = msgText || "خطا در پخش ویدیو. لینک را بررسی کنید یا پخش مجدد بزنید.";
+            if (retryBtn) retryBtn.style.display = "inline-flex";
+        }
+
+        function clearPlayerErrorUi() {
+            const retryBtn = document.getElementById("btn-retry-movie");
+            if (retryBtn) retryBtn.style.display = "none";
+        }
+
+        function unmuteCurrentMovie() {
+            videoEl.muted = false;
+            player.muted = false;
+            const btn = document.getElementById("btn-unmute-player");
+            if (btn) btn.style.display = "none";
+            const pr = player.play();
+            if (pr && pr.catch) pr.catch(() => {});
+        }
+
+        function retryCurrentMoviePlayback() {
+            if (!currentPlayingMovie) return;
+            loadMediaIntoPlayer(currentPlayingMovie, { autoPlay: true });
+        }
+
+        function playMovieById(movieId, startNewSession = true) {
+            const mv = moviesList.find(m => m.id === movieId);
+            if (!mv) return;
             stopAllInlinePostPlayers();
+            if (startNewSession && activeRoomId && !isRoomHost) {
+                leaveActiveRoom();
+            }
+            if (startNewSession) {
+                recordItemViewOnce(movieId);
+            }
+            loadMediaIntoPlayer(mv, { autoPlay: true });
+        }
 
-            if (tabName === "explore" && !isAccountCompleted()) {
-                openNameModal("login");
+        function loadMediaIntoPlayer(movieObj, opts = {}) {
+            if (!movieObj || !movieObj.videoUrl) return;
+            const cleanUrl = movieObj.videoUrl.trim();
+            if (!isDirectVideoFileUrl(cleanUrl)) {
+                alert("لینک فیلم یا ویدیو معتبر نیست.");
                 return;
             }
-            if (tabName === "page" && !isAccountCompleted()) {
-                openNameModal("login");
-                return;
-            }
 
-            document.body.classList.toggle("explore-mode-active", tabName === "explore");
+            currentPlayingMovie = movieObj;
+            clearPlayerErrorUi();
+            document.getElementById("active-player-box").classList.add("show");
+            document.getElementById("now-playing-title").innerText = movieObj.title;
+            const fmtLabel = detectVideoFormatLabel(cleanUrl);
+            document.getElementById("now-playing-meta").innerText = `${movieObj.genre || "درام"} • ${fmtLabel}${movieObj.year ? " • " + movieObj.year : ""}`;
 
-            document.querySelectorAll(".page-view").forEach(sec => sec.classList.remove("active"));
-            const targetSec = document.getElementById("tab-" + tabName);
-            if (targetSec) targetSec.classList.add("active");
+            const statusEl = document.getElementById("now-playing-status");
+            const unmuteBtn = document.getElementById("btn-unmute-player");
+            if (unmuteBtn) unmuteBtn.style.display = "none";
+            if (statusEl) statusEl.innerText = `در حال آماده‌سازی پخش (${fmtLabel})...`;
 
-            document.querySelectorAll(".tb-btn").forEach(btn => btn.classList.remove("active"));
-            const activeTb = document.getElementById("tb-" + tabName);
-            if (activeTb) activeTb.classList.add("active");
+            const seekTarget = (typeof opts.seekToSec === "number") ? opts.seekToSec : null;
+            const autoPlayFlag = opts.autoPlay !== false;
 
-            if (tabName === "home") {
-                renderHomeSections();
-            } else if (tabName === "search") {
-                renderGenreChips();
-                renderFilteredMovies();
-            } else if (tabName === "favorites") {
-                renderFavorites();
-            } else if (tabName === "room") {
-                populateRoomMovieSelect();
-                renderRoomsList();
-                updateRoomPanelsVisibility();
-            } else if (tabName === "page") {
-                syncPageTabAndHeader();
-                renderPageMyItems();
-            } else if (tabName === "explore") {
-                if (!shuffledPostsCache.length && !shuffledMoviesCache.length) {
-                    reshuffleExploreRandom();
-                } else {
-                    renderExploreSections();
+            mainHls = bindCrossPlatformMedia(videoEl, player, cleanUrl, {
+                posterUrl: movieObj.poster || FALLBACK_POSTER,
+                seekToSec: seekTarget,
+                autoPlay: autoPlayFlag,
+                existingHls: mainHls,
+                onBeforeSeek: () => { suppressRoomSyncUntil = Date.now() + 900; },
+                onAfterSeek: () => { suppressRoomSyncUntil = Date.now() + 400; },
+                onPlaying: (isMuted) => {
+                    clearPlayerErrorUi();
+                    if (isMuted) {
+                        if (statusEl) statusEl.innerText = "در حال پخش (بی‌صدا — دکمه «وصل صدا» را بزنید)";
+                        if (unmuteBtn) unmuteBtn.style.display = "inline-flex";
+                    } else {
+                        if (statusEl) statusEl.innerText = "در حال پخش";
+                        if (unmuteBtn) unmuteBtn.style.display = "none";
+                    }
+                },
+                onError: () => {
+                    showPlayerErrorUi("امکان پخش مستقیم این لینک وجود ندارد یا لینک نامعتبر است.");
                 }
-            } else if (tabName === "admin") {
-                updateAdminDashboard();
+            });
+
+            if (opts.shouldPlay === false) {
+                setTimeout(() => {
+                    try { player.pause(); videoEl.pause(); } catch (_) {}
+                }, 120);
             }
-            window.scrollTo({ top: 0, behavior: "smooth" });
+
+            document.getElementById("active-player-box").scrollIntoView({ behavior: "smooth", block: "nearest" });
+        }
+
+        function closePlayer() {
+            exitFullscreenNow();
+            if (mainHls) {
+                try { mainHls.destroy(); } catch (_) {}
+                mainHls = null;
+            }
+            videoEl.pause();
+            videoEl.removeAttribute("src");
+            videoEl.load();
+            currentPlayingMovie = null;
+            clearPlayerErrorUi();
+            const unmuteBtn = document.getElementById("btn-unmute-player");
+            if (unmuteBtn) unmuteBtn.style.display = "none";
+            document.getElementById("active-player-box").classList.remove("show");
+        }
+
+        function pushHostRoomState(forcePlayState = null) {
+            if (!activeRoomId || !isRoomHost || !roomsRef) return;
+            if (Date.now() < suppressRoomSyncUntil) return;
+            const playingNow = typeof forcePlayState === "boolean" ? forcePlayState : !videoEl.paused;
+            roomsRef.child(activeRoomId).update({
+                currentTime: Number(videoEl.currentTime || 0),
+                isPlaying: playingNow,
+                updatedAt: Date.now()
+            }).catch(() => {});
+        }
+
+        videoEl.addEventListener("play", () => {
+            if (activeRoomId && isRoomHost) pushHostRoomState(true);
+        });
+        videoEl.addEventListener("pause", () => {
+            if (activeRoomId && isRoomHost) pushHostRoomState(false);
+        });
+        videoEl.addEventListener("seeked", () => {
+            if (activeRoomId && isRoomHost) pushHostRoomState();
+        });
+        setInterval(() => {
+            if (activeRoomId && isRoomHost && !videoEl.paused) {
+                pushHostRoomState(true);
+            }
+        }, 2500);
+
+        function applyRoomSnapshotToViewer(room) {
+            if (!room) return;
+            activeRoomData = room;
+            const syncInfoEl = document.getElementById("room-sync-info");
+            if (syncInfoEl) {
+                syncInfoEl.innerText = `اتاق «${room.name}» • میزبان: ${room.hostName || "کاربر"} • ${room.isPlaying ? "در حال پخش" : "مکث"}`;
+            }
+            const delBarBtn = document.getElementById("btn-delete-room-bar");
+            if (delBarBtn) {
+                delBarBtn.style.display = isRoomHost ? "inline-flex" : "none";
+            }
+
+            if (isRoomHost) return;
+
+            const targetTime = Number(room.currentTime || 0);
+            const shouldBePlaying = Boolean(room.isPlaying);
+
+            if (!currentPlayingMovie || currentPlayingMovie.videoUrl !== room.videoUrl) {
+                loadMediaIntoPlayer({
+                    id: room.movieId || "room_movie",
+                    title: room.movieTitle || "فیلم اتاق",
+                    genre: "اتاق آنلاین",
+                    year: "",
+                    videoUrl: room.videoUrl
+                }, {
+                    seekToSec: targetTime,
+                    autoPlay: shouldBePlaying,
+                    shouldPlay: shouldBePlaying
+                });
+                return;
+            }
+
+            const drift = Math.abs(Number(videoEl.currentTime || 0) - targetTime);
+            if (drift > 2.2) {
+                suppressRoomSyncUntil = Date.now() + 900;
+                try { videoEl.currentTime = targetTime; } catch (_) {}
+            }
+
+            if (shouldBePlaying && videoEl.paused) {
+                const pr = player.play();
+                if (pr && pr.catch) pr.catch(() => {});
+            } else if (!shouldBePlaying && !videoEl.paused) {
+                player.pause();
+            }
+        }
+
+        function syncToHostNow() {
+            if (!activeRoomData) return;
+            const targetTime = Number(activeRoomData.currentTime || 0);
+            suppressRoomSyncUntil = Date.now() + 900;
+            try { videoEl.currentTime = targetTime; } catch (_) {}
+            if (activeRoomData.isPlaying) {
+                const pr = player.play();
+                if (pr && pr.catch) pr.catch(() => {});
+            } else {
+                player.pause();
+            }
         }
 
         function switchRoomMode(mode) {
-            roomMode = mode;
-            updateRoomPanelsVisibility();
-            if (mode === "create") populateRoomMovieSelect();
-            if (mode === "join") renderRoomsList();
-        }
-
-        function updateRoomPanelsVisibility() {
-            const lobbyBox = document.getElementById("room-lobby-controls");
-            const createPanel = document.getElementById("room-create-panel");
-            const joinPanel = document.getElementById("room-join-panel");
-            const activeNotice = document.getElementById("room-active-notice");
-            const btnCreate = document.getElementById("btn-mode-create");
-            const btnJoin = document.getElementById("btn-mode-join");
-
-            if (activeRoomId) {
-                if (lobbyBox) lobbyBox.style.display = "none";
-                if (createPanel) createPanel.style.display = "none";
-                if (joinPanel) joinPanel.style.display = "none";
-                if (activeNotice) activeNotice.style.display = "block";
-                return;
-            }
-
-            if (lobbyBox) lobbyBox.style.display = "block";
-            if (activeNotice) activeNotice.style.display = "none";
-
-            if (createPanel) createPanel.style.display = roomMode === "create" ? "block" : "none";
-            if (joinPanel) joinPanel.style.display = roomMode === "join" ? "block" : "none";
-
-            if (btnCreate && btnJoin) {
-                if (roomMode === "create") {
-                    btnCreate.className = "btn-main";
-                    btnJoin.className = "btn-sec";
-                    btnJoin.style.padding = "13px 14px";
-                } else {
-                    btnJoin.className = "btn-main";
-                    btnCreate.className = "btn-sec";
-                    btnCreate.style.padding = "13px 14px";
-                }
-            }
+            const isCreate = mode === "create";
+            document.getElementById("room-create-panel").style.display = isCreate ? "block" : "none";
+            document.getElementById("room-join-panel").style.display = isCreate ? "none" : "block";
+            document.getElementById("btn-mode-create").className = isCreate ? "btn-main" : "btn-sec";
+            document.getElementById("btn-mode-join").className = isCreate ? "btn-sec" : "btn-main";
+            if (!isCreate) renderRoomsList();
         }
 
         function populateRoomMovieSelect() {
             const sel = document.getElementById("room-movie-select");
-            const searchInp = document.getElementById("room-movie-search");
             if (!sel) return;
-            const q = (searchInp ? searchInp.value : "").trim().toLowerCase();
-            const playableMovies = moviesList.filter(m => m.itemType !== "text" && m.videoUrl);
-            const filtered = playableMovies.filter(m => !q || (m.title || "").toLowerCase().includes(q));
-            sel.innerHTML = "";
-            if (!filtered.length) {
-                const opt = document.createElement("option");
-                opt.value = "";
-                opt.textContent = "فیلمی یافت نشد";
-                sel.appendChild(opt);
+            const q = (document.getElementById("room-movie-search").value || "").trim().toLowerCase();
+            const playable = getHomeMoviesList().filter(m =>
+                m.videoUrl && (!q || (m.title && m.title.toLowerCase().includes(q)))
+            );
+            if (!playable.length) {
+                sel.innerHTML = `<option value="">فیلمی یافت نشد</option>`;
                 return;
             }
-            filtered.forEach(m => {
-                const opt = document.createElement("option");
-                opt.value = m.id;
-                opt.textContent = `${m.title} (${m.genre || "عمومی"})`;
-                sel.appendChild(opt);
-            });
+            sel.innerHTML = playable.map(m =>
+                `<option value="${escAttr(m.id)}">${esc(m.title)}</option>`
+            ).join("");
         }
 
         async function createWatchRoom(e) {
             e.preventDefault();
-            const roomName = document.getElementById("room-name-input").value.trim();
+            const roomName = (document.getElementById("room-name-input").value || "").trim();
             const movieId = document.getElementById("room-movie-select").value;
-            if (!roomName || !movieId || !roomsRef) return;
-
             const mv = moviesList.find(m => m.id === movieId);
-            if (!mv) return;
+            if (!roomName || !mv || !roomsRef) return;
 
             const hostName = currentUserName || "سازنده اتاق";
             const newRoomRef = roomsRef.push();
             const roomId = newRoomRef.key;
-
-            await newRoomRef.set({
+            const roomPayload = {
                 name: roomName,
                 hostId: persistentUserId,
                 hostName,
                 movieId: mv.id,
                 movieTitle: mv.title,
                 videoUrl: mv.videoUrl,
-                isPlaying: true,
                 currentTime: 0,
-                updatedAt: Date.now()
-            }).catch(() => {});
-
-            document.getElementById("room-name-input").value = "";
-            enterWatchRoom(roomId, {
-                name: roomName,
-                hostId: persistentUserId,
-                hostName,
-                movieId: mv.id,
-                movieTitle: mv.title,
-                videoUrl: mv.videoUrl,
                 isPlaying: true,
-                currentTime: 0
-            });
+                updatedAt: Date.now()
+            };
+
+            await newRoomRef.set(roomPayload);
+            enterWatchRoom(roomId, { id: roomId, ...roomPayload }, true);
         }
 
         function renderRoomsList() {
             const box = document.getElementById("rooms-list-container");
             const badge = document.getElementById("active-rooms-badge");
+            const list = Object.values(roomsMap || {}).sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+            if (badge) badge.innerText = `${list.length} اتاق`;
             if (!box) return;
 
-            const entries = Object.entries(allRoomsMap || {});
-            if (badge) badge.innerText = `${entries.length} اتاق`;
-
-            if (!entries.length) {
+            if (!list.length) {
                 box.innerHTML = `<div class="empty-note">در حال حاضر هیچ اتاق فعالی وجود ندارد. یک اتاق بسازید!</div>`;
                 return;
             }
 
-            box.innerHTML = entries.map(([roomId, r]) => {
-                const canDelete = r.hostId === persistentUserId || currentAdminLevel === "super";
+            box.innerHTML = list.map(r => {
+                const canDeleteRoom = r.hostId === persistentUserId || isAdminLoggedIn;
                 return `
                     <div class="room-item-row">
-                        <button type="button" class="room-item-enter" onclick="enterWatchRoom('${escAttr(roomId)}')">
-                            <strong>${esc(r.name || "اتاق فیلم")}</strong>
-                            <span>فیلم: ${esc(r.movieTitle || "-")} • سازنده: ${esc(r.hostName || "کاربر")}</span>
+                        <button type="button" class="room-item-enter" onclick="joinRoomById('${escAttr(r.id)}')">
+                            <strong>${esc(r.name)}</strong>
+                            <span>فیلم: ${esc(r.movieTitle || "نامشخص")} • میزبان: ${esc(r.hostName || "کاربر")}</span>
                         </button>
                         <div class="room-item-actions">
                             <span class="room-live-pill">${r.isPlaying ? "در حال پخش" : "مکث"}</span>
-                            ${canDelete ? `<button type="button" class="btn-room-del" onclick="deleteRoomById('${escAttr(roomId)}')">حذف</button>` : ``}
+                            ${canDeleteRoom ? `<button type="button" class="btn-del" onclick="deleteRoomById('${escAttr(r.id)}')">حذف</button>` : ""}
                         </div>
                     </div>
                 `;
             }).join("");
         }
 
-        function enterWatchRoom(roomId, initialData = null) {
-            if (!roomsRef) return;
-            leaveRoomListenersOnly();
-
-            activeRoomId = roomId;
-            const data = initialData || allRoomsMap[roomId];
-            if (!data) return;
-
-            activeRoomData = data;
-            isRoomHost = data.hostId === persistentUserId;
-            updateRoomPanelsVisibility();
-
-            document.getElementById("room-sync-bar").classList.add("show");
-            document.getElementById("under-player-chat").classList.add("show");
-            document.getElementById("chat-room-title-badge").innerText = data.name || "اتاق";
-            document.getElementById("btn-manual-sync").style.display = isRoomHost ? "none" : "inline-flex";
-            document.getElementById("btn-delete-room-bar").style.display =
-                (isRoomHost || currentAdminLevel === "super") ? "inline-flex" : "none";
-
-            const targetMovie = moviesList.find(m => m.id === data.movieId) || {
-                id: data.movieId,
-                title: data.movieTitle || "فیلم اتاق",
-                genre: "اتاق همزمان",
-                year: "",
-                videoUrl: data.videoUrl
-            };
-
-            loadMediaIntoPlayer(targetMovie, {
-                seekToSec: Number(data.currentTime || 0),
-                autoPlay: Boolean(data.isPlaying)
-            });
-
-            updateRoomSyncBadgeText(data);
-
-            roomSyncListenerRef = roomsRef.child(roomId);
-            roomSyncListenerRef.on("value", snap => {
-                const updated = snap.val();
-                if (!updated) {
-                    alert("این اتاق بسته شد.");
-                    leaveActiveRoom();
-                    return;
-                }
-                activeRoomData = updated;
-                isRoomHost = updated.hostId === persistentUserId;
-                document.getElementById("btn-manual-sync").style.display = isRoomHost ? "none" : "inline-flex";
-                document.getElementById("btn-delete-room-bar").style.display =
-                    (isRoomHost || currentAdminLevel === "super") ? "inline-flex" : "none";
-                updateRoomSyncBadgeText(updated);
-
-                if (!isRoomHost) {
-                    applyRemoteRoomPlayback(updated);
-                }
-            });
-
-            roomChatListenerRef = roomsRef.child(roomId).child("messages").limitToLast(60);
-            roomChatListenerRef.on("value", snap => {
-                const msgs = [];
-                snap.forEach(ch => msgs.push({ id: ch.key, ...ch.val() }));
-                renderRoomChatMessages(msgs);
-            });
-        }
-
-        function updateRoomSyncBadgeText(data) {
-            const infoEl = document.getElementById("room-sync-info");
-            if (!infoEl) return;
-            const roleText = isRoomHost ? "شما سازنده اتاق هستید" : `اتاق: ${data.name || ""}`;
-            const stateText = data.isPlaying ? "در حال پخش" : "متوقف شده";
-            infoEl.innerText = `${roleText} • ${stateText}`;
-        }
-
-        function applyRemoteRoomPlayback(roomState) {
-            if (!roomState || !roomState.videoUrl) return;
-            isApplyingRemoteRoomState = true;
-
-            const targetSec = Number(roomState.currentTime || 0);
-            const diff = Math.abs((videoEl.currentTime || 0) - targetSec);
-
-            if (!currentPlayingMovie || currentPlayingMovie.videoUrl !== roomState.videoUrl) {
-                loadMediaIntoPlayer({
-                    id: roomState.movieId,
-                    title: roomState.movieTitle || "فیلم اتاق",
-                    genre: "اتاق همزمان",
-                    year: "",
-                    videoUrl: roomState.videoUrl
-                }, {
-                    seekToSec: targetSec,
-                    autoPlay: Boolean(roomState.isPlaying)
-                });
-            } else {
-                if (diff > 2.5) {
-                    try { videoEl.currentTime = targetSec; } catch (_) {}
-                }
-                if (roomState.isPlaying && videoEl.paused) {
-                    plyrPlayer.play().catch(() => {});
-                } else if (!roomState.isPlaying && !videoEl.paused) {
-                    plyrPlayer.pause();
-                }
-            }
-
-            setTimeout(() => { isApplyingRemoteRoomState = false; }, 450);
-        }
-
-        function syncToHostNow() {
-            if (!activeRoomData || isRoomHost) return;
-            applyRemoteRoomPlayback(activeRoomData);
-        }
-
-        function pushHostPlaybackState(force = false) {
-            if (!activeRoomId || !isRoomHost || isApplyingRemoteRoomState || !roomsRef) return;
-            const now = Date.now();
-            if (!force && now - lastHostPushTime < 1200) return;
-            lastHostPushTime = now;
-
-            roomsRef.child(activeRoomId).update({
-                isPlaying: !videoEl.paused,
-                currentTime: Number(videoEl.currentTime || 0),
-                updatedAt: now
-            }).catch(() => {});
-        }
-
-        videoEl.addEventListener("play", () => pushHostPlaybackState(true));
-        videoEl.addEventListener("pause", () => pushHostPlaybackState(true));
-        videoEl.addEventListener("seeked", () => pushHostPlaybackState(true));
-        setInterval(() => {
-            if (activeRoomId && isRoomHost && !videoEl.paused) {
-                pushHostPlaybackState(false);
-            }
-        }, 4000);
-
-        async function deleteCurrentRoom() {
-            if (!activeRoomId) return;
-            await deleteRoomById(activeRoomId);
+        function joinRoomById(roomId) {
+            const room = roomsMap[roomId];
+            if (!room) return;
+            enterWatchRoom(roomId, room, room.hostId === persistentUserId);
         }
 
         async function deleteRoomById(roomId) {
             if (!roomId || !roomsRef) return;
-            const wasActive = activeRoomId === roomId;
+            if (!confirm("آیا این اتاق حذف شود؟")) return;
             await roomsRef.child(roomId).remove().catch(() => {});
-            if (wasActive) {
+            if (activeRoomId === roomId) {
                 leaveActiveRoom();
             }
         }
 
-        function leaveRoomListenersOnly() {
-            if (roomSyncListenerRef) {
-                roomSyncListenerRef.off();
-                roomSyncListenerRef = null;
-            }
-            if (roomChatListenerRef) {
-                roomChatListenerRef.off();
-                roomChatListenerRef = null;
+        async function deleteCurrentRoom() {
+            if (!activeRoomId || !roomsRef) return;
+            if (!isRoomHost && !isAdminLoggedIn) return;
+            if (!confirm("این اتاق به صورت کامل حذف شود؟")) return;
+            const targetId = activeRoomId;
+            leaveActiveRoom();
+            await roomsRef.child(targetId).remove().catch(() => {});
+        }
+
+        let roomChatRef = null;
+
+        function enterWatchRoom(roomId, roomData, asHost) {
+            activeRoomId = roomId;
+            activeRoomData = roomData;
+            isRoomHost = Boolean(asHost);
+
+            document.getElementById("room-lobby-controls").style.display = "none";
+            document.getElementById("room-create-panel").style.display = "none";
+            document.getElementById("room-join-panel").style.display = "none";
+            document.getElementById("room-active-notice").style.display = "block";
+
+            document.getElementById("room-sync-bar").classList.add("show");
+            document.getElementById("under-player-chat").classList.add("show");
+            document.getElementById("chat-room-title-badge").innerText = roomData.name || "اتاق";
+
+            const manualSyncBtn = document.getElementById("btn-manual-sync");
+            if (manualSyncBtn) manualSyncBtn.style.display = isRoomHost ? "none" : "inline-flex";
+
+            const delBarBtn = document.getElementById("btn-delete-room-bar");
+            if (delBarBtn) delBarBtn.style.display = isRoomHost ? "inline-flex" : "none";
+
+            loadMediaIntoPlayer({
+                id: roomData.movieId || "room_movie",
+                title: roomData.movieTitle || "فیلم اتاق",
+                genre: "اتاق آنلاین",
+                year: "",
+                videoUrl: roomData.videoUrl
+            }, {
+                seekToSec: Number(roomData.currentTime || 0),
+                autoPlay: isRoomHost ? true : Boolean(roomData.isPlaying),
+                shouldPlay: isRoomHost ? true : Boolean(roomData.isPlaying)
+            });
+
+            if (roomChatRef) roomChatRef.off();
+            if (db) {
+                roomChatRef = db.ref("zeuc_movie_v1/room_chats/" + roomId);
+                roomChatRef.limitToLast(60).on("value", snap => {
+                    renderRoomChat(snap.val() || {});
+                });
             }
         }
 
         function leaveActiveRoom() {
-            leaveRoomListenersOnly();
             activeRoomId = null;
             activeRoomData = null;
             isRoomHost = false;
+            if (roomChatRef) {
+                roomChatRef.off();
+                roomChatRef = null;
+            }
             document.getElementById("room-sync-bar").classList.remove("show");
             document.getElementById("under-player-chat").classList.remove("show");
-            document.getElementById("room-chat-messages").innerHTML = `<div class="empty-note" style="padding:12px;">هنوز پیامی ارسال نشده است.</div>`;
-            updateRoomPanelsVisibility();
+            document.getElementById("room-active-notice").style.display = "none";
+            document.getElementById("room-lobby-controls").style.display = "block";
+            switchRoomMode("create");
+            closePlayer();
         }
 
-        async function sendRoomChatMessage(e) {
-            e.preventDefault();
-            if (!activeRoomId || !roomsRef) return;
-            const input = document.getElementById("room-chat-input");
-            const text = input.value.trim();
-            if (!text) return;
-
-            await roomsRef.child(activeRoomId).child("messages").push({
-                senderId: persistentUserId,
-                senderName: currentUserName || "کاربر",
-                text,
-                createdAt: Date.now()
-            }).catch(() => {});
-            input.value = "";
-        }
-
-        async function sendReaction(emoji) {
-            if (!activeRoomId || !roomsRef) return;
-            await roomsRef.child(activeRoomId).child("messages").push({
-                senderId: persistentUserId,
-                senderName: currentUserName || "کاربر",
-                text: emoji,
-                createdAt: Date.now()
-            }).catch(() => {});
-        }
-
-        function renderRoomChatMessages(msgs) {
+        function renderRoomChat(chatObj) {
             const box = document.getElementById("room-chat-messages");
             if (!box) return;
+            const msgs = Object.values(chatObj || {}).sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
             if (!msgs.length) {
                 box.innerHTML = `<div class="empty-note" style="padding:12px;">هنوز پیامی ارسال نشده است.</div>`;
                 return;
             }
             box.innerHTML = msgs.map(m => {
-                const isMine = m.senderId === persistentUserId;
+                const mine = m.senderId === persistentUserId;
                 return `
-                    <div class="chat-msg-bubble ${isMine ? "mine" : ""}">
+                    <div class="chat-msg-bubble ${mine ? "mine" : ""}">
                         <div class="chat-msg-sender">${esc(m.senderName || "کاربر")}</div>
                         <div>${esc(m.text || "")}</div>
                     </div>
@@ -6221,504 +6585,93 @@
             box.scrollTop = box.scrollHeight;
         }
 
-        function playMovieById(id, openPlayerCard = true) {
-            const mv = moviesList.find(m => m.id === id);
-            if (!mv) return;
-            recordItemViewOnce(id);
-            loadMediaIntoPlayer(mv, { autoPlay: openPlayerCard });
-            if (activeRoomId && isRoomHost && roomsRef) {
-                roomsRef.child(activeRoomId).update({
-                    movieId: mv.id,
-                    movieTitle: mv.title,
-                    videoUrl: mv.videoUrl,
-                    isPlaying: true,
-                    currentTime: 0,
-                    updatedAt: Date.now()
-                }).catch(() => {});
-            }
+        async function sendRoomChatMessage(e) {
+            e.preventDefault();
+            if (!activeRoomId || !roomChatRef) return;
+            const inp = document.getElementById("room-chat-input");
+            const txt = (inp.value || "").trim();
+            if (!txt) return;
+            await roomChatRef.push({
+                senderId: persistentUserId,
+                senderName: currentUserName || "کاربر",
+                text: txt,
+                createdAt: Date.now()
+            });
+            inp.value = "";
         }
 
-        function unmuteCurrentMovie() {
-            videoEl.muted = false;
-            plyrPlayer.muted = false;
-            plyrPlayer.play().catch(() => {});
-            document.getElementById("btn-unmute-player").style.display = "none";
-            document.getElementById("now-playing-status").innerText = "در حال پخش با صدا";
-        }
-
-        function retryCurrentMoviePlayback() {
-            if (!currentPlayingMovie) return;
-            loadMediaIntoPlayer(currentPlayingMovie, { autoPlay: true });
-        }
-
-        function loadMediaIntoPlayer(movieObj, opts = {}) {
-            stopAllInlinePostPlayers();
-            currentPlayingMovie = movieObj;
-            const playerCard = document.getElementById("active-player-box");
-            const unmuteBtn = document.getElementById("btn-unmute-player");
-            const retryBtn = document.getElementById("btn-retry-movie");
-            const statusEl = document.getElementById("now-playing-status");
-            const fmtLabel = detectVideoFormatLabel(movieObj.videoUrl || "");
-
-            playerCard.classList.add("show");
-            document.getElementById("now-playing-title").innerText = movieObj.title || "بدون عنوان";
-            document.getElementById("now-playing-meta").innerText =
-                `${movieObj.genre || "عمومی"}${movieObj.year ? " • " + movieObj.year : ""} • ${fmtLabel}`;
-            unmuteBtn.style.display = "none";
-            retryBtn.style.display = "none";
-            statusEl.innerText = `در حال بارگذاری (${fmtLabel})...`;
-
-            playerCard.scrollIntoView({ behavior: "smooth", block: "nearest" });
-
-            const rawUrl = (movieObj.videoUrl || "").trim();
-            if (!isDirectVideoFileUrl(rawUrl)) {
-                statusEl.innerText = "لینک فیلم یا ویدیو معتبر نیست.";
-                retryBtn.style.display = "inline-flex";
-                return;
-            }
-
-            hlsInstance = bindCrossPlatformMedia(videoEl, plyrPlayer, rawUrl, {
-                posterUrl: movieObj.poster || FALLBACK_POSTER,
-                seekToSec: typeof opts.seekToSec === "number" ? opts.seekToSec : null,
-                autoPlay: opts.autoPlay !== false,
-                existingHls: hlsInstance,
-                onBeforeSeek: () => { isApplyingRemoteRoomState = true; },
-                onAfterSeek: () => { isApplyingRemoteRoomState = false; },
-                onPlaying: (wasMuted) => {
-                    retryBtn.style.display = "none";
-                    if (wasMuted) {
-                        unmuteBtn.style.display = "inline-flex";
-                        statusEl.innerText = "در حال پخش (بی‌صدا — دکمه «وصل صدا» را بزنید)";
-                    } else {
-                        unmuteBtn.style.display = "none";
-                        statusEl.innerText = `در حال پخش (${fmtLabel})`;
-                    }
-                },
-                onError: () => {
-                    retryBtn.style.display = "inline-flex";
-                    statusEl.innerText = "امکان پخش مستقیم این لینک در این مرورگر فراهم نشد؛ «پخش مجدد» را بزنید یا لینک دیگری را بررسی کنید.";
-                }
+        async function sendReaction(emoji) {
+            if (!activeRoomId || !roomChatRef) return;
+            await roomChatRef.push({
+                senderId: persistentUserId,
+                senderName: currentUserName || "کاربر",
+                text: `واکنش: ${emoji}`,
+                createdAt: Date.now()
             });
         }
 
-        function closePlayer() {
-            exitFullscreenNow();
-            if (hlsInstance) {
-                try { hlsInstance.destroy(); } catch (_) {}
-                hlsInstance = null;
-            }
-            try { plyrPlayer.pause(); } catch (_) {}
-            videoEl.pause();
-            videoEl.removeAttribute("src");
-            while (videoEl.firstChild) {
-                videoEl.removeChild(videoEl.firstChild);
-            }
-            videoEl.load();
-            currentPlayingMovie = null;
-            document.getElementById("active-player-box").classList.remove("show");
-        }
-
-        function toggleFavorite(id) {
-            if (favIds.includes(id)) {
-                favIds = favIds.filter(x => x !== id);
-            } else {
-                favIds.push(id);
-            }
-            safeStorageSet(FAV_STORAGE, JSON.stringify(favIds));
-            if (userProfileRef && isAccountCompleted()) {
-                userProfileRef.child("favorites").set(favIds).catch(() => {});
-            }
-            renderAllMovieViews();
-        }
-
-        function buildMovieCardHtml(m) {
-            const isFav = favIds.includes(m.id);
-            const isText = m.itemType === "text";
-            const isPost = m.itemType === "post";
-            const kindLabel = isText ? "متن" : (isPost ? "پست" : "فیلم");
-            const fmtLabel = !isText && m.videoUrl ? detectVideoFormatLabel(m.videoUrl) : "";
-            const cInfo = getCreatorInfo(m);
-            const hasCreator = Boolean(cInfo.uid);
-            const isMe = cInfo.uid === persistentUserId;
-            const isFollowed = cInfo.uid ? followingList.includes(cInfo.uid) : false;
-
-            const onCardClick = isText
-                ? `recordItemViewOnce('${escAttr(m.id)}')`
-                : (isPost
-                    ? `togglePostInlinePlayback('${escAttr(m.id)}')`
-                    : `openMovieDetail('${escAttr(m.id)}')`);
-
-            const onPlayClick = isPost
-                ? `togglePostInlinePlayback('${escAttr(m.id)}')`
-                : `playMovieById('${escAttr(m.id)}', true)`;
-
-            return `
-                <div class="glass movie-card" onclick="${onCardClick}">
-                    ${hasCreator ? `
-                        <div class="explore-author-strip" onclick="event.stopPropagation(); openCreatorPageInExplore('${escAttr(cInfo.uid)}')">
-                            <div style="display:flex; align-items:center; gap:7px; min-width:0; flex:1;">
-                                <img class="explore-author-avatar" src="${escAttr(cInfo.avatar)}" alt="${escAttr(cInfo.name)}" onerror="this.src='${DEFAULT_AVATAR}'">
-                                <div style="min-width:0;">
-                                    <strong style="display:block; font-size:11.5px; font-weight:900; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.name)}</strong>
-                                    <span style="display:block; font-size:10px; color:var(--chip-text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(cInfo.handle)}</span>
-                                </div>
-                            </div>
-                            ${!isMe ? `
-                                <button type="button" class="${isFollowed ? "btn-sec" : "btn-watch"}" style="padding:4px 8px; font-size:10px;" onclick="event.stopPropagation(); toggleFollowUser('${escAttr(cInfo.uid)}')">
-                                    ${isFollowed ? "✓" : "+ فالو"}
-                                </button>
-                            ` : ``}
-                        </div>
-                    ` : ``}
-
-                    ${isText ? `
-                        <div class="text-post-body-box">${esc(m.textBody || m.desc || "")}</div>
-                        <div class="movie-info-col">
-                            <strong>${esc(m.title)}</strong>
-                            <div class="movie-sub-meta">
-                                <span class="pill-tag" style="margin-bottom:0;">متن</span>
-                                <span>${esc(m.genre || "عمومی")}${m.year ? " • " + esc(m.year) : ""}</span>
-                            </div>
-                        </div>
-                    ` : `
-                        <div class="movie-card-top-row">
-                            <div class="movie-poster-box ${isPost ? "post-media-slot" : ""}" data-post-id="${escAttr(m.id)}" onclick="event.stopPropagation()">
-                                ${getIdlePostMediaHtml(m)}
-                            </div>
-                            <div class="movie-info-col">
-                                <strong>${esc(m.title)}</strong>
-                                <div class="movie-sub-meta">
-                                    <span class="pill-tag" style="margin-bottom:0;">${esc(kindLabel)}${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
-                                    ${renderCustomLogoHtml(m)}
-                                    ${renderLangBadgeHtml(m.langType || "dub")}
-                                    <span>${esc(m.genre || "عمومی")}${m.year ? " • " + esc(m.year) : ""}</span>
-                                </div>
-                                <div class="movie-desc-short">${esc(m.desc || "بدون توضیحات")}</div>
-                                <div class="movie-actions-row" onclick="event.stopPropagation()">
-                                    <button type="button" class="btn-watch ${isPost ? "post-play-toggle-btn" : ""}" data-post-id="${escAttr(m.id)}" onclick="${onPlayClick}">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                                        <span>پخش</span>
-                                    </button>
-                                    ${!isPost ? `
-                                        <button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(m.id)}')">
-                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg>
-                                            <span>ساخت اتاق</span>
-                                        </button>
-                                    ` : ``}
-                                    <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(m.id)}')">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="${isFav ? "currentColor" : "none"}" stroke="currentColor" stroke-width="2.2"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
-                                        <span>${isFav ? "ذخیره شد" : "ذخیره"}</span>
-                                    </button>
-                                    <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(m.id)}')">
-                                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                                        <span>لینک</span>
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    `}
-
-                    ${buildItemSocialBlockHtml(m)}
-                </div>
-            `;
-        }
-
-        function buildMovieCard16x9Html(m) {
-            const isFav = favIds.includes(m.id);
-            const posterSrc = m.poster || FALLBACK_POSTER;
-            const fmtLabel = m.videoUrl ? detectVideoFormatLabel(m.videoUrl) : "";
-            return `
-                <div class="glass movie-card-16x9" onclick="openMovieDetail('${escAttr(m.id)}')">
-                    <div class="poster-16x9-box">
-                        <img src="${escAttr(posterSrc)}" alt="${escAttr(m.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
-                        <div class="poster-16x9-overlay">
-                            <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
-                                ${renderLangBadgeHtml(m.langType || "dub")}
-                                ${renderCustomLogoHtml(m)}
-                                ${fmtLabel ? `<span class="pill-tag" style="margin-bottom:0;">${esc(fmtLabel)}</span>` : ``}
-                            </div>
-                            <div class="poster-16x9-title">${esc(m.title)}</div>
-                        </div>
-                    </div>
-                    <div class="movie-actions-row" onclick="event.stopPropagation()">
-                        <button type="button" class="btn-watch" onclick="playMovieById('${escAttr(m.id)}', true)">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 4 20 12 6 20 6 4"/></svg>
-                            <span>پخش فیلم</span>
-                        </button>
-                        <button type="button" class="btn-room-movie" onclick="openQuickRoomModalForMovie('${escAttr(m.id)}')">
-                            <span>ساخت اتاق</span>
-                        </button>
-                        <button type="button" class="btn-fav ${isFav ? "saved" : ""}" onclick="toggleFavorite('${escAttr(m.id)}')">
-                            <span>${isFav ? "✓ ذخیره شد" : "+ ذخیره"}</span>
-                        </button>
-                        <button type="button" class="btn-share-movie" onclick="shareMovieLink('${escAttr(m.id)}')">
-                            <span>لینک</span>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }
-
-        let randomSliderMovies = [];
-        let randomSliderIndex = 0;
-        let randomSliderTimer = null;
-        let activeHomeAllGenre = null;
-
-        function startRandomSliderAutoplay() {
-            if (randomSliderTimer) clearInterval(randomSliderTimer);
-            randomSliderTimer = setInterval(() => {
-                if (activeHomeAllGenre) return;
-                if (randomSliderMovies.length > 1) {
-                    randomSliderIndex = (randomSliderIndex + 1) % randomSliderMovies.length;
-                    renderRandomSliderSlide();
-                }
-            }, 4200);
-        }
-
-        function goToRandomSlide(idx) {
-            if (!randomSliderMovies.length) return;
-            randomSliderIndex = ((idx % randomSliderMovies.length) + randomSliderMovies.length) % randomSliderMovies.length;
-            renderRandomSliderSlide();
-            startRandomSliderAutoplay();
-        }
-
-        function renderRandomSliderSlide() {
-            const slideBox = document.getElementById("home-random-slide-content");
-            const dotsBox = document.getElementById("home-random-slider-dots");
-            if (!slideBox || !dotsBox) return;
-
-            if (!randomSliderMovies.length) {
-                slideBox.innerHTML = `<div class="empty-note">هنوز فیلمی در سینمای خانه ثبت نشده است.</div>`;
-                dotsBox.innerHTML = "";
-                return;
-            }
-
-            if (randomSliderIndex >= randomSliderMovies.length) {
-                randomSliderIndex = 0;
-            }
-
-            const mv = randomSliderMovies[randomSliderIndex];
-            const posterSrc = mv.poster || FALLBACK_POSTER;
-            const fmtLabel = mv.videoUrl ? detectVideoFormatLabel(mv.videoUrl) : "";
-
-            slideBox.innerHTML = `
-                <div class="hero-slide-clickable" onclick="openMovieDetail('${escAttr(mv.id)}', 'home')">
-                    <div class="hero-slide-stage">
-                        <img src="${escAttr(posterSrc)}" alt="${escAttr(mv.title)}" onerror="this.src='${FALLBACK_POSTER}'">
-                        <div class="hero-slide-overlay">
-                            <div class="hero-slide-meta-row">
-                                <span class="pill-tag" style="margin-bottom:0;">${esc(mv.genre || "عمومی")}${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
-                                <div style="display:flex; gap:5px; align-items:center;">
-                                    ${renderCustomLogoHtml(mv)}
-                                    ${renderLangBadgeHtml(mv.langType || "dub")}
-                                </div>
-                            </div>
-                            <div class="hero-slide-title">${esc(mv.title)}</div>
-                            <span style="font-size:11.5px; color:rgba(255,255,255,0.85);">${esc(mv.year || "پیشنهاد ویژه")} • برای ورود به صفحه فیلم بزنید</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            dotsBox.innerHTML = randomSliderMovies.map((_, idx) => `
-                <button type="button" class="hero-dot-btn ${idx === randomSliderIndex ? "active" : ""}" aria-label="اسلاید ${idx + 1}" onclick="event.stopPropagation(); goToRandomSlide(${idx})"></button>
-            `).join("");
-        }
-
-        function movieMatchesGenre(mv, gName) {
-            if (Array.isArray(mv.genres) && mv.genres.includes(gName)) return true;
-            const rawGenre = String(mv.genre || "");
-            return rawGenre.split(/[،,]+/).map(s => s.trim()).includes(gName);
-        }
-
-        function openHomeGenreAllView(gName) {
-            activeHomeAllGenre = gName;
-            const mainWrap = document.getElementById("home-main-content");
-            const allView = document.getElementById("home-all-genre-view");
-            const titleEl = document.getElementById("home-all-genre-title");
-            const gridEl = document.getElementById("home-all-genre-grid-16x9");
-            if (!mainWrap || !allView || !titleEl || !gridEl) return;
-
-            const baseList = getHomeMoviesList();
-            const matched = baseList.filter(m => movieMatchesGenre(m, gName));
-
-            mainWrap.style.display = "none";
-            allView.style.display = "block";
-            titleEl.innerText = `همه فیلم‌های ژانر ${gName} (${matched.length})`;
-            gridEl.innerHTML = matched.length
-                ? matched.map(buildMovieCard16x9Html).join("")
-                : `<div class="glass empty-note">در این ژانر هنوز فیلمی ثبت نشده است.</div>`;
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        }
-
-        function closeHomeGenreAllView() {
-            activeHomeAllGenre = null;
-            const mainWrap = document.getElementById("home-main-content");
-            const allView = document.getElementById("home-all-genre-view");
-            if (allView) allView.style.display = "none";
-            if (mainWrap) mainWrap.style.display = "block";
-        }
-
-        function renderHomeGenreCarousels() {
-            const container = document.getElementById("home-genre-carousels-container");
-            if (!container) return;
-
-            const baseList = getHomeMoviesList();
-            const sectionsHtml = PRESET_GENRES.map(gName => {
-                const matched = baseList.filter(m => movieMatchesGenre(m, gName));
-                if (!matched.length) return "";
-
-                const cardsHtml = matched.slice(0, 6).map(m => {
-                    const posterSrc = m.poster || FALLBACK_POSTER;
-                    return `
-                        <div class="glass genre-slide-poster-card" onclick="openMovieDetail('${escAttr(m.id)}', 'home')">
-                            <div class="genre-large-poster-wrap">
-                                <img src="${escAttr(posterSrc)}" alt="${escAttr(m.title)}" loading="lazy" onerror="this.src='${FALLBACK_POSTER}'">
-                            </div>
-                            <div class="genre-slide-title">${esc(m.title)}</div>
-                            <div style="display:flex; justify-content:space-between; align-items:center; gap:4px;">
-                                ${renderLangBadgeHtml(m.langType || "dub")}
-                                <span style="font-size:10.5px; color:var(--text-muted);">${esc(m.year || "")}</span>
-                            </div>
-                        </div>
-                    `;
-                }).join("");
-
-                return `
-                    <div class="genre-section-block">
-                        <div class="genre-section-header">
-                            <h3>${esc(gName)}</h3>
-                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openHomeGenreAllView('${escAttr(gName)}')">
-                                نمایش همه (${matched.length})
-                            </button>
-                        </div>
-                        <div class="genre-carousel-track">
-                            ${cardsHtml}
-                            <div class="glass genre-show-all-card" onclick="openHomeGenreAllView('${escAttr(gName)}')">
-                                <span class="pill-tag" style="margin-bottom:0;">مشاهده کامل</span>
-                                <strong style="font-size:13.5px; font-weight:900; color:var(--text-strong);">نمایش همه ${esc(gName)}</strong>
-                                <span style="font-size:11px; color:var(--text-muted);">${matched.length} فیلم</span>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }).join("");
-
-            container.innerHTML = sectionsHtml || `<div class="glass empty-note">هنوز فیلمی در ژانرها ثبت نشده است.</div>`;
-        }
-
-        function renderHomeSections() {
-            if (activeHomeAllGenre) {
-                openHomeGenreAllView(activeHomeAllGenre);
-                return;
-            }
-            const homeMovies = getHomeMoviesList();
-            randomSliderMovies = shuffleArray(homeMovies).slice(0, 5);
-            renderRandomSliderSlide();
-            renderHomeGenreCarousels();
-        }
-
-        function renderGenreChips() {
-            const box = document.getElementById("genre-filter-chips");
-            if (!box) return;
-            const allGenres = ["همه", ...PRESET_GENRES];
-            box.innerHTML = allGenres.map(g => {
-                const active = selectedGenre === g;
-                return `<button type="button" class="genre-chip ${active ? "active" : ""}" onclick="selectGenreFilter('${escAttr(g)}')">${esc(g)}</button>`;
-            }).join("");
-        }
-
-        function selectGenreFilter(g) {
-            selectedGenre = g;
-            renderGenreChips();
-            renderFilteredMovies();
-        }
-
-        function renderFilteredMovies() {
-            const listEl = document.getElementById("search-movies-list");
-            const q = (document.getElementById("search-movie-input").value || "").trim().toLowerCase();
-            if (!listEl) return;
-
-            const filtered = moviesList.filter(m => {
-                const matchGenre = selectedGenre === "همه" || movieMatchesGenre(m, selectedGenre);
-                const matchText = !q ||
-                    (m.title || "").toLowerCase().includes(q) ||
-                    (m.genre || "").toLowerCase().includes(q) ||
-                    (m.desc || "").toLowerCase().includes(q) ||
-                    (m.authorHandle || "").toLowerCase().includes(q);
-                return matchGenre && matchText;
-            });
-
-            if (!filtered.length) {
-                listEl.innerHTML = `<div class="glass empty-note">هیچ فیلم یا پستی با این جستجو یافت نشد.</div>`;
-                return;
-            }
-            listEl.innerHTML = filtered.map(buildMovieCard16x9Html).join("");
-        }
-
-        function renderFavorites() {
-            const box = document.getElementById("favorites-movies-list");
-            if (!box) return;
-            const favMovies = moviesList.filter(m => favIds.includes(m.id));
-            if (!favMovies.length) {
-                box.innerHTML = `<div class="glass empty-note">لیست فیلم‌های من خالی است.</div>`;
-                return;
-            }
-            box.innerHTML = favMovies.map(buildMovieCardHtml).join("");
-        }
-
-        function renderAllMovieViews() {
-            renderHomeSections();
-            renderFilteredMovies();
-            renderFavorites();
-            if (isAccountCompleted()) {
-                renderPageMyItems();
-                renderExploreSections();
-            }
-            if (selectedDetailMovieId) {
-                renderMovieDetailContent();
-            }
-            if (document.getElementById("tab-room").classList.contains("active")) {
-                populateRoomMovieSelect();
-            }
-            if (currentAdminLevel) {
-                updateAdminDashboard();
-            }
-        }
-
-        let currentAdminLevel = null;
-        let adminMediaMode = "movie";
+        let isAdminLoggedIn = false;
+        let adminRole = "none";
         let activeAdminSubtab = "media";
-        let targetedNotifyUid = null;
+        let adminMediaMode = "movie";
+        let adminNotifyTargetUid = null;
         let editingAnnouncementId = null;
 
-        let editingAdminMediaId = null;
-        let adminEditItemType = "movie";
-        let adminEditGenres = ["اکشن"];
+        let editingMediaId = null;
+        let adminEditType = "movie";
+        let adminEditGenres = ["درام"];
         let adminEditLang = "dub";
-        let adminEditUploadedCover = "";
-        let adminEditUploadedLogo = "";
-        const adminBulkSelectedIds = new Set();
+        let adminEditCoverDataUrl = "";
+        let adminEditLogoDataUrl = "";
+        let selectedAdminBulkIds = new Set();
+
+        function applyAdminRolePermissionsUi() {
+            const isSuper = adminRole === "super";
+            const headingEl = document.getElementById("adm-role-heading");
+            const subEl = document.getElementById("adm-role-subtitle");
+
+            if (headingEl) {
+                headingEl.innerText = isSuper ? "مدیریت کل ZEUC MOVIE" : "ادمین فرعی ZEUC MOVIE";
+            }
+            if (subEl) {
+                subEl.innerText = isSuper
+                    ? "دسترسی کامل به فیلم و پست، اعلان‌ها، تبلیغات و کاربران"
+                    : "دسترسی به مدیریت فیلم و پست، اعلان‌ها و تبلیغات";
+            }
+
+            const usersTabBtn = document.getElementById("adm-tab-users");
+            if (usersTabBtn) {
+                usersTabBtn.style.display = isSuper ? "inline-block" : "none";
+            }
+            if (!isSuper && activeAdminSubtab === "users") {
+                switchAdminSubtab("media");
+            }
+        }
 
         function setAdminMediaMode(mode) {
             adminMediaMode = mode === "post" ? "post" : "movie";
             const isPost = adminMediaMode === "post";
+
             const btnMovie = document.getElementById("adm-btn-mode-movie");
             const btnPost = document.getElementById("adm-btn-mode-post");
-            if (btnMovie) btnMovie.className = isPost ? "btn-sec" : "btn-watch";
+            if (btnMovie) btnMovie.className = !isPost ? "btn-watch" : "btn-sec";
             if (btnPost) btnPost.className = isPost ? "btn-watch" : "btn-sec";
+            if (btnMovie) { btnMovie.style.padding = "6px 11px"; btnMovie.style.fontSize = "11.5px"; }
+            if (btnPost) { btnPost.style.padding = "6px 11px"; btnPost.style.fontSize = "11.5px"; }
 
-            document.getElementById("adm-composer-heading").innerText =
-                isPost ? "افزودن پست جدید" : "افزودن فیلم جدید";
-            document.getElementById("adm-title-label").innerText =
-                isPost ? "عنوان پست" : "نام فیلم";
-            document.getElementById("m-title").placeholder =
-                isPost ? "عنوان پست را وارد کنید" : "نام فیلم را وارد کنید";
-            document.getElementById("adm-submit-media-btn").innerText =
-                isPost ? "انتشار پست" : "انتشار فیلم";
+            const heading = document.getElementById("adm-composer-heading");
+            const titleLabel = document.getElementById("adm-title-label");
+            const titleInp = document.getElementById("m-title");
+            const submitBtn = document.getElementById("adm-submit-media-btn");
+
+            if (heading) heading.innerText = isPost ? "افزودن پست جدید" : "افزودن فیلم جدید";
+            if (titleLabel) titleLabel.innerText = isPost ? "عنوان پست" : "نام فیلم";
+            if (titleInp) titleInp.placeholder = isPost ? "عنوان پست را وارد کنید" : "نام فیلم را وارد کنید";
+            if (submitBtn) submitBtn.innerText = isPost ? "انتشار پست" : "انتشار فیلم";
         }
 
         function switchAdminSubtab(subKey) {
+            if (subKey === "users" && adminRole !== "super") return;
             activeAdminSubtab = subKey;
             ["media", "notify", "ads", "users"].forEach(k => {
                 const btn = document.getElementById("adm-tab-" + k);
@@ -6726,81 +6679,114 @@
                 if (btn) btn.classList.toggle("active", k === subKey);
                 if (sec) sec.style.display = k === subKey ? "block" : "none";
             });
-            updateAdminDashboard();
+            if (subKey === "notify") {
+                renderAdminOnlineUsers();
+                renderAdminAnnouncements();
+            } else if (subKey === "ads") {
+                renderAdminAdsList();
+            } else if (subKey === "users") {
+                renderAdminUsersList();
+            }
         }
 
         function loginAdminPanel(e) {
             e.preventDefault();
-            const pass = document.getElementById("adm-pass-field").value.trim();
-            const errEl = document.getElementById("adm-login-error");
-
+            const pass = (document.getElementById("adm-pass-field").value || "").trim();
+            const err = document.getElementById("adm-login-error");
             if (pass === ADMIN_PASS) {
-                currentAdminLevel = "super";
+                isAdminLoggedIn = true;
+                adminRole = "super";
+                err.style.display = "none";
+                document.getElementById("adm-login-card").style.display = "none";
+                document.getElementById("adm-dashboard").style.display = "block";
+                document.body.classList.add("admin-logged-in");
+                applyAdminRolePermissionsUi();
+                setAdminMediaMode("movie");
+                updateOnlinePresencePayload();
+                renderAdminStats();
+                renderAdminMovies();
+                renderRoomsList();
             } else if (pass === SUB_ADMIN_PASS) {
-                currentAdminLevel = "sub";
+                isAdminLoggedIn = true;
+                adminRole = "sub";
+                err.style.display = "none";
+                document.getElementById("adm-login-card").style.display = "none";
+                document.getElementById("adm-dashboard").style.display = "block";
+                document.body.classList.add("admin-logged-in");
+                applyAdminRolePermissionsUi();
+                setAdminMediaMode("movie");
+                updateOnlinePresencePayload();
+                renderAdminStats();
+                renderAdminMovies();
+                renderRoomsList();
             } else {
-                errEl.style.display = "block";
-                return;
+                err.style.display = "block";
             }
-
-            errEl.style.display = "none";
-            document.getElementById("adm-pass-field").value = "";
-            document.body.classList.add("admin-logged-in");
-            document.getElementById("adm-login-card").style.display = "none";
-            document.getElementById("adm-dashboard").style.display = "block";
-
-            renderAdminPresetGenres();
-            selectAdminItemLang("dub");
-            setAdminMediaMode("movie");
-            switchAdminSubtab("media");
-            updateOnlinePresencePayload();
         }
 
         function logoutAdminPanel() {
-            currentAdminLevel = null;
-            document.body.classList.remove("admin-logged-in");
+            isAdminLoggedIn = false;
+            adminRole = "none";
+            document.getElementById("adm-pass-field").value = "";
             document.getElementById("adm-dashboard").style.display = "none";
             document.getElementById("adm-login-card").style.display = "block";
+            document.body.classList.remove("admin-logged-in");
             updateOnlinePresencePayload();
+        }
+
+        function renderAdminStats() {
+            const onCount = Object.keys(onlineUsersMap || {}).length;
+            const adViewsSum = adsList.reduce((acc, ad) => acc + (Number(ad.views) || 0), 0);
+            const onEl = document.getElementById("adm-on-count");
+            const mvEl = document.getElementById("adm-mv-count");
+            const adEl = document.getElementById("adm-ad-views-count");
+            if (onEl) onEl.innerText = String(onCount);
+            if (mvEl) mvEl.innerText = String(moviesList.length);
+            if (adEl) adEl.innerText = String(adViewsSum);
         }
 
         async function addNewMovie(e) {
             e.preventDefault();
-            if (!currentAdminLevel) return;
-            const title = document.getElementById("m-title").value.trim();
-            const genresToSave = adminSelectedGenres.length ? adminSelectedGenres : ["اکشن"];
-            const year = document.getElementById("m-year").value.trim();
-            const poster = document.getElementById("m-poster").value.trim();
+            if (!isAdminLoggedIn || !moviesRef) return;
+            const title = (document.getElementById("m-title").value || "").trim();
+            const genresToSave = adminSelectedGenres.length ? adminSelectedGenres.slice() : ["درام"];
+            const year = (document.getElementById("m-year").value || "").trim();
+            const poster = (document.getElementById("m-poster").value || "").trim();
             const customLogoText = (document.getElementById("m-logo-text").value || "").trim();
-            const videoUrl = document.getElementById("m-video").value.trim();
-            const desc = document.getElementById("m-desc").value.trim();
+            const videoUrl = (document.getElementById("m-video").value || "").trim();
+            const desc = (document.getElementById("m-desc").value || "").trim();
 
-            if (!title) return;
-            if (!isDirectVideoFileUrl(videoUrl)) {
+            if (!title || !isDirectVideoFileUrl(videoUrl)) {
                 alert("لطفاً یک لینک معتبر فیلم یا ویدیو (MKV، MP4، M3U8 یا سایر لینک‌ها) وارد کنید.");
                 return;
             }
 
+            const isPost = adminMediaMode === "post";
             const payload = {
                 title,
-                itemType: adminMediaMode,
+                itemType: isPost ? "post" : "movie",
                 genres: genresToSave,
                 genre: genresToSave.join("، "),
                 year,
                 langType: adminSelectedLang,
-                poster,
                 customLogoText,
+                poster,
                 videoUrl,
                 desc,
+                authorId: persistentUserId,
+                authorName: currentUserName || (adminRole === "super" ? "مدیریت ZEUC" : "ادمین"),
+                authorHandle: currentUserHandle || "@zeuc",
                 views: 0,
                 likesCount: 0,
                 createdAt: Date.now()
             };
 
-            if (moviesRef) {
-                await moviesRef.push(payload).catch(() => {});
-            } else {
-                moviesList.unshift({ id: "local_" + Date.now(), ...payload });
+            const pushed = await moviesRef.push(payload).catch(() => null);
+            const newId = (pushed && pushed.key) || ("local_" + Date.now());
+            if (!moviesList.some(m => m.id === newId)) {
+                moviesList = [{ id: newId, ...payload }, ...moviesList];
+                shuffledPostsCache = [];
+                shuffledMoviesCache = [];
                 renderAllMovieViews();
             }
 
@@ -6809,128 +6795,10 @@
             document.getElementById("m-logo-text").value = "";
             document.getElementById("m-video").value = "";
             document.getElementById("m-desc").value = "";
-            adminSelectedGenres = ["اکشن"];
-            renderAdminPresetGenres();
-            selectAdminItemLang("dub");
-            alert(adminMediaMode === "post" ? "پست منتشر شد." : "فیلم منتشر شد.");
+            alert(isPost ? "پست منتشر شد و در لیست نمایش داده شد." : "فیلم منتشر شد و در لیست نمایش داده شد.");
         }
 
-        async function deleteMovieById(id) {
-            if (!id || !currentAdminLevel) return;
-            adminBulkSelectedIds.delete(id);
-            if (moviesRef) {
-                await moviesRef.child(id).remove().catch(() => {});
-            } else {
-                moviesList = moviesList.filter(m => m.id !== id);
-                renderAllMovieViews();
-            }
-        }
-
-        function toggleAdminBulkSelect(id, checked) {
-            if (!id) return;
-            if (checked) adminBulkSelectedIds.add(id);
-            else adminBulkSelectedIds.delete(id);
-            const cntEl = document.getElementById("adm-bulk-count");
-            if (cntEl) cntEl.innerText = String(adminBulkSelectedIds.size);
-        }
-
-        function toggleAdminSelectAll(checked) {
-            adminBulkSelectedIds.clear();
-            if (checked) {
-                moviesList.forEach(m => { if (m && m.id) adminBulkSelectedIds.add(m.id); });
-            }
-            updateAdminDashboard();
-        }
-
-        async function applyAdminBulkDelete() {
-            if (!currentAdminLevel || !adminBulkSelectedIds.size) return;
-            const ids = Array.from(adminBulkSelectedIds);
-            if (!confirm(`آیا از حذف ${ids.length} آیتم انتخاب‌شده مطمئن هستید؟`)) return;
-            for (const id of ids) {
-                if (moviesRef) await moviesRef.child(id).remove().catch(() => {});
-            }
-            adminBulkSelectedIds.clear();
-            updateAdminDashboard();
-        }
-
-        async function applyAdminBulkEdit() {
-            if (!currentAdminLevel) return;
-            if (!adminBulkSelectedIds.size) {
-                alert("ابتدا حداقل یک آیتم را با تیک انتخاب کنید.");
-                return;
-            }
-            const newGenre = (document.getElementById("adm-bulk-genre").value || "").trim();
-            const newLang = (document.getElementById("adm-bulk-lang").value || "").trim();
-            if (!newGenre && !newLang) {
-                alert("لطفاً تغییر ژانر یا تغییر زبان را انتخاب کنید.");
-                return;
-            }
-
-            const ids = Array.from(adminBulkSelectedIds);
-            for (const id of ids) {
-                const mv = moviesList.find(m => m.id === id);
-                if (!mv) continue;
-                const patch = { updatedAt: Date.now() };
-                if (newGenre) {
-                    patch.genres = [newGenre];
-                    patch.genre = newGenre;
-                }
-                if (newLang) {
-                    patch.langType = newLang;
-                }
-                if (moviesRef) await moviesRef.child(id).update(patch).catch(() => {});
-            }
-            alert(`تغییرات روی ${ids.length} آیتم اعمال شد.`);
-        }
-
-        function openAdminMediaEditModal(id) {
-            const mv = moviesList.find(m => m.id === id);
-            if (!mv || !currentAdminLevel) return;
-            editingAdminMediaId = id;
-            adminEditUploadedCover = "";
-            adminEditUploadedLogo = "";
-
-            adminEditItemType = mv.itemType === "post" ? "post" : "movie";
-            adminEditGenres = Array.isArray(mv.genres) && mv.genres.length
-                ? mv.genres.slice()
-                : (mv.genre ? String(mv.genre).split(/[،,]+/).map(s => s.trim()).filter(Boolean) : ["اکشن"]);
-            if (!adminEditGenres.length) adminEditGenres = ["اکشن"];
-            adminEditLang = mv.langType || "dub";
-
-            document.getElementById("adm-edit-media-title").innerText = `ویرایش: ${mv.title || ""}`;
-            document.getElementById("adm-edit-title").value = mv.title || "";
-            document.getElementById("adm-edit-year").value = mv.year || "";
-            document.getElementById("adm-edit-video-url").value = mv.videoUrl || "";
-            document.getElementById("adm-edit-cover-url").value = (mv.poster && !mv.poster.startsWith("data:")) ? mv.poster : "";
-            document.getElementById("adm-edit-logo-text").value = mv.customLogoText || "";
-            document.getElementById("adm-edit-logo-url").value = (mv.customLogoUrl && !mv.customLogoUrl.startsWith("data:")) ? mv.customLogoUrl : "";
-            document.getElementById("adm-edit-desc").value = mv.desc || "";
-
-            setAdminEditType(adminEditItemType);
-            renderAdminEditGenres();
-            setAdminEditLang(adminEditLang);
-
-            document.getElementById("admin-edit-media-modal").classList.add("show");
-        }
-
-        function closeAdminMediaEditModal() {
-            editingAdminMediaId = null;
-            adminEditUploadedCover = "";
-            adminEditUploadedLogo = "";
-            document.getElementById("admin-edit-media-modal").classList.remove("show");
-        }
-
-        function setAdminEditType(t) {
-            adminEditItemType = t === "post" ? "post" : "movie";
-            const bMov = document.getElementById("adm-edit-type-movie");
-            const bPost = document.getElementById("adm-edit-type-post");
-            if (bMov) bMov.className = adminEditItemType === "movie" ? "btn-watch" : "btn-sec";
-            if (bPost) bPost.className = adminEditItemType === "post" ? "btn-watch" : "btn-sec";
-            if (bMov) { bMov.style.padding = "7px 12px"; bMov.style.fontSize = "12px"; }
-            if (bPost) { bPost.style.padding = "7px 12px"; bPost.style.fontSize = "12px"; }
-        }
-
-        function renderAdminEditGenres() {
+        function renderAdminEditGenresGrid() {
             const box = document.getElementById("adm-edit-genres-grid");
             if (!box) return;
             box.innerHTML = PRESET_GENRES.map(g => {
@@ -6943,15 +6811,25 @@
             }).join("");
         }
 
-        function toggleAdminEditGenre(g) {
-            if (adminEditGenres.includes(g)) {
+        function toggleAdminEditGenre(gName) {
+            if (adminEditGenres.includes(gName)) {
                 if (adminEditGenres.length > 1) {
-                    adminEditGenres = adminEditGenres.filter(x => x !== g);
+                    adminEditGenres = adminEditGenres.filter(x => x !== gName);
                 }
             } else {
-                adminEditGenres.push(g);
+                adminEditGenres.push(gName);
             }
-            renderAdminEditGenres();
+            renderAdminEditGenresGrid();
+        }
+
+        function setAdminEditType(typeVal) {
+            adminEditType = typeVal === "post" ? "post" : "movie";
+            const bMovie = document.getElementById("adm-edit-type-movie");
+            const bPost = document.getElementById("adm-edit-type-post");
+            if (bMovie) bMovie.className = adminEditType === "movie" ? "btn-watch" : "btn-sec";
+            if (bPost) bPost.className = adminEditType === "post" ? "btn-watch" : "btn-sec";
+            if (bMovie) { bMovie.style.padding = "7px 12px"; bMovie.style.fontSize = "12px"; }
+            if (bPost) { bPost.style.padding = "7px 12px"; bPost.style.fontSize = "12px"; }
         }
 
         function setAdminEditLang(langKey) {
@@ -6964,70 +6842,216 @@
             if (o) o.className = "lang-choice-btn" + (langKey === "orig" ? " active-orig" : "");
         }
 
-        function handleAdminEditFilePicked(e, kind) {
+        function handleAdminEditFilePicked(e, targetField) {
             const file = e.target && e.target.files && e.target.files[0];
             if (!file) return;
             const reader = new FileReader();
             reader.onload = () => {
                 if (typeof reader.result === "string") {
-                    if (kind === "cover") adminEditUploadedCover = reader.result;
-                    else adminEditUploadedLogo = reader.result;
+                    if (targetField === "cover") {
+                        adminEditCoverDataUrl = reader.result;
+                        const inp = document.getElementById("adm-edit-cover-url");
+                        if (inp) inp.value = "";
+                    } else if (targetField === "logo") {
+                        adminEditLogoDataUrl = reader.result;
+                        const inp = document.getElementById("adm-edit-logo-url");
+                        if (inp) inp.value = "";
+                    }
                 }
             };
             reader.readAsDataURL(file);
         }
 
+        function openAdminMediaEditModal(movieId) {
+            const mv = moviesList.find(m => m.id === movieId);
+            if (!mv) return;
+            editingMediaId = movieId;
+            adminEditCoverDataUrl = "";
+            adminEditLogoDataUrl = "";
+
+            setAdminEditType(mv.itemType === "post" ? "post" : "movie");
+            adminEditGenres = Array.isArray(mv.genres) && mv.genres.length
+                ? mv.genres.slice()
+                : (String(mv.genre || "درام").split(/[،,]/).map(s => s.trim()).filter(Boolean));
+            if (!adminEditGenres.length) adminEditGenres = ["درام"];
+            renderAdminEditGenresGrid();
+
+            adminEditLang = mv.langType || "dub";
+            setAdminEditLang(adminEditLang);
+
+            document.getElementById("adm-edit-title").value = mv.title || "";
+            document.getElementById("adm-edit-year").value = mv.year || "";
+            document.getElementById("adm-edit-video-url").value = mv.videoUrl || "";
+            document.getElementById("adm-edit-cover-url").value = (mv.poster && !mv.poster.startsWith("data:")) ? mv.poster : "";
+            document.getElementById("adm-edit-logo-text").value = mv.customLogoText || "";
+            document.getElementById("adm-edit-logo-url").value = (mv.customLogoUrl && !mv.customLogoUrl.startsWith("data:")) ? mv.customLogoUrl : "";
+            document.getElementById("adm-edit-desc").value = mv.desc || "";
+
+            document.getElementById("admin-edit-media-modal").classList.add("show");
+        }
+
+        function closeAdminMediaEditModal() {
+            editingMediaId = null;
+            adminEditCoverDataUrl = "";
+            adminEditLogoDataUrl = "";
+            document.getElementById("admin-edit-media-modal").classList.remove("show");
+        }
+
         async function submitAdminMediaEdit(e) {
             e.preventDefault();
-            if (!editingAdminMediaId || !currentAdminLevel) return;
-            const mv = moviesList.find(m => m.id === editingAdminMediaId);
-            if (!mv) return;
+            if (!isAdminLoggedIn || !editingMediaId || !moviesRef) return;
+            const currentItem = moviesList.find(m => m.id === editingMediaId) || {};
 
-            const newTitle = (document.getElementById("adm-edit-title").value || "").trim();
-            const newYear = (document.getElementById("adm-edit-year").value || "").trim();
-            const newVideoUrl = (document.getElementById("adm-edit-video-url").value || "").trim();
+            const title = (document.getElementById("adm-edit-title").value || "").trim();
+            const year = (document.getElementById("adm-edit-year").value || "").trim();
+            const videoUrl = (document.getElementById("adm-edit-video-url").value || "").trim();
             const coverUrlInp = (document.getElementById("adm-edit-cover-url").value || "").trim();
             const logoText = (document.getElementById("adm-edit-logo-text").value || "").trim();
             const logoUrlInp = (document.getElementById("adm-edit-logo-url").value || "").trim();
             const desc = (document.getElementById("adm-edit-desc").value || "").trim();
 
-            if (!newTitle) return;
-            if (!isDirectVideoFileUrl(newVideoUrl)) {
-                alert("لطفاً یک لینک معتبر فیلم یا ویدیو (MKV، MP4، M3U8 یا سایر لینک‌ها) وارد کنید.");
+            if (!title || !isDirectVideoFileUrl(videoUrl)) {
+                alert("عنوان یا لینک فیلم/ویدیو نامعتبر است.");
                 return;
             }
 
-            const genresFinal = adminEditGenres.length ? adminEditGenres : ["اکشن"];
-            const posterFinal = adminEditUploadedCover || coverUrlInp || mv.poster || "";
-            const logoUrlFinal = adminEditUploadedLogo || logoUrlInp || mv.customLogoUrl || "";
+            const genresFinal = adminEditGenres.length ? adminEditGenres.slice() : ["درام"];
+            const posterFinal = coverUrlInp || adminEditCoverDataUrl || currentItem.poster || "";
+            const logoFinal = logoUrlInp || adminEditLogoDataUrl || currentItem.customLogoUrl || "";
 
-            const payload = {
-                title: newTitle,
-                itemType: adminEditItemType,
+            await moviesRef.child(editingMediaId).update({
+                title,
+                itemType: adminEditType,
                 genres: genresFinal,
                 genre: genresFinal.join("، "),
-                year: newYear,
+                year,
                 langType: adminEditLang,
-                videoUrl: newVideoUrl,
+                videoUrl,
                 poster: posterFinal,
                 customLogoText: logoText,
-                customLogoUrl: logoUrlFinal,
+                customLogoUrl: logoFinal,
                 desc,
                 updatedAt: Date.now()
-            };
+            }).catch(() => {});
 
-            if (moviesRef) {
-                await moviesRef.child(editingAdminMediaId).update(payload).catch(() => {});
-            } else {
-                Object.assign(mv, payload);
-                renderAllMovieViews();
-            }
             closeAdminMediaEditModal();
+        }
+
+        function toggleAdminBulkSelect(movieId, checked) {
+            if (checked) {
+                selectedAdminBulkIds.add(movieId);
+            } else {
+                selectedAdminBulkIds.delete(movieId);
+            }
+            updateAdminBulkCountUi();
+        }
+
+        function toggleAdminSelectAll(checked) {
+            selectedAdminBulkIds.clear();
+            if (checked) {
+                moviesList.forEach(m => selectedAdminBulkIds.add(m.id));
+            }
+            renderAdminMovies();
+        }
+
+        function updateAdminBulkCountUi() {
+            const countEl = document.getElementById("adm-bulk-count");
+            if (countEl) countEl.innerText = String(selectedAdminBulkIds.size);
+            const allCb = document.getElementById("adm-select-all-cb");
+            if (allCb) {
+                allCb.checked = moviesList.length > 0 && selectedAdminBulkIds.size === moviesList.length;
+            }
+        }
+
+        async function applyAdminBulkEdit() {
+            if (!isAdminLoggedIn || !moviesRef) return;
+            const ids = Array.from(selectedAdminBulkIds);
+            if (!ids.length) {
+                alert("ابتدا حداقل یک مورد را انتخاب کنید.");
+                return;
+            }
+            const newGenre = (document.getElementById("adm-bulk-genre").value || "").trim();
+            const newLang = (document.getElementById("adm-bulk-lang").value || "").trim();
+
+            if (!newGenre && !newLang) {
+                alert("لطفاً تغییر ژانر یا تغییر زبان را انتخاب کنید.");
+                return;
+            }
+
+            const updates = {};
+            ids.forEach(id => {
+                if (newGenre) {
+                    updates[`${id}/genres`] = [newGenre];
+                    updates[`${id}/genre`] = newGenre;
+                }
+                if (newLang) {
+                    updates[`${id}/langType`] = newLang;
+                }
+                updates[`${id}/updatedAt`] = Date.now();
+            });
+
+            await moviesRef.update(updates).catch(() => {});
+            alert(`${ids.length} آیتم با موفقیت بروزرسانی شد.`);
+        }
+
+        async function applyAdminBulkDelete() {
+            if (!isAdminLoggedIn || !moviesRef) return;
+            const ids = Array.from(selectedAdminBulkIds);
+            if (!ids.length) {
+                alert("ابتدا حداقل یک مورد را انتخاب کنید.");
+                return;
+            }
+            if (!confirm(`آیا ${ids.length} مورد انتخاب‌شده حذف شوند؟`)) return;
+            const updates = {};
+            ids.forEach(id => { updates[id] = null; });
+            await moviesRef.update(updates).catch(() => {});
+            selectedAdminBulkIds.clear();
+            updateAdminBulkCountUi();
+        }
+
+        function renderAdminMovies() {
+            const box = document.getElementById("adm-movies-list");
+            if (!box) return;
+            updateAdminBulkCountUi();
+            if (!moviesList.length) {
+                box.innerHTML = `<div class="empty-note">هیچ موردی ثبت نشده است.</div>`;
+                return;
+            }
+            box.innerHTML = moviesList.map(m => {
+                const isChecked = selectedAdminBulkIds.has(m.id);
+                const isText = m.itemType === "text";
+                const isPost = m.itemType === "post";
+                const typeText = isText ? "متن" : (isPost ? "پست" : "فیلم");
+                return `
+                    <div class="adm-user-row">
+                        <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                            <label style="display:inline-flex; align-items:center; gap:7px; cursor:pointer; flex:1; min-width:0;">
+                                <input type="checkbox" ${isChecked ? "checked" : ""} onchange="toggleAdminBulkSelect('${escAttr(m.id)}', this.checked)">
+                                <strong style="font-size:13.5px; color:var(--text-strong); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(m.title)}</strong>
+                            </label>
+                            <span style="font-size:11px; color:var(--text-muted);">${esc(typeText)} • 👁 ${Number(m.views || 0)}</span>
+                        </div>
+                        <div class="adm-user-actions">
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openAdminMediaEditModal('${escAttr(m.id)}')">ویرایش کامل</button>
+                            <button type="button" class="btn-del" onclick="deleteMovieById('${escAttr(m.id)}')">حذف</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function deleteMovieById(id) {
+            if (!isAdminLoggedIn || !moviesRef) return;
+            if (!confirm("این مورد حذف شود؟")) return;
+            selectedAdminBulkIds.delete(id);
+            await moviesRef.child(id).remove().catch(() => {});
+            moviesList = moviesList.filter(m => m.id !== id);
+            renderAllMovieViews();
         }
 
         async function submitGlobalAnnouncement(e) {
             e.preventDefault();
-            if (!currentAdminLevel || !announcementsRef) return;
+            if (!isAdminLoggedIn || !announcementsRef) return;
             const text = (document.getElementById("adm-global-notif-text").value || "").trim();
             const val = document.getElementById("adm-global-notif-val").value;
             const unit = document.getElementById("adm-global-notif-unit").value;
@@ -7036,31 +7060,32 @@
             const now = Date.now();
             await announcementsRef.push({
                 scope: "all",
+                targetUid: "",
                 text,
+                durationVal: Number(val) || 30,
+                durationUnit: unit,
                 createdAt: now,
                 expiresAt: now + durationToMs(val, unit)
-            }).catch(() => {});
-
+            });
             document.getElementById("adm-global-notif-text").value = "";
-            alert("اعلان همگانی برای همه کاربران ارسال شد.");
+            alert("اعلان همگانی ارسال شد.");
         }
 
-        function openTargetedAnnouncementModal(targetUid, targetLabel) {
-            if (!currentAdminLevel) return;
-            targetedNotifyUid = targetUid;
-            document.getElementById("adm-notify-target-title").innerText = `ارسال اعلان به ${targetLabel}`;
-            document.getElementById("adm-target-notif-text").value = "";
+        function openTargetedAnnouncementModal(uid, labelText) {
+            adminNotifyTargetUid = uid;
+            const titleEl = document.getElementById("adm-notify-target-title");
+            if (titleEl) titleEl.innerText = `ارسال اعلان برای: ${labelText}`;
             document.getElementById("admin-user-notify-modal").classList.add("show");
         }
 
         function closeAdminUserNotifyModal() {
-            targetedNotifyUid = null;
+            adminNotifyTargetUid = null;
             document.getElementById("admin-user-notify-modal").classList.remove("show");
         }
 
         async function submitTargetedAnnouncement(e) {
             e.preventDefault();
-            if (!currentAdminLevel || !targetedNotifyUid || !announcementsRef) return;
+            if (!isAdminLoggedIn || !adminNotifyTargetUid || !announcementsRef) return;
             const text = (document.getElementById("adm-target-notif-text").value || "").trim();
             const val = document.getElementById("adm-target-notif-val").value;
             const unit = document.getElementById("adm-target-notif-unit").value;
@@ -7069,23 +7094,25 @@
             const now = Date.now();
             await announcementsRef.push({
                 scope: "targeted",
-                targetUid: targetedNotifyUid,
+                targetUid: adminNotifyTargetUid,
                 text,
+                durationVal: Number(val) || 30,
+                durationUnit: unit,
                 createdAt: now,
                 expiresAt: now + durationToMs(val, unit)
-            }).catch(() => {});
-
+            });
+            document.getElementById("adm-target-notif-text").value = "";
             closeAdminUserNotifyModal();
-            alert("اعلان تکی برای کاربر ارسال شد.");
+            alert("اعلان اختصاصی ارسال شد.");
         }
 
         function openEditAnnouncementModal(annId) {
             const ann = activeAnnouncementsList.find(a => a.id === annId);
-            if (!ann || !currentAdminLevel) return;
+            if (!ann) return;
             editingAnnouncementId = annId;
             document.getElementById("adm-edit-ann-text").value = ann.text || "";
-            document.getElementById("adm-edit-ann-val").value = "10";
-            document.getElementById("adm-edit-ann-unit").value = "sec";
+            document.getElementById("adm-edit-ann-val").value = ann.durationVal || 10;
+            document.getElementById("adm-edit-ann-unit").value = ann.durationUnit || "sec";
             document.getElementById("admin-edit-announcement-modal").classList.add("show");
         }
 
@@ -7096,7 +7123,7 @@
 
         async function submitEditAnnouncement(e) {
             e.preventDefault();
-            if (!editingAnnouncementId || !currentAdminLevel || !announcementsRef) return;
+            if (!isAdminLoggedIn || !editingAnnouncementId || !announcementsRef) return;
             const text = (document.getElementById("adm-edit-ann-text").value || "").trim();
             const val = document.getElementById("adm-edit-ann-val").value;
             const unit = document.getElementById("adm-edit-ann-unit").value;
@@ -7105,352 +7132,365 @@
             const now = Date.now();
             await announcementsRef.child(editingAnnouncementId).update({
                 text,
+                durationVal: Number(val) || 10,
+                durationUnit: unit,
                 expiresAt: now + durationToMs(val, unit),
                 updatedAt: now
-            }).catch(() => {});
-
+            });
             closeEditAnnouncementModal();
         }
 
         async function deleteAnnouncementById(annId) {
-            if (!annId || !currentAdminLevel || !announcementsRef) return;
+            if (!isAdminLoggedIn || !announcementsRef || !annId) return;
             await announcementsRef.child(annId).remove().catch(() => {});
+        }
+
+        function renderAdminOnlineUsers() {
+            const box = document.getElementById("adm-online-users-list");
+            if (!box) return;
+            const entries = Object.entries(onlineUsersMap || {});
+            if (!entries.length) {
+                box.innerHTML = `<div class="empty-note">هیچ کاربر آنلاینی ثبت نشده است.</div>`;
+                return;
+            }
+            box.innerHTML = entries.map(([uid, info]) => {
+                const displayLabel = `${info.name || "کاربر"} (${info.handle || "@user"})`;
+                return `
+                    <div class="adm-online-chip-row">
+                        <div style="min-width:0;">
+                            <strong style="display:block; font-size:12.5px; color:var(--text-strong);">${esc(displayLabel)}</strong>
+                            <span style="font-size:10.5px; color:var(--chip-text);">آنلاین</span>
+                        </div>
+                        <button type="button" class="btn-watch" style="padding:5px 10px; font-size:11px;" onclick="openTargetedAnnouncementModal('${escAttr(uid)}', '${escAttr(displayLabel)}')">
+                            ارسال اعلان
+                        </button>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        function renderAdminAnnouncements() {
+            const box = document.getElementById("adm-announcements-list");
+            if (!box) return;
+            const now = Date.now();
+            const valid = activeAnnouncementsList.filter(a => Number(a.expiresAt || 0) > now);
+            if (!valid.length) {
+                box.innerHTML = `<div class="empty-note">اعلان فعالی وجود ندارد.</div>`;
+                return;
+            }
+            box.innerHTML = valid.map(a => {
+                const scopeLabel = a.scope === "targeted"
+                    ? `تکی (${esc(a.targetUid)})`
+                    : "همگانی";
+                return `
+                    <div class="adm-user-row">
+                        <div>
+                            <strong style="display:block; font-size:13px; color:var(--text-strong);">${esc(a.text)}</strong>
+                            <span style="font-size:11px; color:var(--text-muted);">نوع: ${scopeLabel} • باقی‌مانده: ${formatRemainingTime(Number(a.expiresAt) - now)}</span>
+                        </div>
+                        <div class="adm-user-actions">
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openEditAnnouncementModal('${escAttr(a.id)}')">ویرایش</button>
+                            <button type="button" class="btn-del" onclick="deleteAnnouncementById('${escAttr(a.id)}')">حذف</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
         }
 
         async function submitNewAdBanner(e) {
             e.preventDefault();
-            if (!currentAdminLevel || !adsRef) return;
-            const title = (document.getElementById("adm-ad-title").value || "").trim();
+            if (!isAdminLoggedIn || !adsRef) return;
+            const title = (document.getElementById("adm-ad-title").value || "").trim() || "تبلیغ";
             const mediaUrl = (document.getElementById("adm-ad-media-url").value || "").trim();
             const targetUrl = (document.getElementById("adm-ad-target-url").value || "").trim();
             if (!mediaUrl || !targetUrl) return;
 
-            await adsRef.push({
-                title: title || "تبلیغ",
+            const newAdRef = adsRef.push();
+            const adId = newAdRef.key;
+            const adPayload = {
+                title,
                 mediaUrl,
                 targetUrl,
                 views: 0,
                 createdAt: Date.now()
-            }).catch(() => {});
+            };
+
+            dismissedAdIds.clear();
+            await newAdRef.set(adPayload).catch(() => {});
+
+            if (adId && !adsList.some(a => a.id === adId)) {
+                adsList = [{ id: adId, ...adPayload }, ...adsList];
+            }
+            renderAdSlots();
+            renderAdminAdsList();
+            renderAdminStats();
 
             document.getElementById("adm-ad-title").value = "";
             document.getElementById("adm-ad-media-url").value = "";
             document.getElementById("adm-ad-target-url").value = "";
-            alert("بنر تبلیغاتی منتشر شد.");
+            alert("بنر تبلیغاتی منتشر شد و در پایین صفحه نمایش داده شد.");
+        }
+
+        function renderAdminAdsList() {
+            const box = document.getElementById("adm-ads-list");
+            if (!box) return;
+            if (!adsList.length) {
+                box.innerHTML = `<div class="empty-note">هنوز تبلیغی ثبت نشده است.</div>`;
+                return;
+            }
+            box.innerHTML = adsList.map(ad => `
+                <div class="adm-user-row">
+                    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
+                        <div style="min-width:0;">
+                            <strong style="display:block; font-size:13px; color:var(--text-strong);">${esc(ad.title || "تبلیغ")}</strong>
+                            <span style="font-size:11px; color:var(--text-muted); display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${esc(ad.targetUrl || "")}</span>
+                        </div>
+                        <span class="pill-tag" style="margin-bottom:0;">👁 ${Number(ad.views || 0)} بازدید</span>
+                    </div>
+                    <div class="adm-user-actions">
+                        <button type="button" class="btn-del" onclick="deleteAdBannerById('${escAttr(ad.id)}')">حذف تبلیغ</button>
+                    </div>
+                </div>
+            `).join("");
         }
 
         async function deleteAdBannerById(adId) {
-            if (!adId || !currentAdminLevel || !adsRef) return;
+            if (!isAdminLoggedIn || !adsRef || !adId) return;
             await adsRef.child(adId).remove().catch(() => {});
+            adsList = adsList.filter(a => a.id !== adId);
+            renderAdSlots();
+            renderAdminAdsList();
+            renderAdminStats();
         }
 
-        async function toggleUserBan(uid, shouldBan) {
-            if (!uid || !currentAdminLevel || !db) return;
-            await db.ref("zeuc_movie_v1/users/" + uid).update({
-                banned: Boolean(shouldBan)
-            }).catch(() => {});
-        }
-
-        async function deleteUserAccount(uid) {
-            if (!uid || !currentAdminLevel || !db) return;
-            if (!confirm("آیا از حذف کامل این حساب کاربری مطمئن هستید؟")) return;
-            const uData = allUsersMap[uid] || {};
-            const hKey = handleKeyFromNormalized(uData.handle || "");
-            if (hKey && handlesRegistryRef) {
-                await handlesRegistryRef.child(hKey).remove().catch(() => {});
-            }
-            await db.ref("zeuc_movie_v1/users/" + uid).remove().catch(() => {});
-        }
-
-        function updateAdminDashboard() {
-            if (!currentAdminLevel) return;
-
-            const isSuper = currentAdminLevel === "super";
-            document.getElementById("adm-role-heading").innerText =
-                isSuper ? "مدیریت ZEUC MOVIE" : "پنل ادمین";
-            document.getElementById("adm-role-subtitle").innerText =
-                isSuper ? "کنترل محتوا، اعلان، تبلیغات و کاربران" : "کنترل محتوا و اعلان‌ها";
-
-            const tabAds = document.getElementById("adm-tab-ads");
-            const tabUsers = document.getElementById("adm-tab-users");
-            const subtabsBar = document.getElementById("adm-subtabs-bar");
-            if (tabAds) tabAds.style.display = isSuper ? "block" : "none";
-            if (tabUsers) tabUsers.style.display = isSuper ? "block" : "none";
-            if (subtabsBar) {
-                subtabsBar.style.gridTemplateColumns = isSuper ? "repeat(4, 1fr)" : "repeat(2, 1fr)";
-            }
-            if (!isSuper && (activeAdminSubtab === "ads" || activeAdminSubtab === "users")) {
-                switchAdminSubtab("media");
+        function renderAdminUsersList() {
+            const box = document.getElementById("adm-users-list");
+            if (!box) return;
+            const entries = Object.entries(allUsersMap || {});
+            if (!entries.length) {
+                box.innerHTML = `<div class="empty-note">هنوز کاربری در دیتابیس ثبت نشده است.</div>`;
                 return;
             }
-
-            const onlineCount = Object.keys(onlineUsersMap || {}).length;
-            const totalAdViews = adsList.reduce((acc, a) => acc + Number(a.views || 0), 0);
-
-            document.getElementById("adm-on-count").innerText = String(onlineCount);
-            document.getElementById("adm-mv-count").innerText = String(moviesList.length);
-            document.getElementById("adm-ad-views-count").innerText = String(totalAdViews);
-
-            const bulkCountEl = document.getElementById("adm-bulk-count");
-            if (bulkCountEl) bulkCountEl.innerText = String(adminBulkSelectedIds.size);
-
-            const mvBox = document.getElementById("adm-movies-list");
-            if (mvBox) {
-                if (!moviesList.length) {
-                    mvBox.innerHTML = `<div class="empty-note">هیچ آیتمی ثبت نشده است.</div>`;
-                } else {
-                    mvBox.innerHTML = moviesList.map(m => {
-                        const tLabel = m.itemType === "text" ? "متن" : (m.itemType === "post" ? "پست" : "فیلم");
-                        const fmtLabel = m.videoUrl ? detectVideoFormatLabel(m.videoUrl) : "";
-                        const checked = adminBulkSelectedIds.has(m.id);
-                        return `
-                            <div class="adm-user-row">
-                                <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:8px;">
-                                    <div style="display:flex; align-items:flex-start; gap:7px; min-width:0; flex:1;">
-                                        <input type="checkbox" style="margin-top:4px; cursor:pointer;" ${checked ? "checked" : ""} onchange="toggleAdminBulkSelect('${escAttr(m.id)}', this.checked)">
-                                        <div style="min-width:0;">
-                                            <strong style="font-size:13.5px; color:var(--text-strong);">${esc(m.title)}</strong>
-                                            <div style="display:flex; gap:5px; flex-wrap:wrap; margin-top:4px; align-items:center;">
-                                                <span class="pill-tag" style="margin-bottom:0;">${esc(tLabel)}${fmtLabel ? " • " + esc(fmtLabel) : ""}</span>
-                                                ${renderCustomLogoHtml(m)}
-                                                ${m.itemType !== "text" ? renderLangBadgeHtml(m.langType || "dub") : ``}
-                                                <span style="font-size:11px; color:var(--text-muted);">${esc(m.genre || "-")} • 👁 ${Number(m.views || 0)}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="display:flex; gap:5px; flex-shrink:0;">
-                                        <button type="button" class="btn-sec" style="padding:5px 9px; font-size:11px;" onclick="openAdminMediaEditModal('${escAttr(m.id)}')">ویرایش</button>
-                                        <button type="button" class="btn-del" onclick="deleteMovieById('${escAttr(m.id)}')">حذف</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join("");
-                }
-            }
-
-            const onlineBox = document.getElementById("adm-online-users-list");
-            if (onlineBox) {
-                const onEntries = Object.entries(onlineUsersMap || {});
-                if (!onEntries.length) {
-                    onlineBox.innerHTML = `<div class="empty-note">در حال حاضر کاربر آنلاینی ثبت نشده است.</div>`;
-                } else {
-                    onlineBox.innerHTML = onEntries.map(([uid, info]) => {
-                        const u = allUsersMap[uid] || {};
-                        const label = `${info.name || u.name || "کاربر"} (${info.handle || u.handle || uid.slice(0, 8)})`;
-                        return `
-                            <div class="adm-online-chip-row">
-                                <div style="min-width:0; flex:1;">
-                                    <strong style="display:block; font-size:12.5px; color:var(--text-strong);">${esc(info.name || u.name || "کاربر")}</strong>
-                                    <span style="font-size:11px; color:var(--chip-text);">${esc(info.handle || u.handle || "@user")} • آنلاین</span>
-                                </div>
-                                <button type="button" class="btn-watch" style="padding:6px 10px; font-size:11px;" onclick="openTargetedAnnouncementModal('${escAttr(uid)}', '${escAttr(label)}')">
-                                    ارسال اعلان
-                                </button>
-                            </div>
-                        `;
-                    }).join("");
-                }
-            }
-
-            const annBox = document.getElementById("adm-announcements-list");
-            if (annBox) {
-                const now = Date.now();
-                const liveAnns = activeAnnouncementsList.filter(a => Number(a.expiresAt || 0) > now);
-                if (!liveAnns.length) {
-                    annBox.innerHTML = `<div class="empty-note">اعلان فعالی وجود ندارد.</div>`;
-                } else {
-                    annBox.innerHTML = liveAnns.map(a => {
-                        const targetInfo = a.scope === "targeted"
-                            ? `کاربر: ${(allUsersMap[a.targetUid] && allUsersMap[a.targetUid].handle) || a.targetUid}`
-                            : "همگانی (همه کاربران)";
-                        return `
-                            <div class="adm-user-row">
-                                <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                                    <div style="min-width:0; flex:1;">
-                                        <strong style="display:block; font-size:13px; color:var(--text-strong);">${esc(a.text)}</strong>
-                                        <span style="font-size:11px; color:var(--chip-text);">${esc(targetInfo)} • مانده: ${formatRemainingTime(Number(a.expiresAt) - now)}</span>
-                                    </div>
-                                    <div style="display:flex; gap:5px;">
-                                        <button type="button" class="btn-sec" style="padding:5px 9px; font-size:11px;" onclick="openEditAnnouncementModal('${escAttr(a.id)}')">ویرایش</button>
-                                        <button type="button" class="btn-del" onclick="deleteAnnouncementById('${escAttr(a.id)}')">حذف</button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    }).join("");
-                }
-            }
-
-            const adsBox = document.getElementById("adm-ads-list");
-            if (adsBox && isSuper) {
-                if (!adsList.length) {
-                    adsBox.innerHTML = `<div class="empty-note">هیچ بنر تبلیغاتی ثبت نشده است.</div>`;
-                } else {
-                    adsBox.innerHTML = adsList.map(ad => `
-                        <div class="adm-user-row">
-                            <div style="display:flex; justify-content:space-between; align-items:center; gap:8px;">
-                                <div style="display:flex; align-items:center; gap:8px; min-width:0; flex:1;">
-                                    <img src="${escAttr(ad.mediaUrl)}" alt="بنر" style="width:74px; height:32px; object-fit:cover; border-radius:8px; border:1px solid rgba(255,77,109,0.3);">
-                                    <div style="min-width:0;">
-                                        <strong style="display:block; font-size:13px; color:var(--text-strong);">${esc(ad.title || "تبلیغ")}</strong>
-                                        <span style="font-size:11px; color:var(--chip-text);">👁 ${Number(ad.views || 0)} بازدید</span>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-del" onclick="deleteAdBannerById('${escAttr(ad.id)}')">حذف</button>
-                            </div>
+            box.innerHTML = entries.map(([uid, u]) => {
+                const isBanned = Boolean(u && u.banned);
+                const labelText = `${u.name || "کاربر"} (${u.handle || "@user"})`;
+                return `
+                    <div class="adm-user-row">
+                        <div>
+                            <strong style="display:block; font-size:13px; color:var(--text-strong);">${esc(labelText)}</strong>
+                            <span style="font-size:11px; color:${isBanned ? "#ff6b86" : "#10b981"};">وضعیت: ${isBanned ? "مسدود شده" : "فعال"}</span>
                         </div>
-                    `).join("");
+                        <div class="adm-user-actions">
+                            <button type="button" class="btn-sec" style="padding:5px 10px; font-size:11px;" onclick="openTargetedAnnouncementModal('${escAttr(uid)}', '${escAttr(labelText)}')">ارسال اعلان</button>
+                            <button type="button" class="btn-del" onclick="setUserBanStatus('${escAttr(uid)}', ${!isBanned})">${isBanned ? "رفع مسدودیت" : "مسدود کردن"}</button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        async function setUserBanStatus(uid, bannedFlag) {
+            if (!isAdminLoggedIn || adminRole !== "super" || !db || !uid) return;
+            await db.ref("zeuc_movie_v1/users/" + uid).update({ banned: Boolean(bannedFlag) }).catch(() => {});
+        }
+
+        function checkIfCurrentUserIsBanned() {
+            const bannedOverlay = document.getElementById("banned-overlay-screen");
+            if (!bannedOverlay) return;
+            const myRecord = allUsersMap[persistentUserId];
+            const isBanned = Boolean(myRecord && myRecord.banned);
+            bannedOverlay.classList.toggle("show", isBanned);
+        }
+
+        function openTab(tabName) {
+            stopAllInlinePostPlayers();
+
+            if (tabName === "page" || tabName === "explore") {
+                if (!isAccountCompleted()) {
+                    openNameModal("login");
+                    return;
                 }
             }
 
-            const usersBox = document.getElementById("adm-users-list");
-            if (usersBox && isSuper) {
-                const entries = Object.entries(allUsersMap || {});
-                if (!entries.length) {
-                    usersBox.innerHTML = `<div class="empty-note">کاربری ثبت نشده است.</div>`;
-                } else {
-                    usersBox.innerHTML = entries.map(([uid, u]) => {
-                        const isBanned = Boolean(u.banned);
-                        const isOnline = Boolean(onlineUsersMap && onlineUsersMap[uid]);
-                        return `
-                            <div class="adm-user-row">
-                                <div>
-                                    <strong style="font-size:13.5px; color:var(--text-strong);">${esc(u.name || "کاربر")}</strong>
-                                    <span style="font-size:11.5px; color:var(--chip-text); margin-right:6px;">${esc(u.handle || "@user")}</span>
-                                    <span style="font-size:11px; color:${isOnline ? "#10b981" : "var(--text-muted)"}; margin-right:6px;">
-                                        ${isOnline ? "• آنلاین" : "• آفلاین"}
-                                    </span>
-                                    ${isBanned ? `<span class="dead-status-badge">مسدود</span>` : ``}
-                                </div>
-                                <div class="adm-user-actions">
-                                    <button type="button" class="btn-sec" style="padding:5px 9px; font-size:11px;" onclick="openTargetedAnnouncementModal('${escAttr(uid)}', '${escAttr((u.name || "کاربر") + " (" + (u.handle || "@user") + ")")}')" >اعلان</button>
-                                    <button type="button" class="btn-sec" style="padding:5px 9px; font-size:11px;" onclick="toggleUserBan('${escAttr(uid)}', ${!isBanned})">${isBanned ? "رفع مسدودی" : "مسدود کردن"}</button>
-                                    <button type="button" class="btn-del" onclick="deleteUserAccount('${escAttr(uid)}')">حذف کاربر</button>
-                                </div>
-                            </div>
-                        `;
-                    }).join("");
+            document.querySelectorAll(".page-view").forEach(v => v.classList.remove("active"));
+            document.querySelectorAll(".tb-btn").forEach(b => b.classList.remove("active"));
+
+            const targetSection = document.getElementById("tab-" + tabName);
+            if (targetSection) targetSection.classList.add("active");
+
+            const targetBtn = document.getElementById("tb-" + tabName);
+            if (targetBtn) targetBtn.classList.add("active");
+
+            document.body.classList.toggle("explore-mode-active", tabName === "explore");
+
+            if (tabName === "home") {
+                closeHomeGenreAllView();
+                renderRandomHeroSlider();
+                renderHomeGenreCarousels();
+            }
+            if (tabName === "search") renderFilteredMovies();
+            if (tabName === "favorites") renderFavoritesList();
+            if (tabName === "room") {
+                populateRoomMovieSelect();
+                if (!activeRoomId) renderRoomsList();
+            }
+            if (tabName === "page") {
+                syncPageTabAndHeader();
+                renderPageMyItems();
+            }
+            if (tabName === "explore") {
+                switchExploreSubtab(activeExploreSubtab || "feed");
+            }
+            if (tabName === "admin" && isAdminLoggedIn) {
+                applyAdminRolePermissionsUi();
+                renderAdminStats();
+                renderAdminMovies();
+                if (activeAdminSubtab === "notify") {
+                    renderAdminOnlineUsers();
+                    renderAdminAnnouncements();
+                } else if (activeAdminSubtab === "ads") {
+                    renderAdminAdsList();
+                } else if (activeAdminSubtab === "users") {
+                    renderAdminUsersList();
                 }
             }
+
+            renderAdSlots();
+            window.scrollTo({ top: 0, behavior: "smooth" });
         }
+
+        renderGenreChips();
+        renderAdminPresetGenres();
+        selectAdminItemLang("dub");
+        selectPageItemLang("dub");
 
         function updateOnlinePresencePayload() {
             if (!onlineRef) return;
-            const ref = onlineRef.child(persistentUserId);
-            ref.set({
-                online: true,
-                name: currentUserName || "کاربر",
-                handle: currentUserHandle || "",
-                role: currentAdminLevel || "user",
+            const effectiveName = currentUserName || (isAdminLoggedIn ? "ادمین" : "کاربر مهمان");
+            const effectiveHandle = currentUserHandle || (isAdminLoggedIn ? "@admin" : "@guest");
+            onlineRef.set({
+                name: effectiveName,
+                handle: effectiveHandle,
+                isAdmin: isAdminLoggedIn,
                 lastSeen: Date.now()
             }).catch(() => {});
-            ref.onDisconnect().remove().catch(() => {});
         }
 
         function initFirebaseConnection() {
             try {
-                if (typeof firebase === "undefined") {
-                    showVpnWarningNotice();
-                    return;
-                }
                 if (!firebase.apps.length) {
                     firebase.initializeApp({ databaseURL: FIREBASE_DB_URL });
                 }
                 db = firebase.database();
                 moviesRef = db.ref("zeuc_movie_v1/movies");
-                onlineRef = db.ref("zeuc_movie_v1/online");
+                onlineRef = db.ref("zeuc_movie_v1/online/" + persistentUserId);
                 roomsRef = db.ref("zeuc_movie_v1/rooms");
-                handlesRegistryRef = db.ref("zeuc_movie_v1/handles");
+                handlesRegistryRef = db.ref("zeuc_movie_v1/handles_registry");
                 announcementsRef = db.ref("zeuc_movie_v1/announcements");
                 adsRef = db.ref("zeuc_movie_v1/ads");
                 userProfileRef = db.ref("zeuc_movie_v1/users/" + persistentUserId);
 
-                updateOnlinePresencePayload();
-                setInterval(() => updateOnlinePresencePayload(), 25000);
-                window.addEventListener("beforeunload", () => {
-                    try { onlineRef.child(persistentUserId).remove(); } catch (_) {}
+                db.ref(".info/connected").on("value", snap => {
+                    if (snap.val() === true) {
+                        updateOnlinePresencePayload();
+                        onlineRef.onDisconnect().remove().catch(() => {});
+                    }
                 });
+
+                if (isAccountCompleted()) {
+                    userProfileRef.update({
+                        name: currentUserName,
+                        handle: currentUserHandle,
+                        pin: currentUserPin,
+                        avatar: currentUserAvatar,
+                        updatedAt: Date.now()
+                    }).catch(() => {});
+                    claimUniqueHandleTx(currentUserHandle, persistentUserId).catch(() => {});
+                }
 
                 handlesRegistryRef.on("value", snap => {
                     handlesRegistryMap = snap.val() || {};
-                    if (isAccountCompleted()) {
-                        autoFollowZeucSilently();
+                    autoFollowZeucSilently();
+                    if (document.getElementById("user-name-modal").classList.contains("show")) {
+                        const activeTab = document.getElementById("auth-tab-register").classList.contains("active")
+                            ? "register"
+                            : (document.getElementById("auth-tab-edit").classList.contains("active") ? "edit" : null);
+                        if (activeTab) checkHandleAvailability(activeTab === "edit" ? "edit" : "reg");
                     }
                 });
 
                 moviesRef.on("value", snap => {
-                    const arr = [];
-                    snap.forEach(child => arr.push({ id: child.key, ...child.val() }));
-                    arr.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                    moviesList = arr;
+                    const data = snap.val() || {};
+                    moviesList = Object.entries(data)
+                        .map(([id, val]) => ({ id, ...val }))
+                        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     shuffledPostsCache = [];
                     shuffledMoviesCache = [];
                     renderAllMovieViews();
+                    renderAdminStats();
+                    tryOpenDeepLinkedMovie();
                     completeAppBoot();
                 }, () => {
                     showVpnWarningNotice();
                 });
 
-                onlineRef.on("value", snap => {
+                db.ref("zeuc_movie_v1/online").on("value", snap => {
                     onlineUsersMap = snap.val() || {};
-                    const count = Object.keys(onlineUsersMap).length;
-                    document.getElementById("top-online-count-text").innerText = `آنلاین: ${count}`;
-                    if (currentAdminLevel) updateAdminDashboard();
-                });
-
-                roomsRef.on("value", snap => {
-                    allRoomsMap = snap.val() || {};
-                    renderRoomsList();
+                    const total = Object.keys(onlineUsersMap).length;
+                    const topCountEl = document.getElementById("top-online-count-text");
+                    if (topCountEl) topCountEl.innerText = `آنلاین: ${total}`;
+                    renderAdminStats();
+                    if (isAdminLoggedIn && activeAdminSubtab === "notify") {
+                        renderAdminOnlineUsers();
+                    }
                 });
 
                 announcementsRef.on("value", snap => {
-                    const list = [];
-                    snap.forEach(child => list.push({ id: child.key, ...child.val() }));
-                    activeAnnouncementsList = list;
+                    const raw = snap.val() || {};
+                    const now = Date.now();
+                    activeAnnouncementsList = Object.entries(raw)
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(a => a && a.text && Number(a.expiresAt || 0) > now);
                     refreshActiveAnnouncementBanner();
-                    if (currentAdminLevel) updateAdminDashboard();
+                    if (isAdminLoggedIn && activeAdminSubtab === "notify") {
+                        renderAdminAnnouncements();
+                    }
                 });
 
                 adsRef.on("value", snap => {
-                    const list = [];
-                    snap.forEach(child => list.push({ id: child.key, ...child.val() }));
-                    list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-                    adsList = list;
+                    const raw = snap.val() || {};
+                    adsList = Object.entries(raw)
+                        .map(([id, val]) => ({ id, ...val }))
+                        .filter(ad => ad && ad.mediaUrl && ad.targetUrl)
+                        .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                     renderAdSlots();
-                    if (currentAdminLevel) updateAdminDashboard();
+                    renderAdminStats();
+                    if (isAdminLoggedIn && activeAdminSubtab === "ads") {
+                        renderAdminAdsList();
+                    }
                 });
 
                 db.ref("zeuc_movie_v1/users").on("value", snap => {
-                    const val = snap.val() || {};
-                    allUsersMap = val;
+                    allUsersMap = snap.val() || {};
+                    checkIfCurrentUserIsBanned();
+                    autoFollowZeucSilently();
 
-                    const myRecord = val[persistentUserId];
-                    const bannedOverlay = document.getElementById("banned-overlay-screen");
-                    if (myRecord && myRecord.banned) {
-                        if (bannedOverlay) bannedOverlay.classList.add("show");
-                    } else {
-                        if (bannedOverlay) bannedOverlay.classList.remove("show");
-                    }
-
-                    if (myRecord && myRecord.name && myRecord.handle && myRecord.pin) {
-                        applyLocalAccountSession(persistentUserId, myRecord);
-                    }
-
-                    const newFollowers = [];
-                    Object.entries(val).forEach(([uid, u]) => {
-                        if (uid !== persistentUserId && u && Array.isArray(u.following) && u.following.includes(persistentUserId)) {
-                            newFollowers.push({
+                    const followers = [];
+                    Object.entries(allUsersMap).forEach(([uid, uData]) => {
+                        if (uid !== persistentUserId && uData && Array.isArray(uData.following) && uData.following.includes(persistentUserId)) {
+                            followers.push({
                                 uid,
-                                name: u.name || "کاربر",
-                                handle: u.handle || "@user"
+                                name: uData.name || "کاربر",
+                                handle: uData.handle || "@user"
                             });
                         }
                     });
-                    followersList = newFollowers;
+                    followersList = followers;
 
-                    if (isAccountCompleted()) {
-                        autoFollowZeucSilently();
+                    const myRecord = allUsersMap[persistentUserId];
+                    if (myRecord && !isAccountCompleted() && myRecord.name && myRecord.handle) {
+                        applyLocalAccountSession(persistentUserId, myRecord);
+                        claimUniqueHandleTx(currentUserHandle, persistentUserId).catch(() => {});
                     }
 
                     syncPageTabAndHeader();
@@ -7458,36 +7498,29 @@
                         renderPageMyItems();
                         renderExploreSections();
                     }
-                    if (currentAdminLevel) updateAdminDashboard();
+                    if (isAdminLoggedIn && activeAdminSubtab === "users") {
+                        renderAdminUsersList();
+                    }
                 });
-            } catch (err) {
-                console.error("Firebase init failed:", err);
+
+                roomsRef.on("value", snap => {
+                    roomsMap = snap.val() || {};
+                    renderRoomsList();
+                    if (activeRoomId) {
+                        const currentRoom = roomsMap[activeRoomId];
+                        if (!currentRoom) {
+                            leaveActiveRoom();
+                        } else {
+                            applyRoomSnapshotToViewer(currentRoom);
+                        }
+                    }
+                });
+            } catch (_) {
                 showVpnWarningNotice();
             }
         }
 
         initFirebaseConnection();
-
-        function esc(str) {
-            return String(str || "")
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;");
-        }
-
-        function escAttr(str) {
-            return String(str || "")
-                .replace(/&/g, "&amp;")
-                .replace(/'/g, "&#39;")
-                .replace(/"/g, "&quot;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;");
-        }
-
-        renderGenreChips();
-        renderHomeSections();
-        renderAdSlots();
     </script>
 </body>
 </html>
